@@ -1,0 +1,118 @@
+import type {
+  Founder,
+  Company,
+  FounderCompanyMembership,
+  Application,
+  Session,
+  SessionParticipant,
+  BookingRequest,
+  ResearchRecord,
+  ResearchAnswer,
+  ClassificationLabel,
+  CompanyLabel,
+  BusinessNeed,
+  CompanyRelationship,
+  Opportunity,
+  OpportunityActivity,
+  Campaign,
+  CampaignParticipant,
+  AwardDecision,
+  AuditLog,
+} from "@prisma/client";
+export type Serialized<T> = T extends Date
+  ? string
+  : T extends (infer U)[]
+    ? Serialized<U>[]
+    : T extends object
+      ? { [K in keyof T]: Serialized<T[K]> }
+      : T;
+export type Person = Serialized<Founder>;
+export type CompanyRow = Serialized<Company>;
+export interface TeamMember {
+  id: string;
+  name: string;
+  email: string;
+  roleId: string;
+  active: boolean;
+  permissions: string[];
+}
+export interface InviteRow {
+  id: string;
+  email: string;
+  name: string;
+  roleId: string;
+  expiresAt: string;
+  acceptedAt: string | null;
+  createdAt: string;
+}
+export interface Settings {
+  countryOptions: string[];
+  capacity: number;
+  retentionDays: number;
+  campaignTarget: number;
+  awardAmount: string;
+  terms: string;
+}
+export interface DataState {
+  version: 1;
+  fictional?: boolean;
+  founders: Person[];
+  companies: CompanyRow[];
+  memberships: Serialized<FounderCompanyMembership>[];
+  applications: Serialized<
+    Omit<Application, "dedupeKey" | "confirmationHash" | "confirmationExpires">
+  >[];
+  sessions: Serialized<Session>[];
+  participants: Serialized<SessionParticipant>[];
+  bookings: Serialized<BookingRequest>[];
+  research: Serialized<ResearchRecord>[];
+  answers: Serialized<ResearchAnswer>[];
+  labels: Serialized<ClassificationLabel>[];
+  companyLabels: Serialized<CompanyLabel>[];
+  needs: Serialized<BusinessNeed>[];
+  relationships: Serialized<CompanyRelationship>[];
+  opportunities: Serialized<Opportunity>[];
+  activities: Serialized<OpportunityActivity>[];
+  campaigns: Serialized<Campaign>[];
+  campaignParticipants: Serialized<CampaignParticipant>[];
+  awards: Serialized<AwardDecision>[];
+  audit: Serialized<AuditLog>[];
+  users: TeamMember[];
+  invitations: InviteRow[];
+  settings: Settings;
+}
+export interface Viewer {
+  id: string;
+  name: string;
+  email: string;
+  roleId: string;
+  permissions: string[];
+  csrf?: string;
+}
+export interface Command {
+  type: string;
+  payload: Record<string, unknown>;
+}
+export type Section =
+  | "dashboard"
+  | "founders"
+  | "companies"
+  | "spaces"
+  | "research"
+  | "market-map"
+  | "opportunities"
+  | "reports"
+  | "campaigns"
+  | "settings";
+export const SECTIONS: Section[] = [
+  "dashboard",
+  "founders",
+  "companies",
+  "spaces",
+  "research",
+  "market-map",
+  "opportunities",
+  "reports",
+  "campaigns",
+  "settings",
+];

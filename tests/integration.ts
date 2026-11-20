@@ -1,0 +1,536 @@
+/** Isolated PostgreSQL + production HTTP verification. Never resets an existing database. */
+import assert from "node:assert/strict";
+import { randomBytes } from "node:crypto";
+import { spawn, spawnSync } from "node:child_process";
+import { once } from "node:events";
+import { Client } from "pg";
+import { chromium } from "@playwright/test";
+import type { DataState } from "../lib/types";
+try {
+  process.loadEnvFile(".env");
+} catch {}
+const source = process.env.TEST_DATABASE_URL || process.env.DATABASE_URL;
+if (!source)
+  throw new Error(
+    "Set TEST_DATABASE_URL to a local PostgreSQL server with database-creation privileges.",
+  );
+const url = new URL(source);
+if (!["localhost", "127.0.0.1", "[::1]"].includes(url.hostname))
+  throw new Error("Integration runner only creates databases on localhost.");
+const database = `founders_lab_test_${randomBytes(6).toString("hex")}`;
+const controlUrl = new URL(url);
+controlUrl.pathname = "/postgres";
+const control = new Client({ connectionString: controlUrl.toString() });
+await control.connect();
+await control.query(`CREATE DATABASE "${database}"`);
+url.pathname = `/${database}`;
+const origin = "http://localhost:3100";
+const password = randomBytes(24).toString("base64url");
+const env = {
+  ...process.env,
+  DATABASE_URL: url.toString(),
+  APP_ORIGIN: origin,
+  BOOTSTRAP_ADMIN_EMAIL: "admin@integration.example.invalid",
+  BOOTSTRAP_ADMIN_NAME: "Integration Admin",
+  BOOTSTRAP_ADMIN_PASSWORD: password,
+  NODE_ENV: "production" as const,
+};
+let server: ReturnType<typeof spawn> | undefined;
+let output = "";
+function run(script: string, args: string[] = []) {
+  const r = spawnSync(process.execPath, ["--import", "tsx", script, ...args], {
+    env,
+    encoding: "utf8",
+  });
+  if (r.status !== 0) throw new Error(`${script} failed: ${r.stderr}`);
+}
+type Jar = { cookie: string; csrf: string };
+const admin: Jar = { cookie: "", csrf: "" };
+async function request(
+  path: string,
+  payload?: unknown,
+  jar?: Jar,
+  csrf = true,
+) {
+  const response = await fetch(origin + path, {
+    method: payload === undefined ? "GET" : "POST",
+    headers: {
+      Origin: origin,
+      "Content-Type": "application/json",
+      ...(jar?.cookie ? { Cookie: jar.cookie } : {}),
+      ...(csrf && jar?.csrf ? { "X-CSRF-Token": jar.csrf } : {}),
+    },
+    body: payload === undefined ? undefined : JSON.stringify(payload),
+    redirect: "manual",
+  });
+  const cookie = response.headers.get("set-cookie");
+  if (jar && cookie) jar.cookie = cookie.split(";")[0];
+  const data = await response.json().catch(() => null);
+  return { status: response.status, data };
+}
+async function command(type: string, payload: unknown, jar = admin) {
+  const r = await request("/api/workspace", { type, payload }, jar);
+  assert.equal(r.status, 200, `${type}: ${JSON.stringify(r.data)}`);
+  return r.data.state as DataState;
+}
+let passed = 0;
+function pass(name: string) {
+  console.log(`PASS ${++passed}: ${name}`);
+}
+try {
+  run("scripts/migrate.ts");
+  run("scripts/seed.ts", ["--demo"]);
+  run("scripts/admin.ts");
+  server = spawn(
+    process.execPath,
+    [
+      "node_modules/next/dist/bin/next",
+      "start",
+      "-p",
+      "3100",
+      "--hostname",
+      "0.0.0.0",
+    ],
+    { env, stdio: ["ignore", "pipe", "pipe"] },
+  );
+  server.stdout?.on("data", (chunk) => {
+    output += chunk.toString();
+  });
+  server.stderr?.on("data", (chunk) => {
+    output += chunk.toString();
+  });
+  let ready = false;
+  for (let i = 0; i < 100; i++) {
+    try {
+      const r = await fetch(origin + "/demo");
+      if (r.ok) {
+        ready = true;
+        break;
+      }
+    } catch {}
+    await new Promise((r) => setTimeout(r, 200));
+  }
+  assert.ok(ready, "Production server started");
+  assert.equal((await request("/api/workspace")).status, 401);
+  assert.equal(
+    (await fetch(origin + "/dashboard", { redirect: "manual" })).status,
+    307,
+  );
+  assert.equal(
+    (
+      await request("/api/auth/login", {
+        email: env.BOOTSTRAP_ADMIN_EMAIL,
+        password: "incorrect",
+      })
+    ).status,
+    401,
+  );
+  assert.equal(
+    (
+      await request(
+        "/api/auth/login",
+        { email: env.BOOTSTRAP_ADMIN_EMAIL, password },
+        admin,
+      )
+    ).status,
+    200,
+  );
+  const me = await request("/api/auth/me", undefined, admin);
+  admin.csrf = me.data.viewer.csrf;
+  assert.ok(admin.cookie && admin.csrf);
+  let state = (await request("/api/workspace", undefined, admin)).data
+    .state as DataState;
+  assert.equal(state.founders.length, 50);
+  assert.equal(
+    state.sessions.filter((s) => s.status === "Completed").length,
+    10,
+  );
+  assert.equal(
+    (
+      await request(
+        "/api/workspace",
+        {
+          type: "application.review",
+          payload: { id: "a1", status: "Approved" },
+        },
+        admin,
+        false,
+      )
+    ).status,
+    403,
+  );
+  pass(
+    "Production server, authentication, anonymous access rejection and CSRF enforcement",
+  );
+  const application = {
+    founderName: "Integration Fictional",
+    companyName: "Isolated Example",
+    xHandle: "isolated_example",
+    website: "https://isolated.example.invalid",
+    country: "Nigeria",
+    description:
+      "Fictional application for isolated end-to-end research verification.",
+    speakers: 3,
+    teamSize: "2–5",
+    stage: "MVP",
+    sector: "Payments",
+    focus: "Research workflows",
+    privacyConsent: true,
+    promotionalConsent: false,
+  };
+  const result = await request("/api/public/apply", application);
+  assert.equal(result.status, 201, JSON.stringify(result.data));
+  const capability = result.data.token;
+  assert.equal(
+    (
+      await request("/api/public/apply", {
+        ...application,
+        xHandle: "@ISOLATED_EXAMPLE",
+        companyName: " isolated   example ",
+      })
+    ).status,
+    409,
+  );
+  assert.equal(
+    (
+      await request("/api/public/confirmation", {
+        token: result.data.reference,
+      })
+    ).status,
+    400,
+  );
+  const confirmation = await request("/api/public/confirmation", {
+    token: capability,
+  });
+  assert.equal(confirmation.status, 200);
+  assert.deepEqual(Object.keys(confirmation.data).sort(), [
+    "bookings",
+    "companyName",
+    "reference",
+    "status",
+  ]);
+  state = (await request("/api/workspace", undefined, admin)).data.state;
+  const app = state.applications.find(
+    (a) => a.reference === result.data.reference,
+  )!;
+  state = await command("application.review", {
+    id: app.id,
+    status: "Approved",
+  });
+  const linked = state.applications.find((a) => a.id === app.id)!;
+  assert.ok(linked.founderId && linked.companyId);
+  assert.ok(
+    state.memberships.some(
+      (m) =>
+        m.founderId === linked.founderId && m.companyId === linked.companyId,
+    ),
+  );
+  const sessionPayload = {
+    title: "Isolated concurrency session",
+    startsAt: "2027-06-10T17:00:00.000Z",
+    timezone: "Africa/Lagos",
+    host: "Fictional host",
+    capacity: 5,
+    deadline: "2027-06-09T17:00:00.000Z",
+    status: "Scheduled",
+    researchStatus: "Not started",
+    liveUrl: "",
+    recordingUrl: "",
+    notes: "Integration fixture",
+  };
+  state = await command("session.save", sessionPayload);
+  const session = state.sessions.find((s) => s.title === sessionPayload.title)!;
+  assert.equal(
+    (
+      await request("/api/public/book", {
+        token: capability,
+        sessionId: session.id,
+      })
+    ).status,
+    201,
+  );
+  const confirmed = await request("/api/public/confirmation", {
+    token: capability,
+  });
+  assert.equal(confirmed.data.bookings[0].status, "Pending");
+  assert.equal(
+    (
+      await request("/api/public/book", {
+        token: capability,
+        sessionId: session.id,
+      })
+    ).status,
+    409,
+  );
+  pass(
+    "Public application validation, normalised duplicate prevention, approval and limited-scope confirmation",
+  );
+  const applicationIds = [app.id, ...["a1", "a2", "a3", "a4", "a5"]];
+  for (const id of applicationIds.slice(1))
+    state = await command("booking.create", {
+      applicationId: id,
+      sessionId: session.id,
+      speakers: 3,
+    });
+  const bookingIds = state.bookings
+    .filter((b) => b.sessionId === session.id)
+    .map((b) => b.id);
+  assert.equal(bookingIds.length, 6);
+  const reviews = await Promise.all(
+    bookingIds.map((id) =>
+      request(
+        "/api/workspace",
+        { type: "booking.review", payload: { id, status: "Approved" } },
+        admin,
+      ),
+    ),
+  );
+  assert.equal(
+    reviews.filter((r) => r.status === 200).length,
+    5,
+    JSON.stringify(reviews.filter((r) => r.status !== 200).map((r) => r.data)),
+  );
+  assert.equal(reviews.filter((r) => r.status === 400).length, 1);
+  state = (await request("/api/workspace", undefined, admin)).data.state;
+  const participants = state.participants.filter(
+    (p) => p.sessionId === session.id && p.attendance !== "Cancelled",
+  );
+  assert.equal(new Set(participants.map((p) => p.companyId)).size, 5);
+  assert.equal(
+    participants.reduce((sum, p) => sum + p.speakers, 0),
+    15,
+  );
+  const publicSessions = await request("/api/public/sessions");
+  const publicSession = publicSessions.data.sessions.find(
+    (s: { id: string }) => s.id === session.id,
+  );
+  assert.equal(publicSession.availableSeats, 0);
+  assert.ok(!("participants" in publicSession));
+  assert.ok(!("notes" in publicSession));
+  assert.equal(
+    (
+      await request(
+        "/api/workspace",
+        { type: "session.save", payload: { ...session, capacity: 4 } },
+        admin,
+      )
+    ).status,
+    400,
+  );
+  pass(
+    "Six concurrent approvals produce five project seats, fifteen speakers, and one capacity rejection",
+  );
+  const recording = "https://spaces.example.invalid/recording/database-shared";
+  state = await command("session.save", {
+    ...session,
+    recordingUrl: recording,
+  });
+  const { founderSessions, companySessions } = await import("../lib/domain");
+  for (const p of participants) {
+    assert.equal(
+      founderSessions(state, p.founderId).find(
+        (s) => s.session.id === session.id,
+      )?.session.recordingUrl,
+      recording,
+    );
+    assert.equal(
+      companySessions(state, p.companyId).find((s) => s.id === session.id)
+        ?.recordingUrl,
+      recording,
+    );
+  }
+  const check = new Client({ connectionString: url.toString() });
+  await check.connect();
+  const rows = await check.query(
+    'SELECT "recordingUrl" FROM "Session" WHERE id=$1',
+    [session.id],
+  );
+  assert.equal(rows.rows[0].recordingUrl, recording);
+  const columns = await check.query(
+    "SELECT table_name FROM information_schema.columns WHERE column_name='recordingUrl' AND table_schema='public'",
+  );
+  assert.deepEqual(
+    columns.rows.map((r) => r.table_name),
+    ["Session"],
+  );
+  await check.end();
+  pass(
+    "Relational persistence and one shared recording inherited by all linked profiles",
+  );
+  const invitation = await request(
+    "/api/workspace",
+    {
+      type: "invite.create",
+      payload: {
+        email: "researcher@integration.example.invalid",
+        name: "Test Researcher",
+        roleId: "researcher",
+      },
+    },
+    admin,
+  );
+  assert.equal(invitation.status, 200);
+  const inviteToken = invitation.data.invitationPath.split("token=")[1];
+  const researcher: Jar = { cookie: "", csrf: "" };
+  assert.equal(
+    (
+      await request(
+        "/api/auth/accept-invite",
+        { token: inviteToken, password: randomBytes(24).toString("hex") },
+        researcher,
+      )
+    ).status,
+    200,
+  );
+  assert.equal(
+    (
+      await request("/api/auth/accept-invite", {
+        token: inviteToken,
+        password: randomBytes(24).toString("hex"),
+      })
+    ).status,
+    400,
+  );
+  const researcherMe = await request("/api/auth/me", undefined, researcher);
+  researcher.csrf = researcherMe.data.viewer.csrf;
+  const scoped = await request("/api/workspace", undefined, researcher);
+  assert.equal(scoped.status, 200);
+  assert.equal(scoped.data.state.opportunities.length, 0);
+  assert.equal(scoped.data.state.users.length, 0);
+  assert.equal(scoped.data.state.invitations.length, 0);
+  for (const type of [
+    "settings.save",
+    "opportunity.save",
+    "user.permissions",
+    "invite.create",
+  ])
+    assert.equal(
+      (await request("/api/workspace", { type, payload: {} }, researcher))
+        .status,
+      403,
+    );
+  const privatePage = await fetch(origin + "/opportunities", {
+    headers: { Cookie: researcher.cookie },
+  });
+  assert.ok(
+    !(await privatePage.text()).includes("Private opportunity intelligence"),
+  );
+  pass(
+    "One-use collaborator invitations and backend permissions with redacted commercial/team records",
+  );
+  const research = state.research[0],
+    answers = Object.fromEntries(
+      state.answers
+        .filter((a) => a.researchId === research.id)
+        .map((a) => [a.section, a.response]),
+    );
+  state = await command("research.save", {
+    ...research,
+    answers,
+    visibility: "Public",
+    verification: "Evidence reviewed",
+    status: "Complete",
+  });
+  const consentDb = new Client({ connectionString: url.toString() });
+  await consentDb.connect();
+  await consentDb.query(
+    'UPDATE "ResearchRecord" SET visibility=$2 WHERE id<>$1',
+    [research.id, "Private"],
+  );
+  await consentDb.query(
+    'UPDATE "Application" SET "promotionalConsent"=false WHERE "founderId"=$1 AND "companyId"=$2',
+    [research.founderId, research.companyId],
+  );
+  const withoutConsent = await request("/api/public/programme");
+  assert.equal(withoutConsent.data.highlights.length, 0);
+  await consentDb.query(
+    'UPDATE "Application" SET "promotionalConsent"=true WHERE "founderId"=$1 AND "companyId"=$2',
+    [research.founderId, research.companyId],
+  );
+  await consentDb.end();
+  const programme = await request("/api/public/programme");
+  assert.equal(programme.data.highlights.length, 1);
+  assert.equal(
+    programme.data.highlights[0].company,
+    state.companies.find((c) => c.id === research.companyId)?.name,
+  );
+  assert.equal(programme.status, 200);
+  assert.ok(
+    programme.data.highlights.every(
+      (h: { company: string }) =>
+        h.company !==
+        state.companies.find((c) => c.id === linked.companyId)?.name,
+    ),
+  );
+  assert.ok(!("founders" in programme.data));
+  const { reportData, blankFilters } = await import("../lib/selectors");
+  const report = reportData(state, blankFilters);
+  assert.equal(report.founders.length, 51);
+  assert.equal(
+    report.countries.reduce((sum, c) => sum + c.value, 0),
+    51,
+  );
+  assert.equal(
+    reportData(state, { ...blankFilters, country: "Nigeria" }).founders.length,
+    21,
+  );
+  pass(
+    "Database-derived reporting totals and consent-gated public research publication",
+  );
+  const browser = await chromium.launch({
+    executablePath:
+      process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || "/usr/bin/chromium",
+    headless: true,
+    args: ["--no-sandbox"],
+  });
+  try {
+    const page = await browser.newPage({
+      viewport: { width: 393, height: 852 },
+    });
+    const errors: string[] = [];
+    page.on("pageerror", (e) => errors.push(e.message));
+    await page.goto(origin + "/signin");
+    await page.getByLabel("Email").fill(env.BOOTSTRAP_ADMIN_EMAIL);
+    await page.getByLabel("Password", { exact: true }).fill(password);
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await page.waitForURL("**/dashboard");
+    await page.getByRole("heading", { name: /Good morning/ }).waitFor();
+    await page.goto(origin + "/founders/" + linked.founderId);
+    await page
+      .getByRole("heading", { name: "Integration Fictional", exact: true })
+      .waitFor();
+    assert.equal(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+      true,
+    );
+    await page.screenshot({
+      path: "artifacts/private-founder-mobile.png",
+      fullPage: true,
+    });
+    assert.deepEqual(errors, []);
+  } finally {
+    await browser.close();
+  }
+  pass(
+    "Production mobile sign-in, private dashboard and newly approved founder profile render without runtime errors",
+  );
+  console.log(
+    `${passed} PostgreSQL/production HTTP integration groups passed.`,
+  );
+} catch (error) {
+  console.error(error);
+  if (output.includes("Error")) console.error(output.slice(-2500));
+  process.exitCode = 1;
+} finally {
+  if (server) {
+    server.kill("SIGTERM");
+    await Promise.race([
+      once(server, "exit"),
+      new Promise((r) => setTimeout(r, 3000)),
+    ]);
+  }
+  await control.query(`DROP DATABASE "${database}" WITH (FORCE)`);
+  await control.end();
+}

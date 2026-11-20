@@ -1,0 +1,410 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String           @id @default(cuid())
+  email             String           @unique
+  name              String
+  passwordHash      String
+  roleId            String
+  role              Role             @relation(fields: [roleId], references: [id])
+  active            Boolean          @default(true)
+  customPermissions Boolean          @default(false)
+  grants            UserPermission[]
+  sessions          AuthSession[]
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+}
+
+model Role {
+  id          String           @id
+  name        String           @unique
+  users       User[]
+  permissions RolePermission[]
+}
+
+model Permission {
+  id    String           @id
+  roles RolePermission[]
+  users UserPermission[]
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+}
+
+model UserPermission {
+  userId       String
+  permissionId String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([userId, permissionId])
+}
+
+model AuthSession {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  csrf      String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Invitation {
+  id         String    @id @default(cuid())
+  email      String
+  name       String
+  roleId     String
+  tokenHash  String    @unique
+  invitedBy  String
+  acceptedAt DateTime?
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
+}
+
+model RateLimit {
+  key         String   @id
+  count       Int      @default(1)
+  windowStart DateTime @default(now())
+}
+
+model Founder {
+  id                   String                     @id @default(cuid())
+  name                 String
+  role                 String                     @default("Founder")
+  xHandle              String                     @unique
+  contact              String                     @default("")
+  country              String
+  relationshipStatus   String                     @default("New")
+  source               String                     @default("Application")
+  verification         String                     @default("Self-reported")
+  notes                String                     @default("")
+  followUp             String                     @default("")
+  memberships          FounderCompanyMembership[]
+  applications         Application[]
+  participants         SessionParticipant[]
+  research             ResearchRecord[]
+  opportunities        Opportunity[]
+  campaignParticipants CampaignParticipant[]
+  awards               AwardDecision[]
+  createdAt            DateTime                   @default(now())
+  updatedAt            DateTime                   @updatedAt
+}
+
+model Company {
+  id                 String                     @id @default(cuid())
+  name               String
+  description        String
+  website            String
+  country            String
+  operatingCountries String[]
+  teamSize           String
+  stage              String
+  sector             String
+  economicFunctions  String[]
+  customers          String[]
+  businessModels     String[]
+  ecosystems         String[]
+  chains             String[]
+  integrations       String[]
+  distribution       String[]
+  hiringStatus       String                     @default("Unknown")
+  hiringEvidence     String                     @default("")
+  challenges         String                     @default("")
+  memberships        FounderCompanyMembership[]
+  applications       Application[]
+  participants       SessionParticipant[]
+  labels             CompanyLabel[]
+  needs              BusinessNeed[]
+  research           ResearchRecord[]
+  relationshipsFrom  CompanyRelationship[]      @relation("From")
+  relationshipsTo    CompanyRelationship[]      @relation("To")
+  opportunities      Opportunity[]
+  createdAt          DateTime                   @default(now())
+  updatedAt          DateTime                   @updatedAt
+}
+
+model FounderCompanyMembership {
+  founderId String
+  companyId String
+  role      String   @default("Founder")
+  founder   Founder  @relation(fields: [founderId], references: [id], onDelete: Cascade)
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([founderId, companyId])
+}
+
+model Application {
+  id                  String           @id @default(cuid())
+  reference           String           @unique
+  dedupeKey           String           @unique
+  founderName         String
+  companyName         String
+  xHandle             String
+  website             String
+  country             String
+  description         String
+  speakers            Int
+  teamSize            String
+  stage               String
+  sector              String
+  focus               String
+  founderRole         String           @default("Founder")
+  contact             String           @default("")
+  teamCountries       String[]
+  ecosystem           String           @default("")
+  hiring              Boolean          @default(false)
+  seeking             String           @default("")
+  comments            String           @default("")
+  privacyConsent      Boolean
+  promotionalConsent  Boolean          @default(false)
+  status              String           @default("Pending")
+  founderId           String?
+  founder             Founder?         @relation(fields: [founderId], references: [id])
+  companyId           String?
+  company             Company?         @relation(fields: [companyId], references: [id])
+  confirmationHash    String           @unique
+  confirmationExpires DateTime
+  bookings            BookingRequest[]
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+}
+
+model Session {
+  id             String               @id @default(cuid())
+  title          String
+  startsAt       DateTime
+  timezone       String               @default("Africa/Lagos")
+  host           String
+  capacity       Int                  @default(5)
+  deadline       DateTime
+  status         String               @default("Scheduled")
+  researchStatus String               @default("Not started")
+  liveUrl        String               @default("")
+  recordingUrl   String               @default("")
+  notes          String               @default("")
+  participants   SessionParticipant[]
+  bookings       BookingRequest[]
+  research       ResearchRecord[]
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+}
+
+model SessionParticipant {
+  id         String   @id @default(cuid())
+  sessionId  String
+  founderId  String
+  companyId  String
+  speakers   Int      @default(1)
+  attendance String   @default("Approved")
+  session    Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  founder    Founder  @relation(fields: [founderId], references: [id])
+  company    Company  @relation(fields: [companyId], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@unique([sessionId, founderId, companyId])
+}
+
+model BookingRequest {
+  id            String      @id @default(cuid())
+  applicationId String
+  sessionId     String
+  application   Application @relation(fields: [applicationId], references: [id])
+  session       Session     @relation(fields: [sessionId], references: [id])
+  speakers      Int
+  status        String      @default("Pending")
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([applicationId, sessionId])
+}
+
+model ResearchRecord {
+  id           String           @id @default(cuid())
+  founderId    String
+  companyId    String
+  sessionId    String
+  founder      Founder          @relation(fields: [founderId], references: [id])
+  company      Company          @relation(fields: [companyId], references: [id])
+  session      Session          @relation(fields: [sessionId], references: [id])
+  researcher   String
+  recordedAt   DateTime
+  evidence     String
+  confidence   String
+  verification String
+  visibility   String           @default("Private")
+  status       String           @default("Draft")
+  answers      ResearchAnswer[]
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@unique([founderId, companyId, sessionId])
+}
+
+model ResearchAnswer {
+  id             String         @id @default(cuid())
+  researchId     String
+  research       ResearchRecord @relation(fields: [researchId], references: [id], onDelete: Cascade)
+  section        String
+  response       String
+  classification String         @default("")
+
+  @@unique([researchId, section])
+}
+
+model ClassificationLabel {
+  id        String         @id @default(cuid())
+  group     String
+  name      String
+  active    Boolean        @default(true)
+  companies CompanyLabel[]
+
+  @@unique([group, name])
+}
+
+model CompanyLabel {
+  companyId String
+  labelId   String
+  company   Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  label     ClassificationLabel @relation(fields: [labelId], references: [id])
+
+  @@id([companyId, labelId])
+}
+
+model BusinessNeed {
+  id            String        @id @default(cuid())
+  companyId     String
+  company       Company       @relation(fields: [companyId], references: [id])
+  kind          String
+  description   String
+  evidence      String
+  confidence    String
+  verification  String
+  opportunities Opportunity[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model CompanyRelationship {
+  id           String   @id @default(cuid())
+  companyAId   String
+  companyBId   String
+  companyA     Company  @relation("From", fields: [companyAId], references: [id])
+  companyB     Company  @relation("To", fields: [companyBId], references: [id])
+  type         String
+  reason       String
+  evidence     String
+  confidence   String
+  researcher   String
+  verification String
+  reviewedAt   DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([companyAId, companyBId, type])
+}
+
+model Opportunity {
+  id            String                @id @default(cuid())
+  companyId     String
+  founderId     String
+  needId        String
+  company       Company               @relation(fields: [companyId], references: [id])
+  founder       Founder               @relation(fields: [founderId], references: [id])
+  need          BusinessNeed          @relation(fields: [needId], references: [id])
+  category      String
+  solution      String
+  skills        String[]
+  decisionMaker String
+  budget        String                @default("Unknown")
+  evidence      String
+  owner         String
+  nextAction    String
+  followUpDate  DateTime
+  status        String                @default("Discovered")
+  outcome       String                @default("")
+  activities    OpportunityActivity[]
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+}
+
+model OpportunityActivity {
+  id            String      @id @default(cuid())
+  opportunityId String
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  actor         String
+  note          String
+  createdAt     DateTime    @default(now())
+}
+
+model Campaign {
+  id           String                @id @default(cuid())
+  name         String
+  period       String                @unique
+  target       Int                   @default(20)
+  awardAmount  String                @default("1 SOL")
+  rules        String
+  criteria     String
+  status       String                @default("Open")
+  participants CampaignParticipant[]
+  decisions    AwardDecision[]
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+}
+
+model CampaignParticipant {
+  campaignId String
+  founderId  String
+  eligible   Boolean  @default(false)
+  assessment String   @default("")
+  reviewer   String   @default("")
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  founder    Founder  @relation(fields: [founderId], references: [id])
+
+  @@id([campaignId, founderId])
+}
+
+model AwardDecision {
+  id                   String   @id @default(cuid())
+  campaignId           String   @unique
+  founderId            String
+  campaign             Campaign @relation(fields: [campaignId], references: [id])
+  founder              Founder  @relation(fields: [founderId], references: [id])
+  reviewer             String
+  rationale            String
+  decisionDate         DateTime
+  status               String   @default("Selected")
+  transactionReference String   @default("")
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actor     String
+  action    String
+  entityId  String
+  detail    String
+  createdAt DateTime @default(now())
+}
+
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}

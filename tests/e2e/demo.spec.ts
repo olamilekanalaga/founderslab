@@ -1,0 +1,354 @@
+import { test, expect, type Page } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
+async function field(page: Page, name: string, value: string) {
+  await page.getByLabel(name, { exact: true }).fill(value);
+}
+test("demo opens without login, edits persist, and reset restores 50 fictional founders", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 393, height: 852 });
+  await page.goto("/demo");
+  await expect(
+    page.getByRole("heading", { name: /Good morning/ }),
+  ).toBeVisible();
+  await expect(page.locator(".demo-banner")).toContainText("Fictional demo");
+  await page.goto("/demo/founders");
+  await page.getByRole("button", { name: "Add founder", exact: true }).click();
+  await field(page, "Founder name", "Fictional Test Founder");
+  await field(page, "Role", "Founder");
+  await field(page, "X username", "test_founder_demo");
+  await page.getByRole("button", { name: "Save record", exact: true }).click();
+  await page.getByLabel("Search founders").fill("Fictional Test Founder");
+  await expect(page.locator("tbody tr")).toHaveCount(1);
+  await page.reload();
+  await page.getByLabel("Search founders").fill("Fictional Test Founder");
+  await expect(page.locator("tbody")).toContainText("Fictional Test Founder");
+  await page.getByRole("button", { name: "Reset demo", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Reset fictional demo", exact: true })
+    .click();
+  await page.goto("/demo/founders");
+  await expect(page.locator("tbody tr")).toHaveCount(50);
+});
+test("demo application, approval, booking and one recording propagate to linked profiles", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 393, height: 852 });
+  await page.goto("/apply?mode=demo");
+  await field(page, "Founder name", "Sade Fictional");
+  await field(page, "Company / project name", "Fictional Workflow Labs");
+  await field(page, "X username", "sade_workflow_demo");
+  await field(
+    page,
+    "Company website or public project link",
+    "https://workflow.example.invalid",
+  );
+  await field(
+    page,
+    "Short product description",
+    "A fictional product helping African teams understand activation and retention.",
+  );
+  await field(page, "Main business focus", "Product analytics for small teams");
+  await page
+    .getByLabel("I agree to the privacy notice and programme terms.")
+    .check();
+  await page
+    .getByRole("button", { name: "Submit founder application", exact: true })
+    .click();
+  await expect(page).toHaveURL(/confirmation#demo=/);
+  await expect(
+    page.getByRole("heading", { name: "You’re on our radar." }),
+  ).toBeVisible();
+  const reference = await page.locator(".facts dd").first().innerText();
+  await page.goto("/demo/spaces?tab=applications");
+  const appRow = page
+    .locator("tbody tr")
+    .filter({ hasText: "Fictional Workflow Labs" });
+  await appRow.getByRole("button", { name: "Review", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Approve application", exact: true })
+    .click();
+  await expect(page.getByRole("dialog")).toContainText(
+    "Founder and company records are linked",
+  );
+  const founderHref = await page
+    .getByRole("link", { name: "Open founder profile" })
+    .getAttribute("href");
+  await page.getByRole("button", { name: "Close dialog" }).click();
+  await page.goto("/book?mode=demo");
+  await page
+    .getByLabel("Fictional booking application")
+    .selectOption({ label: `Fictional Workflow Labs · ${reference}` });
+  await page
+    .getByRole("button", { name: "Request booking", exact: true })
+    .first()
+    .click();
+  await expect(page).toHaveURL(/confirmation#demo=/);
+  await page.goto("/demo/spaces?tab=bookings");
+  const booking = page
+    .locator("tbody tr")
+    .filter({ hasText: "Fictional Workflow Labs" });
+  await booking.getByRole("combobox").selectOption("Approved");
+  await expect(booking.getByRole("combobox")).toHaveValue("Approved");
+  await booking.getByRole("link").click();
+  await page.getByRole("button", { name: "Edit session & recording" }).click();
+  await field(
+    page,
+    "Shared recording URL",
+    "https://spaces.example.invalid/recording/shared-workflow",
+  );
+  await page.getByRole("button", { name: "Save record", exact: true }).click();
+  await page.goto(founderHref!);
+  await expect(
+    page.getByRole("link", { name: "Session recording" }),
+  ).toHaveAttribute(
+    "href",
+    "https://spaces.example.invalid/recording/shared-workflow",
+  );
+  const companyHref = await page
+    .locator(".entity-row")
+    .filter({ hasText: "Fictional Workflow Labs" })
+    .getAttribute("href");
+  await page.goto(companyHref!);
+  await expect(
+    page.getByRole("link", { name: "Shared session recording" }),
+  ).toHaveAttribute(
+    "href",
+    "https://spaces.example.invalid/recording/shared-workflow",
+  );
+  await page.screenshot({
+    path: "artifacts/shared-recording-mobile.png",
+    fullPage: true,
+  });
+  const companyId = companyHref!.split("/").at(-1)!;
+  await page.goto("/demo/research");
+  await page.getByRole("button", { name: "Add research", exact: true }).click();
+  const dialog = page.getByRole("dialog");
+  const appearances = dialog.getByRole("combobox").first();
+  const appearance = await appearances
+    .locator("option")
+    .filter({ hasText: "Sade Fictional" })
+    .getAttribute("value");
+  await appearances.selectOption(appearance!);
+  const sections = dialog.locator("details");
+  await expect(sections).toHaveCount(12);
+  for (const details of await sections.all()) {
+    if ((await details.getAttribute("open")) === null)
+      await details.locator("summary").click();
+    await details
+      .locator("textarea")
+      .fill(
+        "Fictional interview evidence describes the customer's current workflow and next milestone.",
+      );
+  }
+  await dialog
+    .getByLabel("Evidence source")
+    .fill(
+      "Fictional founder interview, reviewed written notes and shared recording.",
+    );
+  await dialog.getByLabel("Research status").selectOption("Complete");
+  await dialog
+    .getByRole("button", { name: "Save research", exact: true })
+    .click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await page
+    .getByRole("button", { name: "Add business need", exact: true })
+    .click();
+  await page.getByLabel("Company", { exact: true }).selectOption(companyId);
+  await page
+    .getByLabel("Business need", { exact: true })
+    .selectOption("Data analytics");
+  await field(
+    page,
+    "Identified need",
+    "The team needs a repeatable activation and retention analysis.",
+  );
+  await field(
+    page,
+    "Source evidence",
+    "Fictional founder explicitly requested activation research during the interview.",
+  );
+  await page.getByRole("button", { name: "Save record", exact: true }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await page.goto("/demo/opportunities");
+  await page
+    .getByRole("button", { name: "Add opportunity", exact: true })
+    .click();
+  await page.getByLabel("Company", { exact: true }).selectOption(companyId);
+  await page
+    .getByLabel("Related founder", { exact: true })
+    .selectOption(founderHref!.split("/").at(-1)!);
+  const need = page.getByLabel("Documented business need", { exact: true });
+  await need.selectOption(
+    (await need.locator("option").last().getAttribute("value")) || "",
+  );
+  await field(
+    page,
+    "Potential solution",
+    "Run a short activation funnel research engagement for the founder team.",
+  );
+  await field(page, "Decision-maker", "Sade Fictional");
+  await field(
+    page,
+    "Evidence",
+    "Fictional founder requested analytics help in the documented interview.",
+  );
+  await field(
+    page,
+    "Next action",
+    "Schedule a scoped discovery call with the founder.",
+  );
+  await page.getByRole("button", { name: "Save record", exact: true }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await page.getByLabel("Search opportunities").fill("Fictional Workflow Labs");
+  await expect(page.locator(".opportunity-card")).toHaveCount(1);
+  await page.goto("/demo/reports");
+  await expect(page.getByTestId("report-founders")).toHaveText("51");
+});
+test("company classifications, opportunity stages, role previews and exports are interactive", async ({
+  page,
+}) => {
+  await page.goto("/demo/companies");
+  await page.getByLabel("Filter sector").selectOption("Payments");
+  await expect(page.locator("tbody tr")).toHaveCount(5);
+  await page.goto("/demo/market-map");
+  await page.getByRole("button", { name: "Network", exact: true }).click();
+  await expect(
+    page.getByRole("img", { name: "Company relationship network" }),
+  ).toBeVisible();
+  await page
+    .getByLabel("Relationship type filter")
+    .selectOption("Potential integration");
+  await expect(
+    page.locator('svg[aria-label="Company relationship network"] a'),
+  ).toHaveCount(2);
+  await page.goto("/demo/opportunities");
+  await page.getByRole("button", { name: "List", exact: true }).click();
+  await page.getByLabel("Opportunity status filter").selectOption("Discovered");
+  await expect(page.locator("tbody tr")).toHaveCount(3);
+  await page.goto("/demo/opportunities");
+  const status = page.getByLabel("Opportunity status o1", { exact: true });
+  await status.selectOption("Qualified");
+  await expect(
+    page.locator(".kanban-column").filter({
+      has: page.locator(".kanban-heading", { hasText: "Qualified" }),
+    }),
+  ).toContainText("KoraLane");
+  await page.goto("/demo/reports");
+  await expect(page.getByTestId("report-founders")).toHaveText("50");
+  await page.getByLabel("Country", { exact: true }).selectOption("Nigeria");
+  await expect(page.getByTestId("report-founders")).toHaveText("20");
+  const csv = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export CSV", exact: true }).click();
+  await expect((await csv).suggestedFilename()).toBe(
+    "founders-lab-research.csv",
+  );
+  const pdf = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export PDF", exact: true }).click();
+  await expect((await pdf).suggestedFilename()).toBe(
+    "founders-lab-research.pdf",
+  );
+  await page.getByLabel("Demo role preview").selectOption("analyst");
+  await expect(
+    page.getByRole("link", { name: "Opportunities", exact: true }),
+  ).toHaveCount(0);
+  await expect(page.getByText("This role does not have access")).toHaveCount(0);
+  await page.goto("/demo/opportunities");
+  await expect(page.getByText(/does not have access/)).toBeVisible();
+});
+test("research saves all twelve sections and campaign award decisions remain manual", async ({
+  page,
+}) => {
+  await page.goto("/demo/research");
+  await page.getByRole("button", { name: "Open / edit" }).first().click();
+  await page
+    .getByLabel("Notes · Founder origin and motivation", { exact: true })
+    .fill(
+      "Updated fictional motivation: making everyday payments easier for a narrow customer segment.",
+    );
+  await page
+    .getByRole("button", { name: "Save research", exact: true })
+    .click();
+  await expect(page.getByRole("status")).toContainText("saved");
+  await page.goto("/demo/campaigns");
+  await page.getByRole("button", { name: /November founder cohort/ }).click();
+  await page.getByRole("button", { name: "Add / update assessment" }).click();
+  await page.getByLabel("Founder", { exact: true }).selectOption("f50");
+  await page.getByLabel("Eligible under published rules").check();
+  await page
+    .getByLabel("Reviewer assessment and any conflicts")
+    .fill(
+      "All eligibility criteria reviewed, strong customer evidence, and no reviewer conflict declared.",
+    );
+  await page.getByRole("button", { name: "Save record", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Record human decision", exact: true })
+    .click();
+  await page.getByLabel("Eligible founder").selectOption("f50");
+  await page
+    .getByLabel("Human selection rationale and conflicts")
+    .fill(
+      "Selected on the published criteria with documented product progress and no reviewer conflict.",
+    );
+  await page.getByRole("button", { name: "Save record", exact: true }).click();
+  await expect(page.locator(".award-winner")).toContainText("Isabel Cruz");
+  await expect(page.getByText(/no transfer is claimed/)).toBeVisible();
+});
+test("iPhone, tablet and desktop views have working navigation and no horizontal overflow", async ({
+  page,
+}) => {
+  for (const [width, height] of [
+    [393, 852],
+    [375, 812],
+    [834, 1112],
+    [1440, 1000],
+  ]) {
+    await page.setViewportSize({ width, height });
+    for (const route of [
+      "/demo",
+      "/demo/founders",
+      "/demo/spaces",
+      "/demo/market-map",
+      "/demo/reports",
+      "/apply?mode=demo",
+    ]) {
+      await page.goto(route);
+      await page.locator("h1").first().waitFor();
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+        `${route} @ ${width}`,
+      ).toBe(true);
+    }
+  }
+  await page.setViewportSize({ width: 393, height: 852 });
+  await page.goto("/demo");
+  await page.getByRole("button", { name: "Open navigation" }).click();
+  await page
+    .getByRole("dialog")
+    .getByRole("link", { name: "Founders", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Founder directory" }),
+  ).toBeVisible();
+});
+test("core mobile views pass automated accessibility checks", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 393, height: 852 });
+  for (const route of [
+    "/demo",
+    "/demo/founders",
+    "/demo/founders/f1",
+    "/apply?mode=demo",
+    "/book?mode=demo",
+  ]) {
+    await page.goto(route);
+    await page.locator("h1").first().waitFor();
+    const result = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+      .analyze();
+    expect(result.violations, route).toEqual([]);
+  }
+});
