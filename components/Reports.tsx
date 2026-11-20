@@ -19,9 +19,7 @@ export default function Reports() {
     <>
       <div className="page-heading">
         <div>
-          <div className="eyebrow">RESEARCH YOU CAN STAND BEHIND</div>
           <h1>Reports & insights</h1>
-          <p>Build a brief from the evidence, with the gaps kept in view.</p>
         </div>
         <div className="heading-actions">
           <button

@@ -29,12 +29,7 @@ export default function Research({
     <>
       <div className="page-heading">
         <div>
-          <div className="eyebrow">FROM CONVERSATION TO EVIDENCE</div>
           <h1>Founder research</h1>
-          <p>
-            Capture what was said, what is known and what still needs a closer
-            look.
-          </p>
         </div>
         <div className="heading-actions">
           {can && (

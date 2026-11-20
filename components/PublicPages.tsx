@@ -8,7 +8,6 @@ import {
   CalendarDays,
   Mic2,
   Lightbulb,
-  ShieldCheck,
   CheckCircle2,
   BookOpen,
   Award,
@@ -37,6 +36,28 @@ import {
   approvedSeats,
 } from "@/lib/domain";
 import { Status, Empty } from "./ui";
+function DemoModeControl({
+  demo,
+  configured,
+  onChange,
+}: {
+  demo: boolean;
+  configured: boolean;
+  onChange: (value: boolean) => void;
+}) {
+  if (!configured)
+    return <span className="tag public-mode-label">Demo mode</span>;
+  return (
+    <label className="public-mode-control">
+      <input
+        type="checkbox"
+        checked={demo}
+        onChange={(e) => onChange(e.target.checked)}
+      />
+      Demo mode
+    </label>
+  );
+}
 interface PublicSession {
   id: string;
   title: string;
@@ -372,30 +393,12 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
     <div className="public-app">
       <PublicHeader />
       <main className="public-form-page" id="main-content">
-        <div className="eyebrow">YOUR NEXT CONVERSATION STARTS HERE</div>
         <h1>Bring your founder story.</h1>
-        <p>
-          Tell us a little about you and your product. The research questions
-          come later, in conversation.
-        </p>
-        <div className="notice compact">
-          <ShieldCheck size={18} />
-          <label className="check-label">
-            <input
-              type="checkbox"
-              checked={demo}
-              onChange={(e) => setDemo(e.target.checked)}
-              disabled={!configured}
-            />{" "}
-            Use fictional demo submission · stored only in this browser
-          </label>
-        </div>
-        {!configured && (
-          <p className="form-note">
-            The private database is not configured here. You can test the full
-            fictional application flow.
-          </p>
-        )}
+        <DemoModeControl
+          demo={demo}
+          configured={configured}
+          onChange={setDemo}
+        />
         <form
           className="panel public-form"
           onSubmit={async (e) => {
@@ -766,26 +769,15 @@ export function BookingPage({ configured }: { configured: boolean }) {
     <div className="public-app">
       <PublicHeader />
       <main className="public-form-page booking-page" id="main-content">
-        <div className="eyebrow">MAKE ROOM FOR A GOOD CONVERSATION</div>
         <h1>Request a founder Space.</h1>
-        <p>
-          Up to five founder projects per session. Your team’s speakers are
-          tracked separately. Every booking needs approval.
-        </p>
-        <div className="notice compact">
-          <label className="check-label">
-            <input
-              type="checkbox"
-              checked={demo}
-              onChange={(e) => setDemo(e.target.checked)}
-              disabled={!configured}
-            />{" "}
-            Explore fictional demo bookings
-          </label>
-        </div>
+        <DemoModeControl
+          demo={demo}
+          configured={configured}
+          onChange={setDemo}
+        />
         {demo ? (
           <label className="public-booking-identity">
-            Fictional founder application
+            Application
             <select
               aria-label="Fictional booking application"
               value={applicationId}

@@ -20,14 +20,7 @@ export default function Campaigns({
     <>
       <div className="page-heading">
         <div>
-          <div className="eyebrow">
-            CONSISTENT CONVERSATIONS. SHARED PROGRESS.
-          </div>
           <h1>Campaigns & awards</h1>
-          <p>
-            One monthly founder cohort, transparent criteria and a
-            human-reviewed award.
-          </p>
         </div>
         {can && (
           <button className="button primary" onClick={() => edit("campaign")}>

@@ -1094,18 +1094,14 @@ th {
   letter-spacing: 0.2px;
   font-weight: 500;
   padding: 12px 18px;
-  border-top: 1px solid #eef0e9;
-  border-bottom: 1px solid #eef0e9;
+  border: 1px solid #d4dacf;
   white-space: nowrap;
 }
 td {
   padding: 15px 18px;
-  border-bottom: 1px solid #f0f1eb;
+  border: 1px solid #d4dacf;
   white-space: nowrap;
   color: #66705f;
-}
-tr:last-child td {
-  border-bottom: 0;
 }
 td > b,
 td > small {
@@ -3820,4 +3816,22 @@ td select {
     top: 72px;
     bottom: auto;
   }
+}
+
+.public-mode-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  margin: 14px 0 20px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.public-mode-control input {
+  width: 16px;
+  height: 16px;
+}
+.public-mode-label {
+  display: inline-flex;
+  margin: 12px 0 20px;
 }

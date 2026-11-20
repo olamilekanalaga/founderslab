@@ -277,11 +277,6 @@ function Shell({ section, id }: { section: Section; id?: string }) {
             <div>
               <span className="demo-dot" />
               <b>{demo ? "Fictional demo" : "Fictional seed data"}</b>
-              <span className="demo-description">
-                {demo
-                  ? "Explore freely. Changes stay in this browser."
-                  : "Development programme records, not real founders."}
-              </span>
             </div>
             {demo && (
               <label>

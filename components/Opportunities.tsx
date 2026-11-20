@@ -75,9 +75,7 @@ export default function Opportunities({
     <>
       <div className="page-heading">
         <div>
-          <div className="eyebrow">TURN INSIGHT INTO OPPORTUNITY</div>
           <h1>Opportunity pipeline</h1>
-          <p>Private signals, careful qualification and a clear next action.</p>
         </div>
         {can && (
           <button

@@ -76,14 +76,10 @@ export default function Overview({ addFounder }: { addFounder: () => void }) {
     <>
       <div className="page-heading">
         <div>
-          <div className="eyebrow">
-            <span /> THE FOUNDER INTELLIGENCE WORKSPACE
-          </div>
           <h1>
             Good morning, {viewer.name.split(" ")[0]}
             <span className="gold-dot">.</span>
           </h1>
-          <p>A clearer view of the people building what’s next.</p>
         </div>
         <div className="heading-actions">
           <Link className="button" href={path("reports")}>

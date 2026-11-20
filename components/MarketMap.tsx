@@ -32,12 +32,7 @@ export default function MarketMap({
     <>
       <div className="page-heading">
         <div>
-          <div className="eyebrow">UNDERSTAND THE CONNECTIONS</div>
           <h1>Market map</h1>
-          <p>
-            Competition, complements and opportunities—grounded in documented
-            evidence.
-          </p>
         </div>
         {viewer.permissions.includes("research.write") && (
           <button

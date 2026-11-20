@@ -45,7 +45,6 @@ export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
           </Link>
           <div className="page-heading">
             <div>
-              <div className="eyebrow">FOUNDER CONVERSATIONS</div>
               <h1>{session.title}</h1>
               <p>
                 {dateTime(session.startsAt, session.timezone)} ·{" "}
@@ -177,12 +176,7 @@ export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
         <>
           <div className="page-heading">
             <div>
-              <div className="eyebrow">MEANINGFUL CONVERSATIONS</div>
               <h1>Founder Spaces</h1>
-              <p>
-                Bring the right people into the room. Keep the learning
-                connected.
-              </p>
             </div>
             <div className="heading-actions">
               {can && (

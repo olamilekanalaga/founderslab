@@ -19,11 +19,7 @@ export default function Settings({
     <>
       <div className="page-heading">
         <div>
-          <div className="eyebrow">A WELL-RUN PRIVATE WORKSPACE</div>
           <h1>Team & settings</h1>
-          <p>
-            Give people the access they need, and keep the programme consistent.
-          </p>
         </div>
         <button className="button primary" onClick={() => edit("invitation")}>
           <UserPlus size={16} /> Invite collaborator

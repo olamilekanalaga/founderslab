@@ -83,15 +83,9 @@ export default function Directory({
     <>
       <div className="page-heading">
         <div>
-          <div className="eyebrow">THE PEOPLE & PRODUCTS</div>
           <h1>
             {kind === "founders" ? "Founder directory" : "Company intelligence"}
           </h1>
-          <p>
-            {kind === "founders"
-              ? "Get to know the people behind the products."
-              : "Understand what each company does, who it serves and what it needs."}
-          </p>
         </div>
         {viewer.permissions.includes("directory.write") && (
           <button
@@ -294,7 +288,6 @@ function FounderProfile({ id, edit }: { id: string; edit: Editor }) {
       <div className="profile-banner">
         <Avatar name={f.name} />
         <div>
-          <div className="eyebrow">FOUNDER PROFILE</div>
           <h1>{f.name}</h1>
           <p>
             {f.role} · @{f.xHandle} · {f.country}
@@ -483,7 +476,6 @@ function CompanyProfile({ id, edit }: { id: string; edit: Editor }) {
       <div className="profile-banner">
         <Avatar name={c.name} />
         <div>
-          <div className="eyebrow">COMPANY INTELLIGENCE</div>
           <h1>{c.name}</h1>
           <p>
             <MapPin size={14} /> {c.country} · {c.stage} · {c.teamSize} people
