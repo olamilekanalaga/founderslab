@@ -1,10 +1,10 @@
 # Deploy Founders Lab
 
-Use a new project for Founders Lab. Do not overwrite the previous Aladdin Social project or reuse its Vite build settings.
+Use the dedicated Founders Lab Vercel project connected to `olamilekanalaga/founderslab`, production branch `main`. Do not reuse a different application’s Vite/static build settings.
 
 ## Vercel or another Next.js Node host
 
-1. Push this source to the new project's repository/branch. Import it as a **Next.js** project, Node.js 24, install `npm ci`, build `npm run build`. No static export/output-directory override is needed.
+1. Push this source to the new project's repository/branch. Import it as a **Next.js** project, Node.js 24, install `npm ci`, build `npm run build`. The checked-in `vercel.json` explicitly selects Next.js, `npm ci`, `npm run build` and the `.next` output so inherited static-site settings do not take precedence. Keep Root Directory at the repository root (the folder containing `package.json`); root-directory and Git/domain linkage must be checked in the Vercel project.
 2. Provision persistent PostgreSQL and set `DATABASE_URL` as a server-only secret, using the provider's required TLS configuration. Use a pooled application connection if required by the host; use a suitable migration connection for deployment jobs. No database is needed for the browser demo, but public submissions/admin require one.
 3. Set `APP_ORIGIN` to the exact HTTPS origin (for example `https://founders-lab.example.com`). It is used to check public and authenticated write requests. A preview hostname needs its own matching origin and isolated database. Do not let preview deployments mutate production data.
 4. From a secure release job/terminal with the production database environment, run:
