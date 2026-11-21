@@ -1,3 +1,4 @@
+import { databaseUrl } from "./server-env";
 import { cookies } from "next/headers";
 import { scryptSync, timingSafeEqual, randomBytes } from "node:crypto";
 import { db, hash, token } from "./db";
@@ -17,7 +18,7 @@ export function verifyPassword(password: string, encoded: string) {
   );
 }
 export async function getViewer(): Promise<Viewer | null> {
-  if (!process.env.DATABASE_URL) return null;
+  if (!databaseUrl()) return null;
   const value = (await cookies()).get("fl_session")?.value;
   if (!value) return null;
   const session = await db().authSession.findUnique({

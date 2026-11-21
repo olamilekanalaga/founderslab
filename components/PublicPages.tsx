@@ -301,7 +301,13 @@ export function PublicFooter() {
     </footer>
   );
 }
-export function ApplicationForm({ configured }: { configured: boolean }) {
+export function ApplicationForm({
+  configured,
+  allowDemo = true,
+}: {
+  configured: boolean;
+  allowDemo?: boolean;
+}) {
   const params = useSearchParams(),
     router = useRouter();
   const selectedSessionId = params.get("session") || "";
@@ -309,7 +315,8 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
     [],
   );
   const [demo, setDemo] = useState(
-      params.get("mode") === "demo" || !configured,
+      (allowDemo && params.get("mode") === "demo") ||
+        (!configured && allowDemo),
     ),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
@@ -409,11 +416,13 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
       <PublicHeader />
       <main className="public-form-page" id="main-content">
         <h1>Bring your founder story.</h1>
-        <DemoModeControl
-          demo={demo}
-          configured={configured}
-          onChange={setDemo}
-        />
+        {allowDemo && (
+          <DemoModeControl
+            demo={demo}
+            configured={configured}
+            onChange={setDemo}
+          />
+        )}
         {selectedSessionId && (
           <div className="selected-booking panel">
             <div>
@@ -754,10 +763,16 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
     </div>
   );
 }
-export function BookingPage({ configured }: { configured: boolean }) {
+export function BookingPage({
+  configured,
+  allowDemo = true,
+}: {
+  configured: boolean;
+  allowDemo?: boolean;
+}) {
   const params = useSearchParams();
   const [demo, setDemo] = useState(
-    params.get("mode") === "demo" || !configured,
+    (allowDemo && params.get("mode") === "demo") || (!configured && allowDemo),
   );
   const [remoteSessions, setSessions] = useState<PublicSession[]>([]);
   const [loading, setLoading] = useState(true);
@@ -803,11 +818,13 @@ export function BookingPage({ configured }: { configured: boolean }) {
             <span className="eyebrow">BOOK YOUR CONVERSATION</span>
             <h1>Choose your Saturday.</h1>
           </div>
-          <DemoModeControl
-            demo={demo}
-            configured={configured}
-            onChange={setDemo}
-          />
+          {allowDemo && (
+            <DemoModeControl
+              demo={demo}
+              configured={configured}
+              onChange={setDemo}
+            />
+          )}
         </div>
         {error ? (
           <p className="error" role="alert">

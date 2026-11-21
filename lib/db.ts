@@ -1,3 +1,4 @@
+import { databaseUrl } from "./server-env";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient, Prisma } from "@prisma/client";
 import type { DataState, Viewer, Command } from "./types";
@@ -7,13 +8,13 @@ import { normaliseKey } from "./validation";
 import { createHash, randomBytes } from "node:crypto";
 const globalDb = globalThis as unknown as { foundersDb?: PrismaClient };
 export function db() {
-  if (!process.env.DATABASE_URL)
+  if (!databaseUrl())
     throw new DomainError(
       "Database is not configured. The fictional /demo workspace is available without a database.",
       503,
     );
   return (globalDb.foundersDb ??= new PrismaClient({
-    adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
+    adapter: new PrismaPg({ connectionString: databaseUrl() }),
   }));
 }
 export const hash = (v: string) => createHash("sha256").update(v).digest("hex");

@@ -1,12 +1,14 @@
+import { migrationUrl } from "../lib/server-env";
 import { Client } from "pg";
 import { readdir, readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 try {
   process.loadEnvFile(".env");
 } catch {}
-if (!process.env.DATABASE_URL)
+const connectionString = migrationUrl();
+if (!connectionString)
   throw new Error("Set DATABASE_URL before running migrations");
-const client = new Client({ connectionString: process.env.DATABASE_URL });
+const client = new Client({ connectionString });
 await client.connect();
 try {
   await client.query("BEGIN");

@@ -7,9 +7,11 @@ import { ArrowRight, ShieldCheck } from "lucide-react";
 export default function AuthScreen({
   invite = false,
   configured,
+  allowDemo = true,
 }: {
   invite?: boolean;
   configured: boolean;
+  allowDemo?: boolean;
 }) {
   const router = useRouter();
   const [email, setEmail] = useState(""),
@@ -34,7 +36,7 @@ export default function AuthScreen({
         <p>
           {invite
             ? "Set a strong password to accept your one-time invitation."
-            : "Sign in to manage founder research, sessions and opportunities."}
+            : "Sign in to manage founders, bookings and weekly Spaces."}
         </p>
         {!configured && (
           <p className="error">
@@ -111,9 +113,11 @@ export default function AuthScreen({
             <ArrowRight size={16} />
           </button>
         </form>
-        <Link className="text-link" href="/demo">
-          Explore the fictional demo without login <ArrowRight size={13} />
-        </Link>
+        {allowDemo && (
+          <Link className="text-link" href="/demo">
+            Explore the fictional demo without login <ArrowRight size={13} />
+          </Link>
+        )}
         <p className="muted">
           Private accounts are created by an administrator or through a
           role-specific invitation. There are no shared production demo

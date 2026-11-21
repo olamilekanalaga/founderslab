@@ -92,3 +92,9 @@ The initial programme uses an authorised snapshot rather than server pagination.
 Space Data is no longer a navigation page; its old route redirects to founders. A founder's Weekly Spaces view resolves their named session participation and recorded company-level attendance. Co-founders sharing a company see the same project row. Within a weekly Space, the X post, Space/recording links, live listeners, duration and recorded session totals are shared. Each company retains its own founders attended, other team members, total attendance and expected speakers. Expected speakers come from approved participation and are not treated as actual attendance.
 
 The same-week table links the other participating founders and companies. Existing booking approvals assign the founder/project to the week; attendance rows also link a project to that week without inventing named individual attendance. Unknown figures remain blank. Global growth charts and Space totals remain on Overview and count each session once, regardless of the number of founder profiles displaying it.
+
+## Connected Neon production setup
+
+Vercel uses `npm run build:vercel` to prepare the connected production database before compiling the app. It applies the checked-in migrations and inserts programme defaults only; no fictional founder records are seeded. Add your chosen `BOOTSTRAP_ADMIN_EMAIL` and `BOOTSTRAP_ADMIN_PASSWORD` as sensitive Production variables and redeploy to create the first administrator. Remove bootstrap variables after provisioning. The password is not printed or reset on subsequent deployments.
+
+Production turns off the public Admin demo and browser-local demo forms. A supported prefixed Neon connection is resolved on the server; connection values never reach the browser. Readiness is available at `/api/health`. See DEPLOYMENT.md for direct versus pooled connections and initial setup.

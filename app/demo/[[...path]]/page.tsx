@@ -1,3 +1,4 @@
+import { publicDemoAllowed } from "@/lib/server-env";
 import { notFound, redirect } from "next/navigation";
 import Workspace from "@/components/Workspace";
 import { SECTIONS, type Section } from "@/lib/types";
@@ -7,6 +8,7 @@ export default async function Demo({
 }: {
   params: Promise<{ path?: string[] }>;
 }) {
+  if (!publicDemoAllowed()) notFound();
   const { path = [] } = await params;
   const section = (path[0] || "dashboard") as Section;
   if (

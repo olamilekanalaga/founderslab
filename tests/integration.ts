@@ -28,7 +28,10 @@ const origin = "http://localhost:3100";
 const password = randomBytes(24).toString("base64url");
 const env = {
   ...process.env,
-  DATABASE_URL: url.toString(),
+  DATABASE_URL: "",
+  DATABASE_DATABASE_URL: url.toString(),
+  VERCEL_ENV: "production",
+  VERCEL_PROJECT_ID: "integration-fixture",
   APP_ORIGIN: origin,
   BOOTSTRAP_ADMIN_EMAIL: "admin@integration.example.invalid",
   BOOTSTRAP_ADMIN_NAME: "Integration Admin",
@@ -78,7 +81,23 @@ function pass(name: string) {
   console.log(`PASS ${++passed}: ${name}`);
 }
 try {
-  run("scripts/migrate.ts");
+  run("scripts/prepare-vercel.ts");
+  run("scripts/prepare-vercel.ts");
+  const initialDb = new Client({ connectionString: url.toString() });
+  await initialDb.connect();
+  assert.equal(
+    (await initialDb.query('SELECT count(*)::int AS n FROM "Founder"')).rows[0]
+      .n,
+    0,
+  );
+  assert.equal(
+    (await initialDb.query('SELECT count(*)::int AS n FROM "User"')).rows[0].n,
+    1,
+  );
+  await initialDb.end();
+  pass(
+    "Production release initializes tables/defaults and one admin idempotently without fictional founders",
+  );
   run("scripts/seed.ts", ["--demo"]);
   run("scripts/admin.ts");
   server = spawn(
@@ -102,7 +121,7 @@ try {
   let ready = false;
   for (let i = 0; i < 100; i++) {
     try {
-      const r = await fetch(origin + "/demo");
+      const r = await fetch(origin + "/api/health");
       if (r.ok) {
         ready = true;
         break;
@@ -112,6 +131,8 @@ try {
   }
   assert.ok(ready, "Production server started");
   assert.equal((await request("/api/workspace")).status, 401);
+  assert.equal((await request("/demo")).status, 404);
+  assert.equal((await request("/api/health")).data.status, "ready");
   assert.equal(
     (await fetch(origin + "/dashboard", { redirect: "manual" })).status,
     307,

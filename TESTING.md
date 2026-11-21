@@ -5,10 +5,10 @@ Checks run locally against Node.js 24, PostgreSQL 17, the Next.js production bui
 | Check | Result |
 |---|---|
 | TypeScript and ESLint | Passed |
-| Domain/validation tests | 17 passed |
+| Domain/validation tests | 19 passed |
 | Production build | Passed |
 | Browser journeys | 10 passed |
-| PostgreSQL/production HTTP | 9 verification groups passed |
+| PostgreSQL/production HTTP | 10 verification groups passed |
 | Responsive screenshots | 20 current desktop/mobile captures, plus booking and shared-recording journey captures |
 | Accessibility | Axe WCAG A/AA checks on overview, founders/list and profile, companies/list and profile, Spaces, reports, application and booking |
 
@@ -35,3 +35,7 @@ Reports derive basic counts and names/descriptions from stored applications and 
 ## Weekly profile inheritance
 
 Domain tests verify a single shared SpaceData record across two founder profiles, independent company counts, co-founder deduplication, company-attendance mapping and no duplicated global listener totals. PostgreSQL tests persist the session-level X post URL alongside weekly statistics. The mobile browser test edits from one founder, reads shared values and different team counts from another, updates that founder's shared listener number, then verifies the first profile and cumulative Overview chart. Former Space Data navigation is absent and its route redirects to founders. Shared weekly profile screenshots are captured at 393×852 and 1536×1024.
+
+## Connected production release
+
+The isolated PostgreSQL integration suite runs the exact production preparation script twice, confirms zero fictional founders and one bootstrap administrator, and then exercises production HTTP with only a prefixed database variable. It checks `/demo` is unavailable, anonymous workspace access is rejected, and the readiness endpoint succeeds. Existing real application submission, capacity, approval and shared weekly data checks run against that initialized schema. Local browser-demo tests retain the non-production environment.

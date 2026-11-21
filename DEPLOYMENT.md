@@ -45,3 +45,13 @@ Before serving this revision against an existing PostgreSQL database, run `npm r
 ### Shared weekly X post
 
 Run `npm run db:migrate` against database-backed installations before serving this revision. Migration `202611210003_shared_weekly_post` adds `Session.postUrl` with an empty default, preserving existing sessions and attendance rows. X post and Space links are edited once per session and inherited by profiles. The former Space Data route redirects to founders; no database migration is needed for browser-local demo usage.
+
+## Automatic production database preparation
+
+The checked-in Vercel build command is now `npm run build:vercel`. In a linked production build it generates Prisma, validates the connected PostgreSQL variables, applies checked-in SQL migrations transactionally using the unpooled URL, and seeds only roles/permissions/taxonomy/programme defaults. It never inserts fictional founders, sessions or campaigns. Other environments skip database preparation. A preparation failure fails the deployment, leaving the previous deployment serving traffic.
+
+Both ordinary Neon variables (`DATABASE_URL`, `DATABASE_URL_UNPOOLED`) and the `DATABASE_`/`STORAGE_` prefixed variants are supported. This accommodates prefixes selected in Vercel's connection form without exposing credentials. Prefer the standard unprefixed integration variables. Migrations require a direct URL when the application URL uses Neon's pooler.
+
+For initial Admin provisioning, set `BOOTSTRAP_ADMIN_EMAIL` and `BOOTSTRAP_ADMIN_PASSWORD` (at least 12 characters) as sensitive **Production** environment variables, optionally `BOOTSTRAP_ADMIN_NAME`, then redeploy. The release step creates the account without printing the password, and never changes an existing account's password. Remove bootstrap credential variables afterwards. No default or shared password is created when these values are absent.
+
+In Vercel Production, `/demo` is unavailable, public forms ignore `mode=demo`, and the demo switch/link is hidden. Local development and Preview retain the fictional demonstration. `/api/health` returns only a readiness flag, never founder data, credentials or account details. A healthy response verifies application tables/defaults are readable; it does not verify Admin credentials or booking journeys.

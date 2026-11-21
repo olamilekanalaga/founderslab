@@ -15,7 +15,8 @@
     "db:seed": "tsx scripts/seed.ts",
     "db:admin": "tsx scripts/admin.ts",
     "test:integration": "tsx tests/integration.ts",
-    "screenshots": "tsx scripts/screenshots.ts"
+    "screenshots": "tsx scripts/screenshots.ts",
+    "build:vercel": "prisma generate && tsx scripts/prepare-vercel.ts && next build"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^6.19.0",
