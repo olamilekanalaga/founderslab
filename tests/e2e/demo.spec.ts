@@ -37,7 +37,12 @@ test("demo application, approval, booking and one recording propagate to linked 
   page,
 }) => {
   await page.setViewportSize({ width: 393, height: 852 });
-  await page.goto("/apply?mode=demo");
+  await page.goto("/book?mode=demo");
+  await page.getByRole("button", { name: /Saturday, 5 December 2026/ }).click();
+  await page.getByRole("button", { name: /18:00.*places available/ }).click();
+  await page.getByRole("link", { name: "Continue", exact: true }).click();
+  await expect(page).toHaveURL(/apply\?session=up1&mode=demo/);
+  await expect(page.locator(".selected-booking")).toContainText("5 Dec");
   await field(page, "Founder name", "Sade Fictional");
   await field(page, "Company / project name", "Fictional Workflow Labs");
   await field(page, "X username", "sade_workflow_demo");
@@ -58,7 +63,6 @@ test("demo application, approval, booking and one recording propagate to linked 
   await expect(
     page.getByRole("heading", { name: "You’re on our radar." }),
   ).toBeVisible();
-  const reference = await page.locator(".facts dd").first().innerText();
   await page.goto("/demo/spaces?tab=applications");
   const appRow = page
     .locator("tbody tr")
@@ -74,15 +78,6 @@ test("demo application, approval, booking and one recording propagate to linked 
     .getByRole("link", { name: "Open founder profile" })
     .getAttribute("href");
   await page.getByRole("button", { name: "Close dialog" }).click();
-  await page.goto("/book?mode=demo");
-  await page
-    .getByLabel("Fictional booking application")
-    .selectOption({ label: `Fictional Workflow Labs · ${reference}` });
-  await page
-    .getByRole("button", { name: "Request booking", exact: true })
-    .first()
-    .click();
-  await expect(page).toHaveURL(/confirmation#demo=/);
   await page.goto("/demo/spaces?tab=bookings");
   const booking = page
     .locator("tbody tr")
@@ -501,4 +496,53 @@ test("Space Data records actual team attendance and persists totals on mobile", 
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
+});
+
+test("public booking calendar enables only open Saturdays and disables full dates", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 393, height: 852 });
+  await page.goto("/demo");
+  await page.getByRole("button", { name: "Reset demo", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Reset fictional demo", exact: true })
+    .click();
+  await page.evaluate(() => {
+    const seed = JSON.parse(localStorage.getItem("founders-lab-demo-v1")!);
+    seed.sessions.find((s: { id: string }) => s.id === "up1").capacity = 1;
+    seed.participants.push({
+      ...seed.participants[0],
+      id: "full-saturday",
+      sessionId: "up1",
+      attendance: "Approved",
+    });
+    localStorage.setItem("founders-lab-demo-v1", JSON.stringify(seed));
+  });
+  await page.goto("/book?mode=demo");
+  await expect(
+    page.getByRole("button", { name: /Saturday, 5 December 2026, full/ }),
+  ).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: /Friday, 4 December 2026/ }),
+  ).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: /Saturday, 12 December 2026/ }),
+  ).toBeEnabled();
+  await page
+    .getByRole("button", { name: /Saturday, 12 December 2026/ })
+    .click();
+  await page.getByRole("button", { name: /18:00.*places available/ }).click();
+  await expect(
+    page.getByRole("link", { name: "Continue", exact: true }),
+  ).toHaveAttribute("href", "/apply?session=up2&mode=demo");
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.screenshot({
+    path: "artifacts/booking-calendar-mobile.png",
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 1536, height: 1024 });
+  await page.screenshot({
+    path: "artifacts/booking-calendar-desktop.png",
+    fullPage: true,
+  });
 });

@@ -41,6 +41,29 @@ export function hydrateDemo() {
     if (valid(saved))
       snapshot = {
         ...saved,
+        sessions: saved.sessions.map((session) => {
+          const index = ["up1", "up2", "up3", "up4"].indexOf(session.id);
+          const fresh = serverSnapshot.sessions.find(
+            (s) => s.id === session.id,
+          );
+          if (
+            index >= 0 &&
+            fresh &&
+            session.startsAt ===
+              `2026-12-${String(4 + index * 7).padStart(2, "0")}T17:00:00.000Z` &&
+            session.updatedAt === session.createdAt
+          )
+            return {
+              ...session,
+              startsAt: fresh.startsAt,
+              deadline: fresh.deadline,
+              title:
+                session.title === "Founder Friday: product & people"
+                  ? fresh.title
+                  : session.title,
+            };
+          return session;
+        }),
         spaceData: saved.spaceData || [],
         spaceAttendance: saved.spaceAttendance || [],
       };

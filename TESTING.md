@@ -6,13 +6,13 @@ Verified locally against Node.js 24, PostgreSQL 17, Next.js 16.4.6 and Chromium.
 | --------------------------------- | ----------------------------------------------------------------------------- |
 | `npm run typecheck`               | Passed                                                                        |
 | `npm run lint`                    | Passed, no errors or warnings                                                 |
-| `npm test`                        | 14 domain/validation tests passed                                             |
+| `npm test`                        | 15 domain/validation tests passed                                             |
 | `npm run build`                   | Passed; client generation and Next production compilation                     |
 | Build with `DATABASE_URL` empty   | Passed; `/demo` does not require a database                                   |
-| `npm run test:e2e -- --workers=1` | 9 browser tests passed against `next start` |
-| `npm run test:integration`        | 8 PostgreSQL/production HTTP verification groups passed                       |
+| `npm run test:e2e -- --workers=1` | 10 browser tests passed against `next start` |
+| `npm run test:integration`        | 9 PostgreSQL/production HTTP verification groups passed                       |
 | Mobile accessibility              | No Axe WCAG A/AA violations found on the ten checked routes                  |
-| Screenshots                       | 28 desktop/mobile captures plus shared-recording and private-profile captures |
+| Screenshots                       | 30 desktop/mobile captures plus shared-recording and private-profile captures |
 
 ## Browser journeys
 
@@ -48,3 +48,7 @@ Automated checks do not establish full WCAG conformance, every assistive-technol
 ## Space Data checks
 
 Domain tests cover unknown versus zero, actual team counts, edits replacing rather than duplicating records, multi-Space totals, invalid/duplicate projects, chronological cumulative growth, missing metrics and fractional hours. PostgreSQL/HTTP checks verify private storage, update uniqueness, duplicate rejection and anonymous route protection. The mobile browser journey saves and reloads attendance, verifies totals and the growth metric selector, then edits counts. Space Data is included in viewport/overflow and Axe keyboard/accessibility checks; its horizontally scrollable history table is keyboard focusable.
+
+## Calendar-first booking checks
+
+The complete browser journey selects a Saturday and time before founder questions, submits a linked pending booking, then approves the application and booking in Admin. A separate mobile calendar test disables a full Saturday and Friday, selects an open Saturday, checks the attached form link and captures mobile/desktop screenshots. Domain tests cover Saturday availability, past/expired slots, full capacity and atomic demo submission. Production PostgreSQL/HTTP tests verify the combined application/booking transaction and rollback of full or non-Saturday submissions. Existing approval-capacity concurrency tests continue to pass.

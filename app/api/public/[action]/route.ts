@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { publicSlotOpen } from "@/lib/booking";
 import { db, hash, token, loadState } from "@/lib/db";
 import { body, json, failure } from "@/lib/http";
 import { requireOrigin, rateLimit } from "@/lib/auth";
@@ -119,7 +120,9 @@ export async function POST(
       60 * 60000,
     );
     if (action === "apply") {
-      const p = applicationSchema.parse(await body(request));
+      const { sessionId, ...p } = applicationSchema
+        .extend({ sessionId: z.string().min(1).max(200).optional() })
+        .parse(await body(request));
       const configuration = await db().setting.findUnique({
         where: { key: "programme" },
       });
@@ -148,15 +151,58 @@ export async function POST(
       const id = crypto.randomUUID();
       const { websiteTrap: ignored, ...data } = p;
       void ignored;
-      const application = await db().application.create({
-        data: {
-          ...data,
-          id,
-          reference: `FL-${id.slice(0, 8).toUpperCase()}`,
-          dedupeKey: normaliseKey(p.xHandle, p.companyName),
-          confirmationHash: hash(raw),
-          confirmationExpires: new Date(Date.now() + 30 * 864e5),
-        },
+      const application = await db().$transaction(async (tx) => {
+        if (sessionId) {
+          await tx.$queryRaw`SELECT id FROM "Session" WHERE id = ${sessionId} FOR UPDATE`;
+          const session = await tx.session.findUnique({
+            where: { id: sessionId },
+            include: {
+              participants: {
+                where: { attendance: { not: "Cancelled" } },
+                select: { companyId: true },
+              },
+            },
+          });
+          const occupied = session
+            ? new Set(session.participants.map((p) => p.companyId)).size
+            : 0;
+          if (
+            !session ||
+            !publicSlotOpen(
+              {
+                ...session,
+                startsAt: session.startsAt.toISOString(),
+                deadline: session.deadline.toISOString(),
+              },
+              session.capacity - occupied,
+            )
+          )
+            throw new DomainError(
+              "This Saturday is no longer available. Please choose another date.",
+              409,
+            );
+        }
+        return tx.application.create({
+          data: {
+            ...data,
+            id,
+            reference: `FL-${id.slice(0, 8).toUpperCase()}`,
+            dedupeKey: normaliseKey(p.xHandle, p.companyName),
+            confirmationHash: hash(raw),
+            confirmationExpires: new Date(Date.now() + 30 * 864e5),
+            ...(sessionId
+              ? {
+                  bookings: {
+                    create: {
+                      sessionId,
+                      speakers: p.speakers,
+                      status: "Pending",
+                    },
+                  },
+                }
+              : {}),
+          },
+        });
       });
       return json(
         {
@@ -205,8 +251,14 @@ export async function POST(
           });
           if (
             !session ||
-            session.status !== "Scheduled" ||
-            session.deadline < new Date()
+            !publicSlotOpen(
+              {
+                ...session,
+                startsAt: session.startsAt.toISOString(),
+                deadline: session.deadline.toISOString(),
+              },
+              1,
+            )
           )
             throw new DomainError(
               "This session is not open for booking requests.",
@@ -215,11 +267,13 @@ export async function POST(
             throw new DomainError(
               "This application is not eligible for booking.",
             );
-          const state = await loadState(tx),
-            status =
-              approvedSeats(state, session.id) >= session.capacity
-                ? "Waitlisted"
-                : "Pending";
+          const state = await loadState(tx);
+          if (approvedSeats(state, session.id) >= session.capacity)
+            throw new DomainError(
+              "This Saturday is full. Please choose another date.",
+              409,
+            );
+          const status = "Pending";
           return tx.bookingRequest.create({
             data: {
               applicationId: a.id,

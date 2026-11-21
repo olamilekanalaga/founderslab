@@ -122,3 +122,9 @@ Open **Space Data** in the Admin menu (or `/demo/space-data` for fictional pract
 The page totals recorded Spaces and charts cumulative founders, team attendance, live listeners or hours by Space date. Updates recalculate the same record rather than counting it twice. Blank metrics remain unknown; explicit zero is retained. Repeated attendees/listeners across Spaces count again, so these totals are attendance rather than unique programme reach. Historical numbers are not invented. One shared recording URL still belongs to the session.
 
 Existing database installations must run `npm run db:migrate` with their configured database to apply the additive SpaceData/SpaceTeamAttendance migration before serving this update. Demo changes remain browser-local.
+
+## Calendar-first founder bookings
+
+`/book` now opens a month calendar. Only published Saturday sessions with remaining approved project capacity, a future start and an open deadline are selectable. Full dates, past dates, weekdays and unpublished dates are disabled. Select a date and time, then Continue to the founder questions; the chosen session stays attached. Submit saves the application and pending booking together in one transaction, rechecking the slot under the same session row lock used for approvals. A full or unavailable slot leaves no orphan application. The short `/apply` form remains available for existing direct links, but the public primary action starts at the calendar.
+
+Approval remains in Admin → Founder Spaces → Applications and Bookings. Pending requests do not consume confirmed project places. The calendar does not publish founder identities or admin calendar notes. Demo reset supplies four fictional December 2026 Saturdays; untouched legacy fictional Friday slots are upgraded locally without resetting other demo edits. Existing private database sessions are not silently rescheduled; publish Saturday sessions in Admin.

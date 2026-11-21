@@ -31,6 +31,7 @@ try {
       ["opportunities", "/demo/opportunities"],
       ["reports", "/demo/reports"],
       ["application", "/apply?mode=demo"],
+      ["booking", "/book?mode=demo"],
     ] as const) {
       await page.goto(origin + path);
       await page.locator("h1").first().waitFor();
@@ -53,7 +54,7 @@ try {
   }
   if (errors.length) throw new Error(errors.join("\n"));
   console.log(
-    "Captured 28 screenshots at 1536×1024 and 393×852; no runtime errors or horizontal page overflow.",
+    "Captured 30 screenshots at 1536×1024 and 393×852; no runtime errors or horizontal page overflow.",
   );
 } finally {
   await browser.close();

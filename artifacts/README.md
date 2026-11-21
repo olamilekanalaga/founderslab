@@ -17,6 +17,7 @@ The current Founders Lab navy-and-violet interface, captured from the local prod
 | Market map           | [Mobile](market-map-mobile.png)     | [Desktop](market-map-desktop.png)     |
 | Opportunity pipeline | [Mobile](opportunities-mobile.png)  | [Desktop](opportunities-desktop.png)  |
 | Reports              | [Mobile](reports-mobile.png)        | [Desktop](reports-desktop.png)        |
+| Booking calendar | [Mobile](booking-mobile.png) | [Desktop](booking-desktop.png) |
 | Public application   | [Mobile](application-mobile.png)    | [Desktop](application-desktop.png)    |
 
 Additional tested journeys: [approved private founder](private-founder-mobile.png), [shared recording](shared-recording-mobile.png). All records shown are fictional fixtures or isolated test submissions.
@@ -24,3 +25,5 @@ Additional tested journeys: [approved private founder](private-founder-mobile.pn
 Run `npm run screenshots` while the application is running to recreate the set. `PLAYWRIGHT_BASE_URL` and `PLAYWRIGHT_CHROMIUM_EXECUTABLE` can select another server/browser. The script rejects page runtime errors and document overflow.
 
 [Space Data with saved attendance and growth chart](space-data-filled-mobile.png).
+
+Calendar availability with a full Saturday and a selected open time: [mobile](booking-calendar-mobile.png), [desktop](booking-calendar-desktop.png).

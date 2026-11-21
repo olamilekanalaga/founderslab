@@ -226,11 +226,11 @@ try {
   );
   const sessionPayload = {
     title: "Isolated concurrency session",
-    startsAt: "2027-06-10T17:00:00.000Z",
+    startsAt: "2027-06-12T17:00:00.000Z",
     timezone: "Africa/Lagos",
     host: "Fictional host",
     capacity: 5,
-    deadline: "2027-06-09T17:00:00.000Z",
+    deadline: "2027-06-11T17:00:00.000Z",
     status: "Scheduled",
     researchStatus: "Not started",
     liveUrl: "",
@@ -344,6 +344,61 @@ try {
   );
   pass(
     "Six concurrent approvals produce five project seats, fifteen speakers, and one capacity rejection",
+  );
+  const calendarApplication = {
+    ...application,
+    founderName: "Calendar Founder",
+    companyName: "Calendar Product",
+    xHandle: "calendar_product",
+    sessionId: "up3",
+  };
+  const calendarResult = await request(
+    "/api/public/apply",
+    calendarApplication,
+  );
+  assert.equal(calendarResult.status, 201, JSON.stringify(calendarResult.data));
+  const calendarConfirmation = await request("/api/public/confirmation", {
+    token: calendarResult.data.token,
+  });
+  assert.equal(calendarConfirmation.data.bookings.length, 1);
+  assert.equal(calendarConfirmation.data.bookings[0].status, "Pending");
+  const beforeFailed = (await request("/api/workspace", undefined, admin)).data
+    .state.applications.length;
+  assert.equal(
+    (
+      await request("/api/public/apply", {
+        ...calendarApplication,
+        companyName: "Full Product",
+        xHandle: "full_product",
+        sessionId: session.id,
+      })
+    ).status,
+    409,
+  );
+  state = await command("session.save", {
+    ...sessionPayload,
+    title: "Closed weekday",
+    startsAt: "2027-06-11T17:00:00.000Z",
+  });
+  const weekday = state.sessions.find((s) => s.title === "Closed weekday")!;
+  assert.equal(
+    (
+      await request("/api/public/apply", {
+        ...calendarApplication,
+        companyName: "Weekday Product",
+        xHandle: "weekday_product",
+        sessionId: weekday.id,
+      })
+    ).status,
+    409,
+  );
+  assert.equal(
+    (await request("/api/workspace", undefined, admin)).data.state.applications
+      .length,
+    beforeFailed,
+  );
+  pass(
+    "Calendar-first submission creates a linked pending booking; full and weekday submissions roll back without orphan applications",
   );
   const stats = {
     sessionId: session.id,

@@ -13,6 +13,8 @@ import {
   Award,
 } from "lucide-react";
 import PublicHeader from "./PublicHeader";
+import PublicBookingCalendar from "./PublicBookingCalendar";
+import { publicSlotOpen, type PublicSession } from "@/lib/booking";
 import {
   COUNTRIES,
   SECTORS,
@@ -32,11 +34,10 @@ import {
 } from "@/lib/demo-store";
 import {
   createLocalApplication,
-  applyCommand,
-  demoViewer,
+  createLocalBookingApplication,
   approvedSeats,
 } from "@/lib/domain";
-import { Status, Empty } from "./ui";
+import { Status } from "./ui";
 function DemoModeControl({
   demo,
   configured,
@@ -58,17 +59,6 @@ function DemoModeControl({
       Demo mode
     </label>
   );
-}
-interface PublicSession {
-  id: string;
-  title: string;
-  startsAt: string;
-  timezone: string;
-  host: string;
-  capacity: number;
-  deadline: string;
-  status: string;
-  availableSeats: number;
 }
 async function api(path: string, payload?: unknown) {
   const r = await fetch(
@@ -314,6 +304,10 @@ export function PublicFooter() {
 export function ApplicationForm({ configured }: { configured: boolean }) {
   const params = useSearchParams(),
     router = useRouter();
+  const selectedSessionId = params.get("session") || "";
+  const [availableSessions, setAvailableSessions] = useState<PublicSession[]>(
+    [],
+  );
   const [demo, setDemo] = useState(
       params.get("mode") === "demo" || !configured,
     ),
@@ -374,6 +368,27 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
       })
       .catch(() => {});
   }, [demo]);
+  useEffect(() => {
+    if (!demo && selectedSessionId)
+      void api("sessions")
+        .then((r) => setAvailableSessions(r.sessions))
+        .catch(() =>
+          setError(
+            "Could not load your selected Space. Return to the calendar and try again.",
+          ),
+        );
+  }, [demo, selectedSessionId]);
+  const chosenSession = demo
+    ? localState.sessions.find((s) => s.id === selectedSessionId)
+    : availableSessions.find((s) => s.id === selectedSessionId);
+  const chosenSeats = chosenSession
+    ? demo
+      ? chosenSession.capacity - approvedSeats(localState, chosenSession.id)
+      : (chosenSession as PublicSession).availableSeats
+    : 0;
+  const selectionValid =
+    !selectedSessionId ||
+    Boolean(chosenSession && publicSlotOpen(chosenSession, chosenSeats));
   const countries = demo
     ? localState.settings.countryOptions || COUNTRIES
     : catalog.countries;
@@ -399,6 +414,31 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
           configured={configured}
           onChange={setDemo}
         />
+        {selectedSessionId && (
+          <div className="selected-booking panel">
+            <div>
+              <span className="eyebrow">YOUR SELECTED SPACE</span>
+              <strong>
+                {chosenSession
+                  ? dateTime(chosenSession.startsAt, "Africa/Lagos") +
+                    " · Africa/Lagos"
+                  : "Loading selected Space…"}
+              </strong>
+              <span>{chosenSession?.title}</span>
+              {chosenSession && !selectionValid && (
+                <span role="alert">
+                  This slot is no longer available. Choose another Saturday.
+                </span>
+              )}
+            </div>
+            <Link
+              className="text-link"
+              href={demo ? "/book?mode=demo" : "/book"}
+            >
+              Change date
+            </Link>
+          </div>
+        )}
         <form
           className="panel public-form"
           onSubmit={async (e) => {
@@ -414,15 +454,30 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
                 promotionalConsent: promo,
                 hiring,
               });
+              if (!selectionValid)
+                throw new Error(
+                  "Choose an available Saturday from the booking calendar.",
+                );
               if (demo) {
                 hydrateDemo();
-                const next = createLocalApplication(getSnapshot(), p);
+                const next = selectedSessionId
+                  ? createLocalBookingApplication(
+                      getSnapshot(),
+                      p,
+                      selectedSessionId,
+                    )
+                  : createLocalApplication(getSnapshot(), p);
                 saveDemo(next);
                 const a = next.applications.at(-1)!;
                 const token = saveConfirmation(a.id);
                 router.push("/confirmation#demo=" + token);
               } else {
-                const result = await api("apply", p);
+                const result = await api("apply", {
+                  ...p,
+                  ...(selectedSessionId
+                    ? { sessionId: selectedSessionId }
+                    : {}),
+                });
                 sessionStorage.setItem("fl-confirmation-token", result.token);
                 router.push("/confirmation#token=" + result.token);
               }
@@ -683,7 +738,7 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
           )}
           <button
             type="submit"
-            disabled={busy}
+            disabled={busy || !selectionValid}
             className="button primary full-width"
           >
             {busy ? "Submitting…" : "Submit founder application"}
@@ -700,177 +755,72 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
   );
 }
 export function BookingPage({ configured }: { configured: boolean }) {
-  const params = useSearchParams(),
-    router = useRouter(),
-    [demo, setDemo] = useState(params.get("mode") === "demo" || !configured),
-    [remoteSessions, setSessions] = useState<PublicSession[]>([]),
-    [applicationId, setApplication] = useState("a1"),
-    [confirmationInput, setConfirmation] = useState<string | null>(null),
-    [message, setMessage] = useState(""),
-    [busy, setBusy] = useState(false);
-  const local = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  const saved = useSyncExternalStore(
-    subscribeBrowser,
-    () => sessionStorage.getItem("fl-confirmation-token") || "",
-    () => "",
+  const params = useSearchParams();
+  const [demo, setDemo] = useState(
+    params.get("mode") === "demo" || !configured,
   );
-  const confirmation = confirmationInput ?? saved;
-  const applications = demo ? local.applications : [];
+  const [remoteSessions, setSessions] = useState<PublicSession[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const local = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  useEffect(() => {
+    if (demo) {
+      hydrateDemo();
+      return;
+    }
+    let active = true;
+    void api("sessions")
+      .then((r) => {
+        if (active) {
+          setSessions(r.sessions);
+          setLoading(false);
+        }
+      })
+      .catch((e) => {
+        if (active) {
+          setError(e.message);
+          setLoading(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [demo]);
   const sessions = demo
     ? local.sessions
-        .filter((v) => v.status === "Scheduled")
-        .map((v) => ({
-          ...v,
-          availableSeats: v.capacity - approvedSeats(local, v.id),
+        .filter((s) => s.status === "Scheduled")
+        .map((s) => ({
+          ...s,
+          availableSeats: Math.max(0, s.capacity - approvedSeats(local, s.id)),
         }))
     : remoteSessions;
-  useEffect(() => {
-    if (demo) hydrateDemo();
-    else
-      void api("sessions")
-        .then((r) => setSessions(r.sessions))
-        .catch((e) => setMessage(e.message));
-  }, [demo]);
-  async function request(session: PublicSession) {
-    setBusy(true);
-    setMessage("");
-    try {
-      if (demo) {
-        hydrateDemo();
-        const s = getSnapshot(),
-          a = s.applications.find((a) => a.id === applicationId);
-        if (!a) throw new Error("Choose a fictional application");
-        let next = applyCommand(
-          s,
-          {
-            type: "booking.create",
-            payload: {
-              applicationId,
-              sessionId: session.id,
-              speakers: a.speakers,
-            },
-          },
-          demoViewer(),
-        );
-        if (session.availableSeats <= 0)
-          next = {
-            ...next,
-            bookings: next.bookings.map((b, i, arr) =>
-              i === arr.length - 1 ? { ...b, status: "Waitlisted" } : b,
-            ),
-          };
-        saveDemo(next);
-        const token = saveConfirmation(applicationId);
-        router.push("/confirmation#demo=" + token);
-      } else {
-        let token = confirmation.trim();
-        if (token.includes("#"))
-          token = new URLSearchParams(token.split("#")[1]).get("token") || "";
-        if (!token)
-          throw new Error("Paste the confirmation link from your application.");
-        await api("book", { token, sessionId: session.id });
-        sessionStorage.setItem("fl-confirmation-token", token);
-        router.push("/confirmation#token=" + token);
-      }
-    } catch (e) {
-      setMessage(formError(e, "Could not request booking").message);
-    } finally {
-      setBusy(false);
-    }
-  }
   return (
     <div className="public-app">
       <PublicHeader />
       <main className="public-form-page booking-page" id="main-content">
-        <h1>Request a founder Space.</h1>
-        <DemoModeControl
-          demo={demo}
-          configured={configured}
-          onChange={setDemo}
-        />
-        {demo ? (
-          <label className="public-booking-identity">
-            Application
-            <select
-              aria-label="Fictional booking application"
-              value={applicationId}
-              onChange={(e) => setApplication(e.target.value)}
-            >
-              {applications.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.companyName} · {a.reference}
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : (
-          <label className="public-booking-identity">
-            Your application confirmation link
-            <input
-              value={confirmation}
-              onChange={(e) => setConfirmation(e.target.value)}
-              placeholder="Paste the private confirmation link you saved"
-            />
-            <small>
-              Haven’t applied yet?{" "}
-              <Link className="text-link" href="/apply">
-                Submit a short application first.
-              </Link>
-            </small>
-          </label>
-        )}
-        {message && (
-          <p role="alert" className="error">
-            {message}
-          </p>
-        )}
-        <div className="session-grid">
-          {sessions.map((s) => (
-            <article className="panel session-card" key={s.id}>
-              <div className="row-between">
-                <CalendarDays size={24} />
-                <Status
-                  value={s.availableSeats > 0 ? "Scheduled" : "Waitlist"}
-                />
-              </div>
-              <h2>{s.title}</h2>
-              <p>
-                {dateTime(s.startsAt, s.timezone)}
-                <br />
-                {s.timezone}
-              </p>
-              <dl className="facts">
-                <div>
-                  <dt>Project seats</dt>
-                  <dd>
-                    {s.availableSeats} of {s.capacity} available
-                  </dd>
-                </div>
-                <div>
-                  <dt>Host</dt>
-                  <dd>{s.host}</dd>
-                </div>
-                <div>
-                  <dt>Apply by</dt>
-                  <dd>{dateTime(s.deadline, s.timezone)}</dd>
-                </div>
-              </dl>
-              <button
-                disabled={busy}
-                className="button primary full-width"
-                onClick={() => void request(s)}
-              >
-                {s.availableSeats > 0 ? "Request booking" : "Request waitlist"}
-                <ArrowRight size={15} />
-              </button>
-            </article>
-          ))}
+        <div className="booking-page-heading">
+          <div>
+            <span className="eyebrow">BOOK YOUR CONVERSATION</span>
+            <h1>Choose your Saturday.</h1>
+          </div>
+          <DemoModeControl
+            demo={demo}
+            configured={configured}
+            onChange={setDemo}
+          />
         </div>
-        {!sessions.length && (
-          <Empty>
-            No open sessions are published yet. Check back soon, or explore the
-            fictional demo.
-          </Empty>
+        {error ? (
+          <p className="error" role="alert">
+            {error}
+          </p>
+        ) : !demo && loading ? (
+          <p role="status">Loading available Saturdays…</p>
+        ) : (
+          <PublicBookingCalendar
+            key={`${demo}:${sessions.map((s) => s.id).join(",")}`}
+            sessions={sessions}
+            demo={demo}
+          />
         )}
       </main>
       <PublicFooter />

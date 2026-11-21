@@ -22,7 +22,7 @@ export default function PublicHeader() {
         <Link className="button" href="/signin">
           Admin
         </Link>
-        <Link className="button primary" href="/apply">
+        <Link className="button primary" href="/book">
           Apply as a founder
         </Link>
       </nav>

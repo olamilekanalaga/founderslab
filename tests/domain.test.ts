@@ -538,3 +538,35 @@ test("Space growth follows event dates, combines same-day totals and omits missi
   assert.equal(spaceGrowth(s, "listeners").length, 1);
   assert.equal(spaceGrowth(s, "listeners")[0].value, 80);
 });
+
+test("calendar-first applications attach a pending Saturday booking atomically", async () => {
+  const { createLocalBookingApplication } = await import("../lib/domain");
+  const { isSaturday, publicSlotOpen } = await import("../lib/booking");
+  const seed = makeSeed(),
+    now = "2026-11-21T12:00:00.000Z";
+  const session = seed.sessions.find((s) => s.id === "up1")!;
+  assert.equal(isSaturday(session), true);
+  assert.equal(publicSlotOpen(session, 5, Date.parse(now)), true);
+  const saved = createLocalBookingApplication(
+    seed,
+    application,
+    session.id,
+    now,
+  );
+  const app = saved.applications.at(-1)!;
+  assert.equal(saved.bookings.at(-1)?.applicationId, app.id);
+  assert.equal(saved.bookings.at(-1)?.sessionId, session.id);
+  assert.equal(saved.bookings.at(-1)?.status, "Pending");
+  assert.equal(seed.applications.length, 50);
+  assert.throws(() =>
+    createLocalBookingApplication(seed, application, "missing", now),
+  );
+  const full = structuredClone(seed);
+  full.sessions.find((s) => s.id === session.id)!.capacity = 0;
+  assert.throws(() =>
+    createLocalBookingApplication(full, application, session.id, now),
+  );
+  const weekday = { ...session, startsAt: "2026-12-04T17:00:00.000Z" };
+  assert.equal(publicSlotOpen(weekday, 5, Date.parse(now)), false);
+  assert.equal(publicSlotOpen(session, 5, Date.parse("2027-01-01")), false);
+});

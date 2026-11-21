@@ -1,3 +1,4 @@
+import { publicSlotOpen } from "./booking";
 import type { Command, DataState, Viewer } from "./types";
 import { actionPermission, RESEARCH_SECTIONS, ROLES } from "./catalog";
 import { schemas, applicationSchema, normaliseKey } from "./validation";
@@ -91,6 +92,39 @@ export function scopeState(s: DataState, permissions: string[]): DataState {
     copy.audit = [];
   }
   return copy;
+}
+/** Calendar-first public demo submission: persist both records together or neither. */
+export function createLocalBookingApplication(
+  state: DataState,
+  input: unknown,
+  sessionId: string,
+  now = new Date().toISOString(),
+): DataState {
+  const session = state.sessions.find((s) => s.id === sessionId);
+  check(
+    session &&
+      publicSlotOpen(
+        session,
+        session.capacity - approvedSeats(state, sessionId),
+        Date.parse(now),
+      ),
+    "This Saturday is no longer available. Please choose another date.",
+  );
+  const next = createLocalApplication(state, input, now);
+  const application = next.applications.at(-1)!;
+  return applyCommand(
+    next,
+    {
+      type: "booking.create",
+      payload: {
+        applicationId: application.id,
+        sessionId,
+        speakers: application.speakers,
+      },
+    },
+    demoViewer(),
+    now,
+  );
 }
 export function createLocalApplication(
   state: DataState,
