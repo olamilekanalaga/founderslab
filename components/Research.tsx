@@ -402,7 +402,6 @@ function ResearchEditor({
             value={evidence}
             onChange={(e) => setEvidence(e.target.value)}
             required
-            minLength={10}
           />
         </label>
         <div className="two-grid">

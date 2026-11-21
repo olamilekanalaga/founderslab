@@ -635,7 +635,7 @@ export function applyCommand(
             p.campaignId === v.campaignId &&
             p.founderId === v.founderId &&
             p.eligible &&
-            p.assessment.length >= 10,
+            p.assessment.trim().length > 0,
         ),
         "The winner needs an eligible, assessed campaign record",
       );

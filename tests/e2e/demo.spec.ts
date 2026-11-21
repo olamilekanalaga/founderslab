@@ -46,12 +46,8 @@ test("demo application, approval, booking and one recording propagate to linked 
     "Company website or public project link",
     "https://workflow.example.invalid",
   );
-  await field(
-    page,
-    "Short product description",
-    "A fictional product helping African teams understand activation and retention.",
-  );
-  await field(page, "Main business focus", "Product analytics for small teams");
+  await field(page, "Short product description", "Pay");
+  await field(page, "Main business focus", "AI");
   await page
     .getByLabel("I agree to the privacy notice and programme terms.")
     .check();
@@ -411,4 +407,38 @@ test("redesigned founder cards, classification labels and calendar preserve work
   await expect(page.locator(".research-takeaways article")).toHaveCount(12);
   await page.getByRole("button", { name: "Actions", exact: true }).click();
   await expect(page.locator(".research-takeaways")).toContainText("Follow-up");
+});
+
+test("short founder answers submit and invalid inputs show a readable message", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 393, height: 852 });
+  await page.goto("/apply?mode=demo");
+  await field(page, "Founder name", "Short Answer");
+  await field(page, "Company / project name", "Short Form Demo");
+  await field(page, "X username", "bad handle");
+  await field(
+    page,
+    "Company website or public project link",
+    "https://short.example.invalid",
+  );
+  await field(page, "Short product description", "Pay");
+  await field(page, "Main business focus", "AI");
+  await page
+    .getByLabel("I agree to the privacy notice and programme terms.")
+    .check();
+  await page
+    .getByRole("button", { name: "Submit founder application", exact: true })
+    .click();
+  await expect(page.locator(".public-form").getByRole("alert")).toContainText(
+    "X username:",
+  );
+  await expect(
+    page.locator(".public-form").getByRole("alert"),
+  ).not.toContainText('"code"');
+  await field(page, "X username", "short_answer_demo");
+  await page
+    .getByRole("button", { name: "Submit founder application", exact: true })
+    .click();
+  await expect(page).toHaveURL(/confirmation#demo=/);
 });

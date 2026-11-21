@@ -428,3 +428,24 @@ test("controlled taxonomy additions work for relationships and archived meanings
     ),
   );
 });
+
+test("business descriptions accept short answers while empty fields remain required", () => {
+  assert.equal(
+    applicationSchema.parse({ ...application, description: "Pay", focus: "AI" })
+      .description,
+    "Pay",
+  );
+  assert.throws(() =>
+    applicationSchema.parse({ ...application, description: "  " }),
+  );
+  assert.throws(() => applicationSchema.parse({ ...application, focus: "  " }));
+  const c = makeSeed().companies[0];
+  assert.doesNotThrow(() =>
+    schemas["company.save"].parse({
+      ...c,
+      description: "Pay",
+      founderIds: ["f1"],
+      labelIds: [],
+    }),
+  );
+});

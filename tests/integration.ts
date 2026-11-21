@@ -168,13 +168,12 @@ try {
     xHandle: "isolated_example",
     website: "https://isolated.example.invalid",
     country: "Nigeria",
-    description:
-      "Fictional application for isolated end-to-end research verification.",
+    description: "Pay",
     speakers: 3,
     teamSize: "2–5",
     stage: "MVP",
     sector: "Payments",
-    focus: "Research workflows",
+    focus: "AI",
     privacyConsent: true,
     promotionalConsent: false,
   };

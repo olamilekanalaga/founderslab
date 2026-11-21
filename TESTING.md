@@ -6,10 +6,10 @@ Verified locally against Node.js 24, PostgreSQL 17, Next.js 16.4.6 and Chromium.
 | --------------------------------- | ----------------------------------------------------------------------------- |
 | `npm run typecheck`               | Passed                                                                        |
 | `npm run lint`                    | Passed, no errors or warnings                                                 |
-| `npm test`                        | 10 domain tests passed                                                        |
+| `npm test`                        | 12 domain/validation tests passed                                             |
 | `npm run build`                   | Passed; client generation and Next production compilation                     |
 | Build with `DATABASE_URL` empty   | Passed; `/demo` does not require a database                                   |
-| `npm run test:e2e -- --workers=1` | 7 browser tests passed against `next start`                                   |
+| `npm run test:e2e -- --workers=1` | 7 core browser tests plus short-answer regression passed against `next start` |
 | `npm run test:integration`        | 7 PostgreSQL/production HTTP verification groups passed                       |
 | Mobile accessibility              | No Axe WCAG A/AA violations found on the nine checked routes                  |
 | Screenshots                       | 26 desktop/mobile captures plus shared-recording and private-profile captures |
@@ -23,6 +23,7 @@ Verified locally against Node.js 24, PostgreSQL 17, Next.js 16.4.6 and Chromium.
 5. Navigation and document overflow at 375×812, 393×852, 834×1112 and 1440×1000 across overview, founder directory, Spaces, market map, reports and application.
 6. Automated accessibility checks at 393×852 for overview, founder directory/profile, Spaces, classification, research, reports, public application and booking.
 7. Founder-card search and navigation, saved classification labels after refresh, month navigation and research Notes/Actions tabs.
+8. Short product descriptions and business-focus answers submit successfully, then remain editable after application approval. Invalid X input shows a readable field message instead of raw validation JSON.
 
 ## PostgreSQL and production HTTP
 

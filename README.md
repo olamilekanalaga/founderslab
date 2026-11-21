@@ -40,7 +40,7 @@ Migrations live under `prisma/migrations/`. `db:migrate` applies SQL transaction
 
 ## Implemented journeys
 
-- Public founder application: searchable worldwide country input, standardised stage/sector/team size, optional details, separate privacy/promotional consents, normalised duplicate protection and a private confirmation capability.
+- Public founder application: required text accepts short answers without minimum character counts; validation errors use readable field messages. Searchable worldwide country input, standardised stage/sector/team size, optional details, separate privacy/promotional consents, normalised duplicate protection and a private confirmation capability.
 - Public Space request: dates with IANA timezones, deadlines, available project seats, host and approval status. Speakers are counted separately from project seats.
 - Admin approval: create/link founder and company profiles, assign a Space, approve/waitlist/decline/cancel, mark attendance/no-show, and preserve application history.
 - Shared recording: paste one URL on a session. Founder appearances and company timelines derive their recording links from that session. No recording upload or transcription.

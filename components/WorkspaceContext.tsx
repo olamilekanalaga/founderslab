@@ -7,6 +7,7 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react";
+import { formError } from "@/lib/form-errors";
 import type { DataState, Viewer, Command } from "@/lib/types";
 import {
   getSnapshot,
@@ -89,7 +90,7 @@ export function WorkspaceProvider({
       }
       return true;
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : "Unable to save");
+      setMessage(formError(e, "Unable to save").message);
       return false;
     } finally {
       setBusy(false);

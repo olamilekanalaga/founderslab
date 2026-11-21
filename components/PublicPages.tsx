@@ -20,6 +20,7 @@ import {
   TEAM_SIZES,
   defaultSettings,
 } from "@/lib/catalog";
+import { formError } from "@/lib/form-errors";
 import { applicationSchema } from "@/lib/validation";
 import { dateTime } from "@/lib/selectors";
 import {
@@ -403,6 +404,7 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
           onSubmit={async (e) => {
             e.preventDefault();
             setError("");
+            const form = e.currentTarget;
             setBusy(true);
             try {
               const p = applicationSchema.parse({
@@ -425,9 +427,11 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
                 router.push("/confirmation#token=" + result.token);
               }
             } catch (e) {
-              setError(
-                e instanceof Error ? e.message : "Could not submit application",
-              );
+              const result = formError(e, "Could not submit application");
+              setError(result.message);
+              const field =
+                result.field && form.elements.namedItem(result.field);
+              if (field instanceof HTMLElement) field.focus();
             } finally {
               setBusy(false);
             }
@@ -441,6 +445,7 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
             <label>
               Founder name
               <input
+                name="founderName"
                 value={fields.founderName}
                 onChange={(e) => change("founderName", e.target.value)}
                 required
@@ -451,6 +456,7 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
             <label>
               Company / project name
               <input
+                name="companyName"
                 value={fields.companyName}
                 onChange={(e) => change("companyName", e.target.value)}
                 required
@@ -460,6 +466,7 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
             <label>
               X username
               <input
+                name="xHandle"
                 value={fields.xHandle}
                 onChange={(e) => change("xHandle", e.target.value)}
                 required
@@ -471,6 +478,7 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
               Company website or public project link
               <input
                 type="url"
+                name="website"
                 value={fields.website}
                 onChange={(e) => change("website", e.target.value)}
                 required
@@ -482,6 +490,7 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
               Country
               <input
                 list="application-countries"
+                name="country"
                 value={fields.country}
                 onChange={(e) => change("country", e.target.value)}
                 required
@@ -496,6 +505,7 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
             <label>
               Team size
               <select
+                name="teamSize"
                 value={fields.teamSize}
                 onChange={(e) => change("teamSize", e.target.value)}
               >
@@ -538,9 +548,9 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
               Short product description
               <textarea
                 required
-                minLength={20}
                 maxLength={5000}
                 rows={3}
+                name="description"
                 value={fields.description}
                 onChange={(e) => change("description", e.target.value)}
                 placeholder="What does it do, and who is it for?"
@@ -549,6 +559,7 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
             <label>
               Product stage
               <select
+                name="stage"
                 value={fields.stage}
                 onChange={(e) => change("stage", e.target.value)}
               >
@@ -560,6 +571,7 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
             <label>
               Primary sector
               <select
+                name="sector"
                 value={fields.sector}
                 onChange={(e) => change("sector", e.target.value)}
               >
@@ -572,8 +584,8 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
               Main business focus
               <input
                 required
-                minLength={5}
                 maxLength={5000}
+                name="focus"
                 value={fields.focus}
                 onChange={(e) => change("focus", e.target.value)}
                 placeholder="The main problem or market you are focused on"
@@ -617,6 +629,7 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
               <label className="span-2">
                 Additional comments
                 <textarea
+                  name="comments"
                   value={fields.comments}
                   onChange={(e) => change("comments", e.target.value)}
                   maxLength={5000}
@@ -628,6 +641,7 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
             Leave empty
             <input
               tabIndex={-1}
+              name="websiteTrap"
               value={fields.websiteTrap}
               onChange={(e) => change("websiteTrap", e.target.value)}
               autoComplete="off"
@@ -759,7 +773,7 @@ export function BookingPage({ configured }: { configured: boolean }) {
         router.push("/confirmation#token=" + token);
       }
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : "Could not request booking");
+      setMessage(formError(e, "Could not request booking").message);
     } finally {
       setBusy(false);
     }
