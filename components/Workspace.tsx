@@ -8,9 +8,6 @@ import {
   Users,
   Building2,
   Mic2,
-  NotebookPen,
-  Network,
-  BriefcaseBusiness,
   ChartNoAxesCombined,
   Award,
   Settings as SettingsIcon,
@@ -24,7 +21,6 @@ import {
   X,
   LogOut,
   ShieldCheck,
-  Tags,
   ClipboardList,
 } from "lucide-react";
 import type { Section, DataState, Viewer } from "@/lib/types";
@@ -37,10 +33,6 @@ import Overview from "./Overview";
 import Directory from "./Directory";
 import Spaces from "./Spaces";
 import SpaceData from "./SpaceData";
-import Research from "./Research";
-import Classification from "./Classification";
-import MarketMap from "./MarketMap";
-import Opportunities from "./Opportunities";
 import Reports from "./Reports";
 import Campaigns from "./Campaigns";
 import TeamSettings from "./Settings";
@@ -50,10 +42,6 @@ const navigation = [
   { id: "companies", label: "Companies", icon: Building2 },
   { id: "spaces", label: "Founder Spaces", icon: Mic2 },
   { id: "space-data", label: "Space Data", icon: ClipboardList },
-  { id: "research", label: "Research", icon: NotebookPen },
-  { id: "classification", label: "Classification", icon: Tags },
-  { id: "market-map", label: "Market map", icon: Network },
-  { id: "opportunities", label: "Opportunities", icon: BriefcaseBusiness },
   { id: "reports", label: "Reports", icon: ChartNoAxesCombined },
   { id: "campaigns", label: "Campaigns & awards", icon: Award },
   { id: "settings", label: "Settings", icon: SettingsIcon },
@@ -299,14 +287,6 @@ function Shell({ section, id }: { section: Section; id?: string }) {
             <Spaces id={id} edit={edit} />
           ) : section === "space-data" ? (
             <SpaceData />
-          ) : section === "research" ? (
-            <Research edit={edit} />
-          ) : section === "classification" ? (
-            <Classification />
-          ) : section === "market-map" ? (
-            <MarketMap edit={edit} />
-          ) : section === "opportunities" ? (
-            <Opportunities edit={edit} />
           ) : section === "reports" ? (
             <Reports />
           ) : section === "campaigns" ? (
@@ -415,24 +395,19 @@ function Tour({
       text: "Create a pending booking, then approve it. Capacity is counted per founder project, not per speaker.",
     },
     {
-      name: "Capture the interview",
-      url: path("research"),
-      text: "Add research for that appearance. Edit its Space and paste one shared recording URL.",
+      name: "Record Space numbers",
+      url: path("space-data"),
+      text: "Enter founders, team attendance, live listeners and hours for each Space.",
     },
     {
-      name: "Map a useful connection",
-      url: path("market-map"),
-      text: "Record a relationship with evidence. Keep it a hypothesis until it is verified.",
+      name: "Keep founder details up to date",
+      url: path("founders"),
+      text: "View names, companies, countries and short product descriptions.",
     },
     {
-      name: "Document an opportunity",
-      url: path("opportunities"),
-      text: "Connect a documented need to a possible solution, owner and next action.",
-    },
-    {
-      name: "Build a research brief",
+      name: "Export your records",
       url: path("reports"),
-      text: "Filter the records, check sample size and missing data, then export CSV or PDF.",
+      text: "Filter founder and company records, then export CSV or PDF.",
     },
   ];
   const current = steps[step];
@@ -440,7 +415,7 @@ function Tour({
     <aside className="tour-bar" aria-label="Guided walkthrough">
       <div className="tour-step">
         {step + 1}
-        <small>/ 6</small>
+        <small>/ {steps.length}</small>
       </div>
       <div>
         <b>{current.name}</b>
@@ -461,14 +436,14 @@ function Tour({
         <button
           className="button primary"
           onClick={() => {
-            if (step === 5) close();
+            if (step === steps.length - 1) close();
             else {
               change(step + 1);
               navigate(steps[step + 1].url);
             }
           }}
         >
-          {step === 5 ? "Finish" : "Next"}
+          {step === steps.length - 1 ? "Finish" : "Next"}
           <ChevronRight size={14} />
         </button>
         <button

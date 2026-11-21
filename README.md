@@ -1,132 +1,89 @@
 # Founders Lab with Ola_Crrypt
 
-A working, mobile-first founder programme and private research workspace. The supplied navy-and-violet Founders Lab reference defines the visual system: dark navigation, compact cards, violet charts and a light research workspace. SiteFlow informed the initial workflow structure. Built with Next.js App Router, React, TypeScript, Tailwind/CSS, Lucide, Recharts, PostgreSQL, Prisma and Zod.
+A private founder register and X Spaces booking programme, with a no-login fictional demo. The current interface focuses on names, companies, countries, short product descriptions and programme numbers.
 
-**Open `/demo` without an account.** It contains 50 fictional founders, 50 companies, 53 founder/company memberships, 10 completed Spaces plus four upcoming examples, interview records, needs, relationship hypotheses, opportunities and two monthly campaigns. All names, contacts, businesses, evidence and recording links in this dataset are fictional. `.invalid` links intentionally do not resolve.
+## Current screens
 
-## Quick start: no database or login
+- **Overview:** founder, company, country and completed-Space counts; founder growth; country distribution; recorded attendance totals; pending applications and upcoming Spaces.
+- **Founders:** searchable cards/table, company links, short descriptions, contact details and Space appearances.
+- **Companies:** company name, country, short product description, team size, sector/stage, founders and shared recording links.
+- **Founder Spaces:** applications, booking approvals and weekly sessions.
+- **Space Data:** actual founders/team members per project, live listeners, hours/minutes, and cumulative charts.
+- **Reports:** filtered founder/company records, country/team counts, CSV and PDF exports.
+- **Campaigns & awards:** programme cohorts and manually recorded award decisions; no payment automation.
+- **Settings:** administrator access, company options and programme configuration.
 
-Use Node.js 24 and npm:
+Research, classification, market-map and opportunity screens have been retired from navigation. Their old URLs redirect to the founder directory. Profiles, editors and reports no longer display research notes, business-need stories or follow-up narratives. Existing database records and the underlying legacy models are preserved; this update does not delete historical data or import posts from X.
 
-```sh
-npm ci
+## Run the demo
+
+```bash
+npm install
 npm run dev
 ```
 
-Open **http://localhost:3000/demo**. No environment variables or paid APIs are necessary. Without a database, public application/booking forms default to the clearly labelled browser-local demonstration. The private workspace requires a database and real authentication.
+Open `http://localhost:3000/demo`. No secrets, paid APIs or database are needed. Demo changes persist only in the current browser. **Reset demo** restores fictional fixtures: 50 founders, 50 companies, global country coverage, 10 completed Spaces, four upcoming Saturday sessions and two campaigns.
 
-Demo changes persist in this browser. **Reset demo** restores the fixture; **Walkthrough** guides the application → approval → session → research → opportunity → report sequence. The demo previews Admin only. There is no role switcher, and the preview does not grant server authentication. Public demo forms are `/apply?mode=demo` and `/book?mode=demo`.
+Public booking: `/book?mode=demo`. Private demo approvals: `/demo/spaces?tab=applications` and `/demo/spaces?tab=bookings`.
 
-## Database and private workspace
+## Database-backed workspace
 
-1. Copy `.env.example` to `.env`; replace both local password placeholders with the same strong database password. Set the bootstrap email and a distinct administrator password of at least 12 characters.
-2. Start PostgreSQL, migrate and initialise programme defaults:
+Node.js 24 and PostgreSQL are required for private records. Copy `.env.example` to `.env` and configure `DATABASE_URL`, `APP_ORIGIN` and bootstrap administrator credentials. Keep secrets outside Git.
 
-```sh
-docker compose up -d postgres
+```bash
 npm run db:generate
 npm run db:migrate
-npm run db:seed
 npm run db:admin
 npm run dev
 ```
 
-3. Sign in at **http://localhost:3000/signin** with the account you provisioned. `/dashboard` and all private pages enforce authentication. Provisioning again preserves an existing password; it does not reset it.
-4. Remove bootstrap credentials from the runtime environment after provisioning. Never commit `.env`.
+Sign in at `/signin`. To seed fictional records into a development database, run `npm run db:seed -- --demo`; inspect the script before using it against an existing database. Never seed a production founder database just to test the interface.
 
-`db:seed` normally creates roles, permissions, editable taxonomy labels and programme defaults only. **For an isolated development database**, `npm run db:seed -- --demo` additionally inserts the fictional programme and sets a persistent fictional-dataset banner. It refuses to mix demo founders into a database that already contains founders. The browser `/demo` is independent of this database.
+Migration uses the checked-in PostgreSQL runner (`npm run db:migrate`), not Prisma's native migration engine. Existing installations must apply the additive Space Data migration before serving the current revision. See [DEPLOYMENT.md](DEPLOYMENT.md).
 
-Migrations live under `prisma/migrations/`. `db:migrate` applies SQL transactionally with a PostgreSQL advisory lock and checksum ledger. This project deliberately uses its own `pg` migration runner, not `prisma migrate deploy`; do not mix migration ledgers. See [database notes](prisma/README.md).
+## Founder booking flow
 
-## Implemented journeys
+1. Open the month calendar at `/book`.
+2. Choose an available published Saturday, then a time.
+3. Continue to the founder questions with that session attached.
+4. Submit the application and pending booking together.
+5. An administrator approves/declines the application, then approves/waitlists/declines the booking under Founder Spaces.
 
-- Public founder application: required text accepts short answers without minimum character counts; validation errors use readable field messages. Searchable worldwide country input, standardised stage/sector/team size, optional details, separate privacy/promotional consents, normalised duplicate protection and a private confirmation capability.
-- Public Space request: dates with IANA timezones, deadlines, available project seats, host and approval status. Speakers are counted separately from project seats.
-- Admin approval: create/link founder and company profiles, assign a Space, approve/waitlist/decline/cancel, mark attendance/no-show, and preserve application history.
-- Shared recording: paste one URL on a session. Founder appearances and company timelines derive their recording links from that session. No recording upload or transcription.
-- Founder/company directory: paginated founder cards with a table alternative, search, country/sector/stage filters, many-to-many memberships, relationship status, source/evidence, contacts, follow-up actions and company classifications.
-- Research: split-view interview reader with Summary/Notes/Actions, a table alternative and twelve structured sections, manual/pasted notes, classification, researcher/date/confidence, evidence, verification and private/public review. Publishing requires administrator review; public highlights also require promotional consent for that exact founder/company.
-- Classification: a dedicated company workspace for multi-label editing; existing company-save permissions and persistence apply. Geographic market labels remain independent of operating-country records.
-- Spaces calendar: month/day navigation with an agenda, project-seat counts and shared recording links.
-- Market map: explicit company relationships in list and network modes, with reason, evidence, reviewer, confidence and review date. Matches remain hypotheses; a shared sector does not imply competition.
-- Opportunities: editable board/list pipeline, documented company need, related founder, owner, budget/unknown, next action, follow-up, outcome and change history. Hiring claims require supporting evidence.
-- Reports: stored-record-derived counts, charts, date/country/cohort/sector/stage filters, coverage/missing responses, sources/limitations, CSV and actual PDF download.
-- Monthly campaigns: target 20 founders by default, eligibility assessments, published rules, manual winner selection and 1 SOL award record. Recording an external transfer requires a reference. The app never executes a cryptocurrency payment.
-- Admin settings: manually shared one-use admin invitations, enabled countries, taxonomy labels, session capacity, campaign defaults, published terms, retention policy and audit trail.
+Only future Saturday sessions with an open deadline and remaining approved capacity can be selected. Date cells show booked project places/capacity (0/5, 3/5, 5/5 Full). Full dates are disabled. Multiple speakers from one project count as one project seat. Pending requests do not reserve confirmed seats. Server-side session row locks protect approval capacity and recheck availability when public submissions arrive.
 
-## Access and security boundaries
+Confirmation links use random, expiring capabilities and reveal only the submitting project's status. The public calendar exposes no founder identities or private session notes. Automatic email/Telegram notifications are not configured.
 
-Public routes: `/`, `/apply`, `/book`, `/confirmation`, `/terms`, `/demo`, `/signin`, `/invite`.
+## Space numbers
 
-Private routes: `/dashboard`, `/founders`, `/companies`, `/spaces`, `/research`, `/classification`, `/market-map`, `/opportunities`, `/reports`, `/campaigns`, `/settings` and entity details. Private data is not embedded in public pages.
+Enter actual attendance in **Space Data**, independently of booked places and expected speakers. Founders plus other team members form total attendance. Blank figures remain unknown; explicit zero is preserved. Edits replace a Space's numbers rather than counting it twice. Charts accumulate recorded activity by Space date. Repeat attendees/listeners across different Spaces count again; totals are not deduplicated unique audience figures.
 
-There are two supported access experiences:
+A recording URL is stored once on the session and inherited by linked founder/company pages. There is no recording upload, transcription or automatic capture of X conversations.
 
-| Experience | Access                                                                                                             |
-| ---------- | ------------------------------------------------------------------------------------------------------------------ |
-| Admin      | Authenticated access to the private workspace and its founder, research, session, opportunity and reporting tools. |
-| Booking    | Public application, session request and limited confirmation flow; no account or internal workspace access.        |
+## Access and persistence
 
-The homepage redirects to `/book`. Public navigation exposes booking/application and Admin sign-in. `/demo` remains a clearly fictional, no-login **Admin preview**, not a production account or a third access role.
+The real workspace requires an authenticated, authorised Admin session. Public visitors can book without an account; they cannot access private founder data. Demo Admin is a fictional local preview, not real authentication. Server authorization, CSRF/origin checks, capability expiry, password hashing, rate limits and audit logs protect database-backed commands.
 
-Only `admin` accounts can sign in to the real workspace or accept new invitations. Retired collaborator roles cannot reuse old sessions or invitations to enter it. Existing database records are retained for history; no destructive data migration is required.
+Administrator invitations are generated for manual secure sharing. MFA, password recovery, email delivery and SSO are not integrated. Ordinary multi-device sessions are supported. Demo browser storage does not synchronize across devices.
 
-The server resolves current permissions on every authenticated request, checks writes and redacts unavailable datasets before returning them. The demo applies the same domain permissions locally, but contains no real private data. Sessions use random opaque tokens, server-side hashed storage, HttpOnly/SameSite cookies, production Secure cookies, expiry, origin/CSRF checks and durable request limits. Passwords use salted scrypt. Multiple normal sessions are supported.
+## Verification
 
-Application references are not credentials. Confirmation access uses a random 30-day capability in the URL fragment, never an enumerable reference query. Confirmation responses expose only project/reference/status/session information. Invitation tokens expire after seven days and can be accepted once. Share these links privately.
-
-## Checks
-
-```sh
+```bash
 npm run typecheck
 npm run lint
 npm test
 npm run build
 npm start
-# In a second terminal, with the server running on port 3000:
-npm run test:e2e
-# Requires a local PostgreSQL server with CREATE DATABASE permission and a build:
+# In another terminal:
+npm run test:e2e -- --workers=1
+npm run screenshots
+# Local PostgreSQL with CREATE DATABASE privileges:
 npm run test:integration
 ```
 
-Playwright defaults to `/usr/bin/chromium` on this development environment. Elsewhere install Chromium with `npx playwright install chromium`, then set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to its executable, or omit that variable and use an installed system Chromium at the default path. `PLAYWRIGHT_BASE_URL` optionally selects an already running server. The integration runner only connects to localhost and creates/drops a new random database; it never clears the configured application database. Port 3100 must be free.
+Playwright uses `/usr/bin/chromium` here; `PLAYWRIGHT_CHROMIUM_EXECUTABLE` and `PLAYWRIGHT_BASE_URL` override the browser/server. The integration runner creates and drops an isolated random localhost database, never the configured application database. See [TESTING.md](TESTING.md) and [screenshots](artifacts/README.md).
 
-See [verification results](TESTING.md), [deployment instructions](DEPLOYMENT.md), and [screenshots](artifacts/README.md).
+## Deployment and limits
 
-## Architecture
+The existing Vercel project is linked to `olamilekanalaga/founderslab`, production branch `main`, at `https://founderslab-orcin.vercel.app`. Deployment success alone does not verify the public browser flow. All data shown without live database configuration is fictional browser-local demonstration data.
 
-- `app/`: public pages, authenticated server pages and JSON endpoints.
-- `components/`: responsive workspace, forms, entity views, charts and public flows.
-- `lib/domain.ts`: validated, permission-checked state transitions shared by demo/server.
-- `lib/db.ts`: typed relational persistence, scoped loading and transactional commands.
-- `lib/auth.ts`: sessions, passwords, CSRF/origin and rate limits.
-- `lib/seed.ts`: deterministic fictional fixture; `demo-store.ts`: versioned local persistence.
-- `lib/selectors.ts`, `lib/export.ts`: derived reports, CSV/PDF and provenance.
-- `prisma/`: relational schema, foreign keys, uniqueness constraints and SQL migration.
-- `tests/`: domain rules, browser journeys/accessibility, isolated PostgreSQL/production HTTP tests.
-
-## V1 limitations
-
-This is an implementable MVP, not an externally verified founder database. Research is manually entered; confidence and verification states record a human review, not independent certification. Reporting uses a convenience programme sample and cannot represent the whole Web3 industry. Historical fictional upcoming sessions have fixed dates and can be edited/reset.
-
-Invitations are generated for manual secure sharing; email delivery, forgotten-password recovery, MFA and identity-provider SSO are not integrated. Bootstrap access is configured by the operator. Retention settings record policy; scheduled deletion/anonymisation and subject-access tooling require an operational process. Audit logs record commands, not full reversible revisions. Taxonomy labels can be added or archived; existing meanings are preserved by archiving and creating a new label.
-
-The workspace loads its authorised dataset as a single snapshot, appropriate for this initial programme size; large deployments need server pagination, narrower queries and concurrent-edit conflict handling. Session approval capacity is protected by PostgreSQL row locks. More general simultaneous edits currently use last committed field values. No audio processing, automated research, messaging, external analytics, token trading or award payments run in V1.
-
-The dedicated Vercel project is connected to `olamilekanalaga/founderslab`, production branch `main`. Follow `DEPLOYMENT.md` for environment and database setup. Browser and database checks are run locally against the production build; a successful deployment status alone does not verify every live flow.
-
-## Space Data
-
-Open **Space Data** in the Admin menu (or `/demo/space-data` for fictional practice). Choose a Space, add each project, record founders and other team members who actually attended, enter live listeners and hours/minutes, then save. Other team members exclude the founders; the total includes both. These actual counts are independent of booked seats and planned speakers.
-
-The page totals recorded Spaces and charts cumulative founders, team attendance, live listeners or hours by Space date. Updates recalculate the same record rather than counting it twice. Blank metrics remain unknown; explicit zero is retained. Repeated attendees/listeners across Spaces count again, so these totals are attendance rather than unique programme reach. Historical numbers are not invented. One shared recording URL still belongs to the session.
-
-Existing database installations must run `npm run db:migrate` with their configured database to apply the additive SpaceData/SpaceTeamAttendance migration before serving this update. Demo changes remain browser-local.
-
-## Calendar-first founder bookings
-
-`/book` now opens a month calendar. Only published Saturday sessions with remaining approved project capacity, a future start and an open deadline are selectable. Full dates, past dates, weekdays and unpublished dates are disabled. Select a date and time, then Continue to the founder questions; the chosen session stays attached. Submit saves the application and pending booking together in one transaction, rechecking the slot under the same session row lock used for approvals. A full or unavailable slot leaves no orphan application. The short `/apply` form remains available for existing direct links, but the public primary action starts at the calendar.
-
-Approval remains in Admin → Founder Spaces → Applications and Bookings. Pending requests do not consume confirmed project places. The calendar does not publish founder identities or admin calendar notes. Demo reset supplies four fictional December 2026 Saturdays; untouched legacy fictional Friday slots are upgraded locally without resetting other demo edits. Existing private database sessions are not silently rescheduled; publish Saturday sessions in Admin.
-
-Calendar dates show approved project bookings against capacity before selection (for example, 0/5 or 5/5 Full). Pending requests do not consume approved seats. In a day with multiple published sessions, the date count sums their booked places and capacities; individual times remain selectable according to their own availability.
+The initial programme uses an authorised snapshot rather than server pagination. General concurrent field edits use last committed values; booking capacity and Space Data updates serialize per session. Retention settings record policy but do not schedule automatic deletion. Reports describe programme participants, not the entire Web3 industry. No external X ingestion, automated research, cryptocurrency payments or paid integrations run in this version.

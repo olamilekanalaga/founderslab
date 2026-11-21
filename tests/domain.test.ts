@@ -570,3 +570,17 @@ test("calendar-first applications attach a pending Saturday booking atomically",
   assert.equal(publicSlotOpen(weekday, 5, Date.parse(now)), false);
   assert.equal(publicSlotOpen(session, 5, Date.parse("2027-01-01")), false);
 });
+
+test("founder record reports contain short descriptions without research stories", () => {
+  const s = makeSeed();
+  s.founders[0].notes = "PRIVATE LONG STORY";
+  s.founders[0].followUp = "PRIVATE FOLLOW UP";
+  const rows = reportRows(s, blankFilters, true),
+    text = JSON.stringify(rows);
+  assert.ok(text.includes(s.founders[0].name));
+  assert.ok(text.includes(s.companies[0].description));
+  assert.ok(!text.includes("PRIVATE LONG STORY"));
+  assert.ok(!text.includes("PRIVATE FOLLOW UP"));
+  assert.ok(!text.includes("Business needs"));
+  assert.ok(!text.includes("Opportunity pipeline"));
+});

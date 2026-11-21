@@ -13,6 +13,12 @@ export default async function PrivateWorkspace({
   section: string;
   id?: string;
 }) {
+  if (
+    ["research", "classification", "market-map", "opportunities"].includes(
+      section,
+    )
+  )
+    redirect("/founders");
   if (!SECTIONS.includes(section as Section)) notFound();
   const viewer = await getViewer();
   if (!viewer) redirect("/signin");

@@ -114,120 +114,22 @@ test("demo application, approval, booking and one recording propagate to linked 
     path: "artifacts/shared-recording-mobile.png",
     fullPage: true,
   });
-  const companyId = companyHref!.split("/").at(-1)!;
-  await page.goto("/demo/research");
-  await page.getByRole("button", { name: "Add research", exact: true }).click();
-  const dialog = page.getByRole("dialog");
-  const appearances = dialog.getByRole("combobox").first();
-  const appearance = await appearances
-    .locator("option")
-    .filter({ hasText: "Sade Fictional" })
-    .getAttribute("value");
-  await appearances.selectOption(appearance!);
-  const sections = dialog.locator("details");
-  await expect(sections).toHaveCount(12);
-  for (const details of await sections.all()) {
-    if ((await details.getAttribute("open")) === null)
-      await details.locator("summary").click();
-    await details
-      .locator("textarea")
-      .fill(
-        "Fictional interview evidence describes the customer's current workflow and next milestone.",
-      );
-  }
-  await dialog
-    .getByLabel("Evidence source")
-    .fill(
-      "Fictional founder interview, reviewed written notes and shared recording.",
-    );
-  await dialog.getByLabel("Research status").selectOption("Complete");
-  await dialog
-    .getByRole("button", { name: "Save research", exact: true })
-    .click();
-  await expect(page.getByRole("dialog")).toHaveCount(0);
-  await page
-    .getByRole("button", { name: "Add business need", exact: true })
-    .click();
-  await page.getByLabel("Company", { exact: true }).selectOption(companyId);
-  await page
-    .getByLabel("Business need", { exact: true })
-    .selectOption("Data analytics");
-  await field(
-    page,
-    "Identified need",
-    "The team needs a repeatable activation and retention analysis.",
+  await expect(
+    page.getByRole("heading", { name: "Short description", exact: true }),
+  ).toBeVisible();
+  await expect(page.locator("main")).toContainText("Pay");
+  await expect(page.getByText("Research notes", { exact: true })).toHaveCount(
+    0,
   );
-  await field(
-    page,
-    "Source evidence",
-    "Fictional founder explicitly requested activation research during the interview.",
-  );
-  await page.getByRole("button", { name: "Save record", exact: true }).click();
-  await expect(page.getByRole("dialog")).toHaveCount(0);
-  await page.goto("/demo/opportunities");
-  await page
-    .getByRole("button", { name: "Add opportunity", exact: true })
-    .click();
-  await page.getByLabel("Company", { exact: true }).selectOption(companyId);
-  await page
-    .getByLabel("Related founder", { exact: true })
-    .selectOption(founderHref!.split("/").at(-1)!);
-  const need = page.getByLabel("Documented business need", { exact: true });
-  await need.selectOption(
-    (await need.locator("option").last().getAttribute("value")) || "",
-  );
-  await field(
-    page,
-    "Potential solution",
-    "Run a short activation funnel research engagement for the founder team.",
-  );
-  await field(page, "Decision-maker", "Sade Fictional");
-  await field(
-    page,
-    "Evidence",
-    "Fictional founder requested analytics help in the documented interview.",
-  );
-  await field(
-    page,
-    "Next action",
-    "Schedule a scoped discovery call with the founder.",
-  );
-  await page.getByRole("button", { name: "Save record", exact: true }).click();
-  await expect(page.getByRole("dialog")).toHaveCount(0);
-  await page.getByLabel("Search opportunities").fill("Fictional Workflow Labs");
-  await expect(page.locator(".opportunity-card")).toHaveCount(1);
   await page.goto("/demo/reports");
   await expect(page.getByTestId("report-founders")).toHaveText("51");
 });
-test("company classifications, opportunity stages, admin access and exports are interactive", async ({
+test("company filters, simple reports, admin access and exports are interactive", async ({
   page,
 }) => {
   await page.goto("/demo/companies");
   await page.getByLabel("Filter sector").selectOption("Payments");
   await expect(page.locator("tbody tr")).toHaveCount(5);
-  await page.goto("/demo/market-map");
-  await page.getByRole("button", { name: "Network", exact: true }).click();
-  await expect(
-    page.getByRole("img", { name: "Company relationship network" }),
-  ).toBeVisible();
-  await page
-    .getByLabel("Relationship type filter")
-    .selectOption("Potential integration");
-  await expect(
-    page.locator('svg[aria-label="Company relationship network"] a'),
-  ).toHaveCount(2);
-  await page.goto("/demo/opportunities");
-  await page.getByRole("button", { name: "List", exact: true }).click();
-  await page.getByLabel("Opportunity status filter").selectOption("Discovered");
-  await expect(page.locator("tbody tr")).toHaveCount(3);
-  await page.goto("/demo/opportunities");
-  const status = page.getByLabel("Opportunity status o1", { exact: true });
-  await status.selectOption("Qualified");
-  await expect(
-    page.locator(".kanban-column").filter({
-      has: page.locator(".kanban-heading", { hasText: "Qualified" }),
-    }),
-  ).toContainText("KoraLane");
   await page.goto("/demo/reports");
   await expect(page.getByTestId("report-founders")).toHaveText("50");
   await page.getByLabel("Country", { exact: true }).selectOption("Nigeria");
@@ -235,18 +137,14 @@ test("company classifications, opportunity stages, admin access and exports are 
   const csv = page.waitForEvent("download");
   await page.getByRole("button", { name: "Export CSV", exact: true }).click();
   await expect((await csv).suggestedFilename()).toBe(
-    "founders-lab-research.csv",
+    "founders-lab-records.csv",
   );
   const pdf = page.waitForEvent("download");
   await page.getByRole("button", { name: "Export PDF", exact: true }).click();
   await expect((await pdf).suggestedFilename()).toBe(
-    "founders-lab-research.pdf",
+    "founders-lab-records.pdf",
   );
   await expect(page.getByLabel("Demo role preview")).toHaveCount(0);
-  await page.goto("/demo/opportunities");
-  await expect(
-    page.getByRole("heading", { name: "Opportunity pipeline", exact: true }),
-  ).toBeVisible();
   await page.goto("/book?mode=demo");
   await expect(
     page.getByRole("navigation", { name: "Workspace navigation" }),
@@ -255,20 +153,7 @@ test("company classifications, opportunity stages, admin access and exports are 
     page.getByRole("link", { name: "Admin", exact: true }),
   ).toHaveAttribute("href", "/signin");
 });
-test("research saves all twelve sections and campaign award decisions remain manual", async ({
-  page,
-}) => {
-  await page.goto("/demo/research");
-  await page.getByRole("button", { name: "Open / edit" }).first().click();
-  await page
-    .getByLabel("Notes · Founder origin and motivation", { exact: true })
-    .fill(
-      "Updated fictional motivation: making everyday payments easier for a narrow customer segment.",
-    );
-  await page
-    .getByRole("button", { name: "Save research", exact: true })
-    .click();
-  await expect(page.getByRole("status")).toContainText("saved");
+test("campaign award decisions remain manual", async ({ page }) => {
   await page.goto("/demo/campaigns");
   await page.getByRole("button", { name: /November founder cohort/ }).click();
   await page.getByRole("button", { name: "Add / update assessment" }).click();
@@ -308,7 +193,6 @@ test("iPhone, tablet and desktop views have working navigation and no horizontal
       "/demo/founders",
       "/demo/spaces",
       "/demo/space-data",
-      "/demo/market-map",
       "/demo/reports",
       "/apply?mode=demo",
     ]) {
@@ -341,10 +225,10 @@ test("core mobile views pass automated accessibility checks", async ({
     "/demo",
     "/demo/founders",
     "/demo/founders/f1",
+    "/demo/companies",
+    "/demo/companies/c1",
     "/demo/spaces",
     "/demo/space-data",
-    "/demo/classification",
-    "/demo/research",
     "/demo/reports",
     "/apply?mode=demo",
     "/book?mode=demo",
@@ -358,7 +242,7 @@ test("core mobile views pass automated accessibility checks", async ({
   }
 });
 
-test("redesigned founder cards, classification labels and calendar preserve working records", async ({
+test("simple founder details and calendar preserve working records", async ({
   page,
 }) => {
   await page.goto("/demo/founders");
@@ -369,28 +253,19 @@ test("redesigned founder cards, classification labels and calendar preserve work
   await expect(
     page.getByRole("heading", { name: "Amara Okafor", exact: true }),
   ).toBeVisible();
-  await page.goto("/demo/classification");
+  await expect(
+    page.getByRole("heading", { name: "Research notes" }),
+  ).toHaveCount(0);
+  await expect(page.locator("main")).not.toContainText("Follow-up");
+  await page.goto("/demo/companies/c1");
+  await page.getByRole("button", { name: "Edit company", exact: true }).click();
   await page
-    .locator(".classification-group")
-    .filter({ has: page.getByRole("heading", { name: "Sector", exact: true }) })
-    .getByRole("button", { name: "Identity", exact: true })
-    .click();
-  await page.getByRole("button", { name: "Save labels", exact: true }).click();
-  await expect(
-    page.getByRole("button", { name: "Saved", exact: true }),
-  ).toBeVisible();
+    .getByLabel("Product description", { exact: true })
+    .fill("Payments for local teams.");
+  await expect(page.getByLabel("Reported business challenges")).toHaveCount(0);
+  await page.getByRole("button", { name: "Save record", exact: true }).click();
   await page.reload();
-  await expect(
-    page
-      .locator(".classification-group")
-      .filter({
-        has: page.getByRole("heading", { name: "Sector", exact: true }),
-      })
-      .getByRole("button", { name: "Identity", exact: true }),
-  ).toHaveAttribute("aria-pressed", "true");
-  await page.goto("/demo/companies");
-  await page.getByLabel("Filter sector").selectOption("Identity");
-  await expect(page.locator("tbody tr")).toHaveCount(6);
+  await expect(page.locator("main")).toContainText("Payments for local teams.");
   await page.goto("/demo/spaces");
   await expect(page.locator(".agenda-session")).toHaveCount(4);
   await page
@@ -400,10 +275,10 @@ test("redesigned founder cards, classification labels and calendar preserve work
   await page.getByRole("button", { name: "Next month", exact: true }).click();
   await expect(page.locator(".agenda-session")).toHaveCount(4);
   await page.goto("/demo/research");
-  await page.getByRole("button", { name: "Notes", exact: true }).click();
-  await expect(page.locator(".research-takeaways article")).toHaveCount(12);
-  await page.getByRole("button", { name: "Actions", exact: true }).click();
-  await expect(page.locator(".research-takeaways")).toContainText("Follow-up");
+  await expect(page).toHaveURL(/demo\/founders$/);
+  await expect(
+    page.getByRole("link", { name: "Research", exact: true }),
+  ).toHaveCount(0);
 });
 
 test("short founder answers submit and invalid inputs show a readable message", async ({

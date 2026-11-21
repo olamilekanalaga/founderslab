@@ -2,59 +2,43 @@ import type { DataState } from "./types";
 import { reportData, type Filters } from "./selectors";
 export function reportRows(s: DataState, filters: Filters, demo: boolean) {
   const r = reportData(s, filters);
-  const rows: string[][] = [
+  return [
     ["Section", "Label", "Value"],
     [
-      "Provenance",
       "Source",
+      "Dataset",
       demo || s.fictional
         ? "Fictional demonstration records"
-        : "Stored founder applications and manually entered interview records",
+        : "Founder applications and manually entered records",
     ],
     [
-      "Provenance",
       "Scope",
-      "Convenience programme sample; not representative of the entire Web3 industry",
+      "Coverage",
+      "Programme participants; not representative of the entire Web3 industry",
     ],
-    ["Sample", "Founders", String(r.founders.length)],
-    ["Sample", "Companies", String(r.companies.length)],
-    ["Sample", "Complete research coverage", String(r.covered)],
-    ...Object.entries(filters).map(([key, value]) => [
-      "Filter",
-      key,
-      value || "All",
-    ]),
+    ["Count", "Founders", String(r.founders.length)],
+    ["Count", "Companies", String(r.companies.length)],
+    ["Count", "Countries", String(r.countries.length)],
+    ...r.countries.map((c) => ["Country", c.name, String(c.value)]),
+    ["Founder", "Company", "Country", "Short description"],
+    ...r.founders.map((f) => {
+      const companies = s.memberships
+        .filter((m) => m.founderId === f.id)
+        .map((m) => s.companies.find((c) => c.id === m.companyId))
+        .filter((c) => !!c);
+      return [
+        f.name,
+        companies.map((c) => c.name).join(", "),
+        f.country,
+        companies
+          .map((c) => c.description)
+          .filter(Boolean)
+          .join(" · "),
+      ];
+    }),
   ];
-  for (const [section, values] of Object.entries({
-    Countries: r.countries,
-    Sectors: r.sectors,
-    "Team sizes": r.teams,
-    "Product maturity": r.stages,
-    "Distribution channels": r.distribution,
-    "Business needs": r.businessNeeds,
-    "Opportunity pipeline": r.pipeline,
-  }))
-    values.forEach((v) => rows.push([section, v.name, String(v.value)]));
-  Object.entries(r.missing).forEach(([key, value]) =>
-    rows.push(["Missing responses", key, String(value)]),
-  );
-  rows.push(
-    ["Signals", "Explicit hiring evidence", String(r.hiring.length)],
-    ["Signals", "Integration hypotheses", String(r.integrations.length)],
-    ["Signals", "Partnership hypotheses", String(r.partnerships.length)],
-  );
-  r.companies.forEach((c) =>
-    rows.push([
-      "Company roster",
-      c.name,
-      `${c.country}; ${c.sector}; ${c.stage}; ${c.teamSize} people; founders: ${s.memberships
-        .filter((m) => m.companyId === c.id)
-        .map((m) => s.founders.find((f) => f.id === m.founderId)?.name)
-        .join(", ")}`,
-    ]),
-  );
-  return rows;
 }
+
 export function csvContent(rows: string[][]) {
   return (
     "\uFEFF" +
@@ -78,7 +62,7 @@ export function downloadCsv(rows: string[][]) {
   );
   const a = document.createElement("a");
   a.href = url;
-  a.download = "founders-lab-research.csv";
+  a.download = "founders-lab-records.csv";
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
@@ -87,7 +71,7 @@ export async function downloadPdf(rows: string[][]) {
   const doc = new jsPDF();
   let y = 22;
   doc.setFontSize(20);
-  doc.text("Founders Lab | Research brief", 15, y);
+  doc.text("Founders Lab | Founder records", 15, y);
   y += 10;
   doc.setFontSize(10);
   doc.text(
@@ -109,5 +93,5 @@ export async function downloadPdf(rows: string[][]) {
     }
     y += 3;
   }
-  doc.save("founders-lab-research.pdf");
+  doc.save("founders-lab-records.pdf");
 }

@@ -27,7 +27,7 @@ export default function Settings({
         </button>
       </div>
       <div className="tabs settings-tabs">
-        {["Admins", "Classification", "Programme", "Activity"].map((t) => (
+        {["Admins", "Options", "Programme", "Activity"].map((t) => (
           <button
             key={t}
             className={tab === t ? "active" : ""}
@@ -181,10 +181,10 @@ export default function Settings({
           )}
         </section>
       </div>
-      <section className="panel" hidden={tab !== "Classification"}>
+      <section className="panel" hidden={tab !== "Options"}>
         <SectionHeading
-          title="Controlled research taxonomies"
-          detail="Classify independently by sector, economic function, customer and need."
+          title="Company options"
+          detail="Manage sector and product stage choices."
           action={
             <button
               className="button"
@@ -198,18 +198,7 @@ export default function Settings({
           <label>
             Taxonomy group
             <select value={group} onChange={(e) => setGroup(e.target.value)}>
-              {[
-                "Sector",
-                "Economic function",
-                "Customer segment",
-                "Business model",
-                "Product stage",
-                "Geographic market",
-                "Blockchain ecosystem",
-                "Business needs",
-                "Company relationship",
-                "Opportunity type",
-              ].map((v) => (
+              {["Sector", "Product stage"].map((v) => (
                 <option key={v}>{v}</option>
               ))}
             </select>

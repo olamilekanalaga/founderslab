@@ -282,11 +282,11 @@ try {
     state.companyLabels.filter((l) => l.companyId === linked.companyId).length,
     labelIds.length,
   );
-  const classificationPage = await fetch(origin + "/classification", {
+  const classificationPage = await fetch(origin + "/companies", {
     headers: { Cookie: admin.cookie },
   });
   assert.equal(classificationPage.status, 200);
-  assert.ok((await classificationPage.text()).includes("Classification"));
+  assert.ok((await classificationPage.text()).includes("Company directory"));
   pass(
     "Public application validation, normalised duplicate prevention, approval and limited-scope confirmation",
   );

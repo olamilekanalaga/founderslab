@@ -706,8 +706,8 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
             <h3>Your information, handled carefully.</h3>
             <p>
               We use your application to review participation, coordinate
-              sessions and conduct internal programme research. Contact details
-              and internal notes are private. Public research or promotional use
+              sessions and maintain founder records. Contact details and
+              internal notes are private. Public research or promotional use
               needs a separate approval and consent. You may request corrections
               or withdrawal through the programme host.{" "}
               <Link href="/terms">Privacy & programme terms</Link>.

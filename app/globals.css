@@ -5489,3 +5489,10 @@ td > b,
 .booking-days>button.has-slots:disabled{opacity:1;color:#737b8f;background:#f1f1f6}
 .booking-capacity-key{text-align:center;color:#65708a;font-size:11px;margin:10px 0 0;line-height:1.5}
 .booking-days>button.selected small{color:#fff}
+
+.founder-short-description{font-size:12px;line-height:1.5;color:#65708a;margin:10px 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.profile-short-description{display:block;color:#65708a;font-size:14px;line-height:1.6;margin-top:8px}
+.simple-space-totals{padding:0 20px 20px}.simple-space-totals .metric-card{box-shadow:none}
+
+.overview-charts{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}
+@media(max-width:700px){.overview-charts{grid-template-columns:minmax(0,1fr)}}

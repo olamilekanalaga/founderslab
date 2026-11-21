@@ -19,7 +19,7 @@ export default function Reports() {
     <>
       <div className="page-heading">
         <div>
-          <h1>Reports & insights</h1>
+          <h1>Reports</h1>
         </div>
         <div className="heading-actions">
           <button
@@ -127,141 +127,72 @@ export default function Reports() {
       <div className="metric-grid">
         <div className="metric-card">
           <div>
-            Founder sample <BarChart3 size={17} />
+            Founders <BarChart3 size={17} />
           </div>
           <strong data-testid="report-founders">{r.founders.length}</strong>
-          <small>Unique people matching these filters</small>
         </div>
         <div className="metric-card">
-          <div>Company sample</div>
+          <div>Companies</div>
           <strong>{r.companies.length}</strong>
-          <small>Unique associated companies</small>
         </div>
         <div className="metric-card">
-          <div>Interview coverage</div>
-          <strong>
-            {r.founders.length
-              ? Math.round((100 * r.covered) / r.founders.length)
-              : 0}
-            %
-          </strong>
-          <small>{r.covered} founders with complete research</small>
-        </div>
-        <div className="metric-card">
-          <div>Explicit hiring signals</div>
-          <strong>{r.hiring.length}</strong>
-          <small>Only claims with supporting evidence</small>
+          <div>Countries</div>
+          <strong>{r.countries.length}</strong>
         </div>
       </div>
-      <div className="two-grid">
+      <div className="overview-charts">
         <section className="panel">
-          <SectionHeading
-            title="Country distribution"
-            detail={`Base: ${r.founders.length} founders`}
-          />
+          <SectionHeading title="Country distribution" />
           <Chart label="Report countries" data={r.countries} />
         </section>
         <section className="panel">
-          <SectionHeading
-            title="Sector analysis"
-            detail={`Base: ${r.companies.length} companies`}
-          />
-          <Chart
-            label="Report sectors"
-            data={r.sectors}
-            type="donut"
-            center={{ value: r.companies.length, label: "Companies" }}
-          />
-        </section>
-        <section className="panel">
-          <SectionHeading title="Product maturity" />
-          <Chart label="Report product stages" data={r.stages} />
-        </section>
-        <section className="panel">
-          <SectionHeading title="Common business challenges" />
-          <Chart
-            label="Report needs"
-            data={r.businessNeeds}
-            type="horizontal"
-          />
+          <SectionHeading title="Team sizes" />
+          <Chart label="Report team sizes" data={r.teams} />
         </section>
       </div>
       <section className="panel">
-        <SectionHeading
-          title="What this sample tells us"
-          detail="Counts are derived from stored records; missing fields are not treated as negative responses."
-        />
-        <div className="report-summary-grid">
-          {[
-            ["Team sizes", r.teams],
-            ["Distribution channels", r.distribution],
-            [
-              "Data & analytics needs",
-              r.businessNeeds.filter((n) => n.name === "Data analytics"),
-            ],
-            ["Opportunity stages", r.pipeline],
-          ].map(([title, rows]) => (
-            <div key={String(title)}>
-              <h3>{String(title)}</h3>
-              {(rows as { name: string; value: number }[]).map((row) => (
-                <div className="report-stat" key={row.name}>
-                  <span>{row.name}</span>
-                  <b>{row.value}</b>
-                </div>
-              ))}
-              {!(rows as unknown[]).length && (
-                <p className="muted">No responses recorded.</p>
-              )}
-            </div>
-          ))}
+        <SectionHeading title="Founder records" />
+        <div
+          className="table-wrap"
+          tabIndex={0}
+          role="region"
+          aria-label="Founder report records"
+        >
+          <table>
+            <thead>
+              <tr>
+                <th>Founder</th>
+                <th>Company</th>
+                <th>Country</th>
+                <th>Short description</th>
+              </tr>
+            </thead>
+            <tbody>
+              {r.founders.map((f) => {
+                const companies = s.memberships
+                  .filter((m) => m.founderId === f.id)
+                  .map((m) => s.companies.find((c) => c.id === m.companyId))
+                  .filter((c) => !!c);
+                return (
+                  <tr key={f.id}>
+                    <td>{f.name}</td>
+                    <td>{companies.map((c) => c.name).join(", ") || "—"}</td>
+                    <td>{f.country}</td>
+                    <td>
+                      {companies
+                        .map((c) => c.description)
+                        .filter(Boolean)
+                        .join(" · ") || "—"}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
-        <div className="coverage-metrics">
-          <span>
-            <b>{r.integrations.length}</b> Potential integrations
-          </span>
-          <span>
-            <b>{r.partnerships.length}</b> Partnership hypotheses
-          </span>
-        </div>
-      </section>
-      <section className="panel padded">
-        <h2>Coverage, sources & limitations</h2>
-        <p>
-          Source:{" "}
-          {demo || s.fictional
-            ? "fictional applications and manually written demo interviews"
-            : "stored founder applications and manually entered interview records"}
-          . Founder counts refer to unique people; company distributions refer
-          to unique companies. Multi-label fields can sum to more than the
-          sample size.
-        </p>
-        <div className="missing-grid">
-          {Object.entries(r.missing).map(([key, value]) => (
-            <div key={key}>
-              <b>{value}</b>
-              <small>
-                {
-                  (
-                    {
-                      companyProfiles: "Founders without a company profile",
-                      customerSegment: "Missing customer segment",
-                      businessModel: "Missing business model",
-                      distribution: "Missing distribution channels",
-                      completedResearch: "Without complete interview research",
-                    } as Record<string, string>
-                  )[key]
-                }
-              </small>
-            </div>
-          ))}
-        </div>
-        <p className="limitations">
-          This is a convenience sample of programme participants, with an
-          initial Nigerian and African focus. It is not representative of the
-          entire Web3 industry. Self-reported claims and unverified relationship
-          hypotheses need independent validation. Blank responses, uneven
-          interview coverage and different company stages limit comparisons.
-        </p>
+        {!r.founders.length && (
+          <p className="padded">No founders match these filters.</p>
+        )}
       </section>
     </>
   );
