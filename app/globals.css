@@ -5483,3 +5483,8 @@ td > b,
 .selected-booking strong{font-size:15px}
 @media(max-width:950px){.booking-calendar{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.booking-intro{grid-column:1/-1;border-right:0;border-bottom:1px solid #e5e2f1;gap:10px}.booking-intro small{padding-top:0}.booking-calendar-icon{display:none}.booking-intro>p{max-width:500px}.booking-intro>div{display:inline-flex}}
 @media(max-width:600px){.booking-page-heading{align-items:flex-start}.booking-page-heading h1{font-size:28px}.booking-calendar{display:flex;flex-direction:column}.booking-intro,.booking-month,.booking-times{padding:24px 20px}.booking-intro h2{font-size:22px}.booking-times{border-left:0;border-top:1px solid #e5e2f1}.booking-days>button{height:42px;font-size:15px}.booking-time{min-height:54px}.booking-time>span{font-size:12px}.selected-booking{align-items:flex-start;flex-direction:column}.booking-page-heading .eyebrow{font-size:10px}}
+
+.booking-days>button{height:56px;border-radius:12px;gap:2px}
+.booking-days>button .booking-day-count{font-size:10px;font-variant-numeric:tabular-nums}
+.booking-days>button.has-slots:disabled{opacity:1;color:#737b8f;background:#f1f1f6}
+.booking-capacity-key{text-align:center;color:#65708a;font-size:11px;margin:10px 0 0;line-height:1.5}

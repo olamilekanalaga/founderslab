@@ -52,3 +52,5 @@ Domain tests cover unknown versus zero, actual team counts, edits replacing rath
 ## Calendar-first booking checks
 
 The complete browser journey selects a Saturday and time before founder questions, submits a linked pending booking, then approves the application and booking in Admin. A separate mobile calendar test disables a full Saturday and Friday, selects an open Saturday, checks the attached form link and captures mobile/desktop screenshots. Domain tests cover Saturday availability, past/expired slots, full capacity and atomic demo submission. Production PostgreSQL/HTTP tests verify the combined application/booking transaction and rollback of full or non-Saturday submissions. Existing approval-capacity concurrency tests continue to pass.
+
+Calendar capacity labels are checked before date selection: 0/5 on an open Saturday and 5/5 on a disabled full Saturday. The mobile Axe checks include the updated visible and accessible date labels.

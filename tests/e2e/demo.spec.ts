@@ -509,13 +509,17 @@ test("public booking calendar enables only open Saturdays and disables full date
     .click();
   await page.evaluate(() => {
     const seed = JSON.parse(localStorage.getItem("founders-lab-demo-v1")!);
-    seed.sessions.find((s: { id: string }) => s.id === "up1").capacity = 1;
-    seed.participants.push({
-      ...seed.participants[0],
-      id: "full-saturday",
-      sessionId: "up1",
-      attendance: "Approved",
-    });
+    seed.companies
+      .slice(0, 5)
+      .forEach((company: { id: string }, index: number) =>
+        seed.participants.push({
+          ...seed.participants[0],
+          id: `full-saturday-${index}`,
+          companyId: company.id,
+          sessionId: "up1",
+          attendance: "Approved",
+        }),
+      );
     localStorage.setItem("founders-lab-demo-v1", JSON.stringify(seed));
   });
   await page.goto("/book?mode=demo");
@@ -525,6 +529,12 @@ test("public booking calendar enables only open Saturdays and disables full date
   await expect(
     page.getByRole("button", { name: /Friday, 4 December 2026/ }),
   ).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: /Saturday, 5 December 2026, full/ }),
+  ).toContainText("5/5");
+  await expect(
+    page.getByRole("button", { name: /Saturday, 12 December 2026/ }),
+  ).toContainText("0/5");
   await expect(
     page.getByRole("button", { name: /Saturday, 12 December 2026/ }),
   ).toBeEnabled();

@@ -120,6 +120,15 @@ export default function PublicBookingCalendar({
             );
             const full =
               slots.length > 0 && slots.every((s) => s.availableSeats <= 0);
+            const capacity = slots.reduce(
+              (total, slot) => total + slot.capacity,
+              0,
+            );
+            const booked = slots.reduce(
+              (total, slot) =>
+                total + Math.max(0, slot.capacity - slot.availableSeats),
+              0,
+            );
             const label = new Date(`${key}T12:00:00Z`).toLocaleDateString(
               "en-GB",
               {
@@ -135,17 +144,27 @@ export default function PublicBookingCalendar({
                 type="button"
                 key={key}
                 disabled={!available}
-                aria-label={`${label}${full ? ", full" : !available ? ", unavailable" : ""}`}
+                aria-label={`${slots.length ? `${i + 1} ${booked}/${capacity}${full ? " Full" : ""}. ` : ""}${label}${full ? ", full" : !available ? ", unavailable" : ""}${slots.length ? `, ${booked}/${capacity} booked` : ""}`}
                 aria-pressed={day === key}
                 aria-current={key === today ? "date" : undefined}
-                className={`${available ? "available" : ""} ${day === key ? "selected" : ""}`}
+                className={`${slots.length ? "has-slots" : ""} ${available ? "available" : ""} ${day === key ? "selected" : ""}`}
                 onClick={() => {
                   setDay(key);
                   setSlot("");
                 }}
               >
-                {i + 1}
-                {full && <small>Full</small>}
+                {i + 1}{" "}
+                {slots.length > 0 && (
+                  <small className="booking-day-count">
+                    {booked}/{capacity}
+                  </small>
+                )}
+                {full && (
+                  <>
+                    {" "}
+                    <small>Full</small>
+                  </>
+                )}
               </button>
             );
           })}
@@ -154,6 +173,9 @@ export default function PublicBookingCalendar({
           <span /> Available Saturday <span className="unavailable" />{" "}
           Unavailable
         </div>
+        <p className="booking-capacity-key">
+          Project places booked / capacity · e.g. 0/5
+        </p>
       </div>
       <div className="booking-times" aria-live="polite">
         <h2>
