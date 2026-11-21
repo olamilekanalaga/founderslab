@@ -114,3 +114,11 @@ Invitations are generated for manual secure sharing; email delivery, forgotten-p
 The workspace loads its authorised dataset as a single snapshot, appropriate for this initial programme size; large deployments need server pagination, narrower queries and concurrent-edit conflict handling. Session approval capacity is protected by PostgreSQL row locks. More general simultaneous edits currently use last committed field values. No audio processing, automated research, messaging, external analytics, token trading or award payments run in V1.
 
 The dedicated Vercel project is connected to `olamilekanalaga/founderslab`, production branch `main`. Follow `DEPLOYMENT.md` for environment and database setup. Browser and database checks are run locally against the production build; a successful deployment status alone does not verify every live flow.
+
+## Space Data
+
+Open **Space Data** in the Admin menu (or `/demo/space-data` for fictional practice). Choose a Space, add each project, record founders and other team members who actually attended, enter live listeners and hours/minutes, then save. Other team members exclude the founders; the total includes both. These actual counts are independent of booked seats and planned speakers.
+
+The page totals recorded Spaces and charts cumulative founders, team attendance, live listeners or hours by Space date. Updates recalculate the same record rather than counting it twice. Blank metrics remain unknown; explicit zero is retained. Repeated attendees/listeners across Spaces count again, so these totals are attendance rather than unique programme reach. Historical numbers are not invented. One shared recording URL still belongs to the session.
+
+Existing database installations must run `npm run db:migrate` with their configured database to apply the additive SpaceData/SpaceTeamAttendance migration before serving this update. Demo changes remain browser-local.

@@ -180,6 +180,8 @@ export function makeSeed(): DataState {
     applications: [],
     sessions: [],
     participants: [],
+    spaceData: [],
+    spaceAttendance: [],
     bookings: [],
     research: [],
     answers: [],

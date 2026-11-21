@@ -13,6 +13,7 @@ The current Founders Lab navy-and-violet interface, captured from the local prod
 | Campaigns & awards   | [Mobile](campaigns-mobile.png)      | [Desktop](campaigns-desktop.png)      |
 | Team & settings      | [Mobile](settings-mobile.png)       | [Desktop](settings-desktop.png)       |
 | Spaces calendar      | [Mobile](spaces-mobile.png)         | [Desktop](spaces-desktop.png)         |
+| Space Data           | [Mobile](space-data-mobile.png) | [Desktop](space-data-desktop.png) |
 | Market map           | [Mobile](market-map-mobile.png)     | [Desktop](market-map-desktop.png)     |
 | Opportunity pipeline | [Mobile](opportunities-mobile.png)  | [Desktop](opportunities-desktop.png)  |
 | Reports              | [Mobile](reports-mobile.png)        | [Desktop](reports-desktop.png)        |
@@ -21,3 +22,5 @@ The current Founders Lab navy-and-violet interface, captured from the local prod
 Additional tested journeys: [approved private founder](private-founder-mobile.png), [shared recording](shared-recording-mobile.png). All records shown are fictional fixtures or isolated test submissions.
 
 Run `npm run screenshots` while the application is running to recreate the set. `PLAYWRIGHT_BASE_URL` and `PLAYWRIGHT_CHROMIUM_EXECUTABLE` can select another server/browser. The script rejects page runtime errors and document overflow.
+
+[Space Data with saved attendance and growth chart](space-data-filled-mobile.png).

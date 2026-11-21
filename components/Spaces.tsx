@@ -12,6 +12,7 @@ import {
   Empty,
   ExternalLink,
 } from "./ui";
+import { spaceTotals } from "@/lib/space-data";
 import { approvedSeats } from "@/lib/domain";
 import { dateTime, niceDate } from "@/lib/selectors";
 import { BOOKING_STATUSES } from "@/lib/catalog";
@@ -29,6 +30,7 @@ export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
   const a = s.applications.find((v) => v.id === selected),
     can = viewer.permissions.includes("booking.write");
   const session = s.sessions.find((v) => v.id === id);
+  const actual = spaceTotals(s, id);
   return (
     <>
       {id && session ? (
@@ -55,19 +57,25 @@ export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
               </button>
             )}
           </div>
+          <Link
+            className="button primary space-data-link"
+            href={`${path("space-data")}?session=${encodeURIComponent(session.id)}`}
+          >
+            Enter Space data
+          </Link>
           <div className="metric-grid three">
             <section className="metric-card">
               <div>
-                Founder-project seats <Users size={18} />
+                Projects booked <Users size={18} />
               </div>
               <strong>
                 {approvedSeats(s, session.id)} <span>/ {session.capacity}</span>
               </strong>
-              <small>Each company occupies one seat</small>
+              <small>Booking capacity</small>
             </section>
             <section className="metric-card">
               <div>
-                Participating speakers <Mic2 size={18} />
+                People expected <Mic2 size={18} />
               </div>
               <strong>
                 {s.participants
@@ -76,13 +84,15 @@ export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
                   )
                   .reduce((n, p) => n + p.speakers, 0)}
               </strong>
-              <small>Speakers are counted separately</small>
+              <small>From approved bookings</small>
             </section>
             <section className="metric-card">
-              <div>Research status</div>
-              <strong className="metric-word">{session.researchStatus}</strong>
+              <div>People attended</div>
+              <strong>{actual.people ?? "—"}</strong>
               <small>
-                Deadline {dateTime(session.deadline, session.timezone)}
+                {actual.founders === null
+                  ? "Enter actual attendance in Space Data"
+                  : `${actual.founders} founders attended`}
               </small>
             </section>
           </div>
@@ -109,7 +119,7 @@ export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
           </section>
           <section className="panel">
             <SectionHeading
-              title="Participating founders"
+              title="Booked founders"
               action={
                 can ? (
                   <button className="button" onClick={() => setBooking(true)}>
@@ -124,7 +134,7 @@ export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
                   <tr>
                     <th>Founder</th>
                     <th>Company</th>
-                    <th>Speakers</th>
+                    <th>People expected</th>
                     <th>Attendance</th>
                   </tr>
                 </thead>
@@ -249,7 +259,7 @@ export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
                       <th>Founder / company</th>
                       <th>Country</th>
                       <th>Team</th>
-                      <th>Speakers</th>
+                      <th>People expected</th>
                       <th>Status</th>
                       <th />
                     </tr>
@@ -300,8 +310,8 @@ export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
                   <thead>
                     <tr>
                       <th>Project</th>
-                      <th>Session</th>
-                      <th>Speakers</th>
+                      <th>Space</th>
+                      <th>People expected</th>
                       <th>Booking status</th>
                     </tr>
                   </thead>

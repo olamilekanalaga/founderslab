@@ -21,11 +21,13 @@ export default function Chart({
   type = "bar",
   label,
   center,
+  fractional = false,
 }: {
   data: { name: string; value: number }[];
   type?: "bar" | "area" | "donut" | "horizontal";
   center?: { value: string | number; label: string };
   label: string;
+  fractional?: boolean;
 }) {
   return (
     <div
@@ -59,7 +61,7 @@ export default function Chart({
               tick={{ fontSize: 11, fill: "#65708a" }}
             />
             <YAxis
-              allowDecimals={false}
+              allowDecimals={fractional}
               axisLine={false}
               tickLine={false}
               tick={{ fontSize: 11, fill: "#65708a" }}
@@ -77,6 +79,7 @@ export default function Chart({
               dataKey="value"
               stroke="#8758eb"
               fill="url(#founder-growth-fill)"
+              dot={data.length === 1}
               strokeWidth={2.5}
             />
           </AreaChart>
@@ -138,7 +141,7 @@ export default function Chart({
             layout="vertical"
             margin={{ top: 8, right: 26, left: 6, bottom: 8 }}
           >
-            <XAxis type="number" hide allowDecimals={false} />
+            <XAxis type="number" hide allowDecimals={fractional} />
             <YAxis
               type="category"
               dataKey="name"
@@ -175,7 +178,7 @@ export default function Chart({
               textAnchor="end"
             />
             <YAxis
-              allowDecimals={false}
+              allowDecimals={fractional}
               axisLine={false}
               tickLine={false}
               tick={{ fontSize: 11, fill: "#65708a" }}

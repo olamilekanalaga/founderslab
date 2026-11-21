@@ -38,7 +38,12 @@ export function hydrateDemo() {
   try {
     localStorage.removeItem(`${key}-role`);
     const saved = JSON.parse(localStorage.getItem(key) || "null");
-    if (valid(saved)) snapshot = saved;
+    if (valid(saved))
+      snapshot = {
+        ...saved,
+        spaceData: saved.spaceData || [],
+        spaceAttendance: saved.spaceAttendance || [],
+      };
   } catch {}
   listeners.forEach((fn) => fn());
 }

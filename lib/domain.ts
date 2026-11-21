@@ -49,6 +49,8 @@ export function scopeState(s: DataState, permissions: string[]): DataState {
   )
     copy.founders = copy.founders.map((f) => ({ ...f, contact: "" }));
   if (!has("booking.read")) {
+    copy.spaceData = [];
+    copy.spaceAttendance = [];
     copy.applications = [];
     copy.bookings = [];
     if (has("research.read")) {
@@ -332,6 +334,54 @@ export function applyCommand(
             createdAt: now,
           });
       }
+      break;
+    }
+    case "space-data.save": {
+      const v = schemas["space-data.save"].parse(p);
+      check(
+        s.sessions.some((session) => session.id === v.sessionId),
+        "Space not found",
+      );
+      check(
+        new Set(v.teams.map((t) => t.companyId)).size === v.teams.length,
+        "Add each project only once per Space.",
+      );
+      v.teams.forEach((team) =>
+        check(
+          s.companies.some((c) => c.id === team.companyId),
+          "Project not found",
+        ),
+      );
+      s.spaceData ||= [];
+      s.spaceAttendance ||= [];
+      const old = s.spaceData.find((row) => row.sessionId === v.sessionId),
+        id = old?.id || crypto.randomUUID();
+      put(s.spaceData, {
+        id,
+        sessionId: v.sessionId,
+        liveListeners: v.liveListeners,
+        durationMinutes: v.durationMinutes,
+        notes: v.notes,
+        recordedBy: actor.name,
+        createdAt: old?.createdAt || now,
+        updatedAt: now,
+      });
+      const previous = s.spaceAttendance.filter(
+        (row) => row.spaceDataId === id,
+      );
+      s.spaceAttendance = s.spaceAttendance.filter(
+        (row) => row.spaceDataId !== id,
+      );
+      v.teams.forEach((team) =>
+        s.spaceAttendance.push({
+          id:
+            previous.find((row) => row.companyId === team.companyId)?.id ||
+            crypto.randomUUID(),
+          spaceDataId: id,
+          ...team,
+        }),
+      );
+      entityId = id;
       break;
     }
     case "session.save": {

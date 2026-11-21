@@ -33,6 +33,8 @@ const registry = [
   ["applications", "application", ["id"]],
   ["sessions", "session", ["id"]],
   ["participants", "sessionParticipant", ["id"]],
+  ["spaceData", "spaceData", ["id"]],
+  ["spaceAttendance", "spaceTeamAttendance", ["id"]],
   ["bookings", "bookingRequest", ["id"]],
   ["research", "researchRecord", ["id"]],
   ["answers", "researchAnswer", ["id"]],
@@ -195,6 +197,8 @@ export async function executeCommand(command: Command, viewer: Viewer) {
         });
         if (!booking) throw new DomainError("Booking not found", 404);
         await tx.$queryRaw`SELECT id FROM "Session" WHERE id = ${booking.sessionId} FOR UPDATE`;
+      } else if (command.type === "space-data.save") {
+        await tx.$queryRaw`SELECT id FROM "Session" WHERE id = ${String(command.payload.sessionId)} FOR UPDATE`;
       } else if (command.type === "session.save" && command.payload.id) {
         await tx.$queryRaw`SELECT id FROM "Session" WHERE id = ${String(command.payload.id)} FOR UPDATE`;
       }

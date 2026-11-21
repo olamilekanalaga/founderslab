@@ -6,13 +6,13 @@ Verified locally against Node.js 24, PostgreSQL 17, Next.js 16.4.6 and Chromium.
 | --------------------------------- | ----------------------------------------------------------------------------- |
 | `npm run typecheck`               | Passed                                                                        |
 | `npm run lint`                    | Passed, no errors or warnings                                                 |
-| `npm test`                        | 12 domain/validation tests passed                                             |
+| `npm test`                        | 14 domain/validation tests passed                                             |
 | `npm run build`                   | Passed; client generation and Next production compilation                     |
 | Build with `DATABASE_URL` empty   | Passed; `/demo` does not require a database                                   |
-| `npm run test:e2e -- --workers=1` | 7 core browser tests plus short-answer regression passed against `next start` |
-| `npm run test:integration`        | 7 PostgreSQL/production HTTP verification groups passed                       |
-| Mobile accessibility              | No Axe WCAG A/AA violations found on the nine checked routes                  |
-| Screenshots                       | 26 desktop/mobile captures plus shared-recording and private-profile captures |
+| `npm run test:e2e -- --workers=1` | 9 browser tests passed against `next start` |
+| `npm run test:integration`        | 8 PostgreSQL/production HTTP verification groups passed                       |
+| Mobile accessibility              | No Axe WCAG A/AA violations found on the ten checked routes                  |
+| Screenshots                       | 28 desktop/mobile captures plus shared-recording and private-profile captures |
 
 ## Browser journeys
 
@@ -44,3 +44,7 @@ The supplied Founders Lab design is the new visual reference: navy navigation, a
 Captured 26 screenshots from actual 1536×1024 and 393×852 browser viewports. Inspected overview, founder cards, research, classification and reports; corrected contrast, tab spacing and long directory scrolling with pagination. Automated screenshot capture found no page runtime errors or horizontal document overflow. Chart data is derived from records, with region percentages and complete sector groups. The original no-database build check was completed on 20 November; database infrastructure is unchanged by this design pass.
 
 Automated checks do not establish full WCAG conformance, every assistive-technology interaction, load capacity or external service availability. No real applicant data, payment, external message or production deployment was used in verification. See README for V1 operational limits.
+
+## Space Data checks
+
+Domain tests cover unknown versus zero, actual team counts, edits replacing rather than duplicating records, multi-Space totals, invalid/duplicate projects, chronological cumulative growth, missing metrics and fractional hours. PostgreSQL/HTTP checks verify private storage, update uniqueness, duplicate rejection and anonymous route protection. The mobile browser journey saves and reloads attendance, verifies totals and the growth metric selector, then edits counts. Space Data is included in viewport/overflow and Axe keyboard/accessibility checks; its horizontally scrollable history table is keyboard focusable.

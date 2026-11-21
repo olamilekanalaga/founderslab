@@ -449,3 +449,92 @@ test("business descriptions accept short answers while empty fields remain requi
     }),
   );
 });
+
+test("Space Data preserves unknowns, replaces attendance and aggregates actual totals", async () => {
+  const { spaceTotals, durationLabel } = await import("../lib/space-data");
+  let s = makeSeed();
+  assert.equal(spaceTotals(s).people, null);
+  const payload = {
+    sessionId: s.sessions[0].id,
+    liveListeners: 120,
+    durationMinutes: 90,
+    notes: "Counted by host",
+    teams: [
+      { companyId: s.companies[0].id, foundersCount: 2, otherTeamCount: 1 },
+    ],
+  };
+  const save = (v: typeof payload) =>
+    (s = applyCommand(s, { type: "space-data.save", payload: v }, admin));
+  const bookings = JSON.stringify(s.bookings),
+    sessions = JSON.stringify(s.sessions);
+  save(payload);
+  assert.equal(spaceTotals(s).people, 3);
+  assert.equal(s.spaceData[0].recordedBy, admin.name);
+  save({ ...payload, teams: [{ ...payload.teams[0], foundersCount: 1 }] });
+  assert.equal(s.spaceData.length, 1);
+  assert.equal(s.spaceAttendance.length, 1);
+  save({
+    ...payload,
+    sessionId: s.sessions[1].id,
+    liveListeners: 80,
+    durationMinutes: 45,
+  });
+  assert.equal(spaceTotals(s).founders, 3);
+  assert.equal(spaceTotals(s).people, 5);
+  assert.equal(spaceTotals(s).listeners, 200);
+  assert.equal(durationLabel(spaceTotals(s).durationMinutes), "2h 15m");
+  assert.equal(JSON.stringify(s.bookings), bookings);
+  assert.equal(JSON.stringify(s.sessions), sessions);
+  assert.throws(
+    () => save({ ...payload, teams: [payload.teams[0], payload.teams[0]] }),
+    /once/,
+  );
+  assert.throws(() => save({ ...payload, sessionId: "missing" }));
+  assert.throws(() =>
+    save({
+      ...payload,
+      teams: [{ ...payload.teams[0], companyId: "missing" }],
+    }),
+  );
+  assert.throws(() => save({ ...payload, liveListeners: -1 }));
+  assert.throws(() =>
+    save({ ...payload, teams: [{ ...payload.teams[0], foundersCount: 1.5 }] }),
+  );
+  save({ ...payload, liveListeners: 0, durationMinutes: 0, teams: [] });
+  assert.equal(spaceTotals(s, payload.sessionId).listeners, 0);
+  assert.equal(spaceTotals(s, payload.sessionId).people, null);
+});
+
+test("Space growth follows event dates, combines same-day totals and omits missing data", async () => {
+  const { spaceGrowth } = await import("../lib/space-data");
+  let s = makeSeed();
+  const save = (
+    sessionId: string,
+    listeners: number | null,
+    minutes: number | null,
+  ) =>
+    (s = applyCommand(
+      s,
+      {
+        type: "space-data.save",
+        payload: {
+          sessionId,
+          liveListeners: listeners,
+          durationMinutes: minutes,
+          notes: "",
+          teams: [],
+        },
+      },
+      admin,
+    ));
+  assert.deepEqual(spaceGrowth(s, "listeners"), []);
+  save(s.sessions[1].id, 80, 45);
+  save(s.sessions[0].id, 120, 90);
+  const points = spaceGrowth(s, "listeners");
+  assert.equal(points.at(-1)?.value, 200);
+  assert.ok(points[0].name < points[1].name);
+  assert.equal(spaceGrowth(s, "durationMinutes").at(-1)?.value, 2.25);
+  save(s.sessions[0].id, null, null);
+  assert.equal(spaceGrowth(s, "listeners").length, 1);
+  assert.equal(spaceGrowth(s, "listeners")[0].value, 80);
+});

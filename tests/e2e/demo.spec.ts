@@ -312,6 +312,7 @@ test("iPhone, tablet and desktop views have working navigation and no horizontal
       "/demo",
       "/demo/founders",
       "/demo/spaces",
+      "/demo/space-data",
       "/demo/market-map",
       "/demo/reports",
       "/apply?mode=demo",
@@ -346,6 +347,7 @@ test("core mobile views pass automated accessibility checks", async ({
     "/demo/founders",
     "/demo/founders/f1",
     "/demo/spaces",
+    "/demo/space-data",
     "/demo/classification",
     "/demo/research",
     "/demo/reports",
@@ -441,4 +443,62 @@ test("short founder answers submit and invalid inputs show a readable message", 
     .getByRole("button", { name: "Submit founder application", exact: true })
     .click();
   await expect(page).toHaveURL(/confirmation#demo=/);
+});
+
+test("Space Data records actual team attendance and persists totals on mobile", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 393, height: 852 });
+  await page.goto("/demo/space-data");
+  await expect(page.getByTestId("space-total-people")).toContainText("—");
+  await page.getByLabel("Live listeners", { exact: true }).fill("120");
+  await page.getByLabel("Space hours", { exact: true }).fill("1");
+  await page.getByLabel("Space minutes", { exact: true }).fill("30");
+  await page.getByRole("button", { name: "Add team", exact: true }).click();
+  await page.getByLabel("Founders attended 1", { exact: true }).fill("2");
+  await page.getByLabel("Other team members 1", { exact: true }).fill("1");
+  await page
+    .getByRole("button", { name: "Save Space data", exact: true })
+    .click();
+  await expect(page.getByTestId("space-total-people")).toContainText("3");
+  await expect(
+    page.getByRole("img", { name: /Cumulative founders/ }),
+  ).toBeVisible();
+  await page.getByLabel("Growth metric").selectOption("durationMinutes");
+  await expect(
+    page.getByRole("img", { name: /Cumulative hours hosted/ }),
+  ).toHaveAttribute("aria-label", /1.5/);
+  await expect(page.getByTestId("space-total-time")).toContainText("1h 30m");
+  await page.reload();
+  await expect(page.getByTestId("space-total-listeners")).toContainText("120");
+  await page.getByLabel("Founders attended 1", { exact: true }).fill("1");
+  await page
+    .getByRole("button", { name: "Save Space data", exact: true })
+    .click();
+  await expect(page.getByTestId("space-total-people")).toContainText("2");
+  await page.getByLabel("Choose a Space").selectOption({ index: 1 });
+  await page.getByLabel("Live listeners", { exact: true }).fill("80");
+  await page.getByLabel("Space hours", { exact: true }).fill("0");
+  await page.getByLabel("Space minutes", { exact: true }).fill("45");
+  await page.getByRole("button", { name: "Add team", exact: true }).click();
+  await page.getByLabel("Founders attended 1", { exact: true }).fill("1");
+  await page
+    .getByRole("button", { name: "Save Space data", exact: true })
+    .click();
+  await expect(page.getByTestId("space-total-listeners")).toContainText("200");
+  await expect(page.getByTestId("space-total-time")).toContainText("2h 15m");
+  await page.getByRole("button", { name: "Dismiss notification" }).click();
+  await page.evaluate(() => {
+    (document.activeElement as HTMLElement)?.blur();
+    window.scrollTo(0, 0);
+  });
+  await page.screenshot({
+    path: "artifacts/space-data-filled-mobile.png",
+    fullPage: true,
+  });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
 });

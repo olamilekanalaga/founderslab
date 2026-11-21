@@ -345,6 +345,50 @@ try {
   pass(
     "Six concurrent approvals produce five project seats, fifteen speakers, and one capacity rejection",
   );
+  const stats = {
+    sessionId: session.id,
+    liveListeners: 150,
+    durationMinutes: 95,
+    notes: "Host attendance count",
+    teams: [
+      { companyId: state.companies[0].id, foundersCount: 2, otherTeamCount: 3 },
+    ],
+  };
+  state = await command("space-data.save", stats);
+  assert.equal(
+    state.spaceData.find((r) => r.sessionId === session.id)?.liveListeners,
+    150,
+  );
+  state = await command("space-data.save", { ...stats, liveListeners: 160 });
+  assert.equal(
+    state.spaceData.filter((r) => r.sessionId === session.id).length,
+    1,
+  );
+  assert.equal(
+    state.spaceAttendance.filter(
+      (r) =>
+        r.spaceDataId ===
+        state.spaceData.find((v) => v.sessionId === session.id)!.id,
+    ).length,
+    1,
+  );
+  assert.equal(
+    (
+      await request(
+        "/api/workspace",
+        {
+          type: "space-data.save",
+          payload: { ...stats, teams: [...stats.teams, ...stats.teams] },
+        },
+        admin,
+      )
+    ).status,
+    400,
+  );
+  assert.equal((await request("/space-data")).status, 307);
+  pass(
+    "Private Space Data persists actual attendance and rejects duplicate projects",
+  );
   const recording = "https://spaces.example.invalid/recording/database-shared";
   state = await command("session.save", {
     ...session,

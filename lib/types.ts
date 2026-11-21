@@ -4,6 +4,8 @@ import type {
   FounderCompanyMembership,
   Application,
   Session,
+  SpaceData,
+  SpaceTeamAttendance,
   SessionParticipant,
   BookingRequest,
   ResearchRecord,
@@ -64,6 +66,8 @@ export interface DataState {
   >[];
   sessions: Serialized<Session>[];
   participants: Serialized<SessionParticipant>[];
+  spaceData: Serialized<SpaceData>[];
+  spaceAttendance: Serialized<SpaceTeamAttendance>[];
   bookings: Serialized<BookingRequest>[];
   research: Serialized<ResearchRecord>[];
   answers: Serialized<ResearchAnswer>[];
@@ -98,6 +102,7 @@ export type Section =
   | "founders"
   | "companies"
   | "spaces"
+  | "space-data"
   | "classification"
   | "research"
   | "market-map"
@@ -110,6 +115,7 @@ export const SECTIONS: Section[] = [
   "founders",
   "companies",
   "spaces",
+  "space-data",
   "research",
   "classification",
   "market-map",

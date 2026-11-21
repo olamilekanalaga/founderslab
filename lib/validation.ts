@@ -130,6 +130,21 @@ export const schemas = {
     id: required,
     status: z.enum(["Approved", "Waitlisted", "Declined"]),
   }),
+  "space-data.save": z.object({
+    sessionId: required,
+    liveListeners: z.number().int().min(0).max(100000000).nullable(),
+    durationMinutes: z.number().int().min(0).max(1000000).nullable(),
+    notes: text.optional().default(""),
+    teams: z
+      .array(
+        z.object({
+          companyId: required,
+          foundersCount: z.coerce.number().int().min(0).max(100000),
+          otherTeamCount: z.coerce.number().int().min(0).max(100000),
+        }),
+      )
+      .max(500),
+  }),
   "session.save": z
     .object({
       id,

@@ -25,6 +25,7 @@ import {
   LogOut,
   ShieldCheck,
   Tags,
+  ClipboardList,
 } from "lucide-react";
 import type { Section, DataState, Viewer } from "@/lib/types";
 import { ROLES } from "@/lib/catalog";
@@ -35,6 +36,7 @@ import RecordEditor, { type Resource } from "./RecordEditor";
 import Overview from "./Overview";
 import Directory from "./Directory";
 import Spaces from "./Spaces";
+import SpaceData from "./SpaceData";
 import Research from "./Research";
 import Classification from "./Classification";
 import MarketMap from "./MarketMap";
@@ -47,6 +49,7 @@ const navigation = [
   { id: "founders", label: "Founders", icon: Users },
   { id: "companies", label: "Companies", icon: Building2 },
   { id: "spaces", label: "Founder Spaces", icon: Mic2 },
+  { id: "space-data", label: "Space Data", icon: ClipboardList },
   { id: "research", label: "Research", icon: NotebookPen },
   { id: "classification", label: "Classification", icon: Tags },
   { id: "market-map", label: "Market map", icon: Network },
@@ -294,6 +297,8 @@ function Shell({ section, id }: { section: Section; id?: string }) {
             <Directory kind={section} id={id} edit={edit} />
           ) : section === "spaces" ? (
             <Spaces id={id} edit={edit} />
+          ) : section === "space-data" ? (
+            <SpaceData />
           ) : section === "research" ? (
             <Research edit={edit} />
           ) : section === "classification" ? (

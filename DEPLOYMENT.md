@@ -37,3 +37,7 @@ npm start
 Place the Node process behind HTTPS, set the exact `APP_ORIGIN`, and use a process supervisor. Port defaults to 3000. The filesystem is not the production database; PostgreSQL must persist independently.
 
 A production deployment URL is only verified after the deployed flows have been tested. This repository currently provides local verification and deployment instructions, not a claimed live deployment.
+
+### Space Data update
+
+Before serving this revision against an existing PostgreSQL database, run `npm run db:migrate` with the production database environment. Migration `202611210002_space_data` adds the Space Data and team attendance tables without changing existing bookings or recordings. The no-login demo needs no database migration and starts with unknown actual attendance metrics.

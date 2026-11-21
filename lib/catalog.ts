@@ -150,6 +150,7 @@ export function actionPermission(type: string) {
     "booking.create": "booking.write",
     "booking.review": "booking.write",
     "session.save": "booking.write",
+    "space-data.save": "booking.write",
     "research.save": "research.write",
     "need.save": "research.write",
     "relationship.save": "research.write",
