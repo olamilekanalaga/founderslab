@@ -24,7 +24,6 @@ try {
       ["campaigns", "/demo/campaigns"],
       ["settings", "/demo/settings"],
       ["spaces", "/demo/spaces"],
-      ["space-data", "/demo/space-data"],
       ["reports", "/demo/reports"],
       ["application", "/apply?mode=demo"],
       ["booking", "/book?mode=demo"],
@@ -50,7 +49,7 @@ try {
   }
   if (errors.length) throw new Error(errors.join("\n"));
   console.log(
-    "Captured 22 screenshots at 1536×1024 and 393×852; no runtime errors or horizontal page overflow.",
+    "Captured 20 screenshots at 1536×1024 and 393×852; no runtime errors or horizontal page overflow.",
   );
 } finally {
   await browser.close();

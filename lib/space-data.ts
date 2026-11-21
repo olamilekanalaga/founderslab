@@ -62,3 +62,73 @@ export function spaceGrowth(state: DataState, metric: SpaceMetric) {
       };
     });
 }
+
+/** One shared weekly session, with separate company-level attendance rows. */
+export function profileSpaceWeeks(
+  state: DataState,
+  profile: { founderId?: string; companyId?: string },
+) {
+  const ownCompanies = new Set(
+    profile.companyId
+      ? [profile.companyId]
+      : state.memberships
+          .filter((m) => m.founderId === profile.founderId)
+          .map((m) => m.companyId),
+  );
+  return state.sessions
+    .filter(
+      (session) =>
+        state.participants.some(
+          (p) =>
+            p.sessionId === session.id &&
+            p.attendance !== "Cancelled" &&
+            (profile.founderId
+              ? p.founderId === profile.founderId
+              : ownCompanies.has(p.companyId)),
+        ) ||
+        (state.spaceAttendance || []).some(
+          (a) =>
+            ownCompanies.has(a.companyId) &&
+            (state.spaceData || []).some(
+              (r) => r.id === a.spaceDataId && r.sessionId === session.id,
+            ),
+        ),
+    )
+    .toSorted((a, b) => a.startsAt.localeCompare(b.startsAt))
+    .map((session) => {
+      const record = (state.spaceData || []).find(
+        (r) => r.sessionId === session.id,
+      );
+      const attendance = (state.spaceAttendance || []).filter(
+        (a) => a.spaceDataId === record?.id,
+      );
+      const participants = state.participants.filter(
+        (p) => p.sessionId === session.id && p.attendance !== "Cancelled",
+      );
+      const companyIds = [
+        ...new Set([
+          ...participants.map((p) => p.companyId),
+          ...attendance.map((a) => a.companyId),
+        ]),
+      ];
+      const teams = companyIds.map((companyId) => {
+        const company = state.companies.find((c) => c.id === companyId)!;
+        const row = attendance.find((a) => a.companyId === companyId);
+        const members = participants.filter((p) => p.companyId === companyId);
+        return {
+          company,
+          own: ownCompanies.has(companyId),
+          foundersCount: row?.foundersCount ?? null,
+          otherTeamCount: row?.otherTeamCount ?? null,
+          people: row ? row.foundersCount + row.otherTeamCount : null,
+          speakers: members.length
+            ? Math.max(...members.map((p) => p.speakers))
+            : null,
+          founders: state.founders.filter((f) =>
+            members.some((p) => p.founderId === f.id),
+          ),
+        };
+      });
+      return { session, record, totals: spaceTotals(state, session.id), teams };
+    });
+}

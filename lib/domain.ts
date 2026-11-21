@@ -386,6 +386,15 @@ export function applyCommand(
           "Project not found",
         ),
       );
+      const sharedSession = s.sessions.find(
+        (session) => session.id === v.sessionId,
+      )!;
+      for (const key of ["postUrl", "liveUrl", "recordingUrl"] as const) {
+        if (v[key] !== undefined) {
+          sharedSession[key] = v[key];
+          sharedSession.updatedAt = now;
+        }
+      }
       s.spaceData ||= [];
       s.spaceAttendance ||= [];
       const old = s.spaceData.find((row) => row.sessionId === v.sessionId),

@@ -15,8 +15,9 @@ import {
 } from "lucide-react";
 import { useWorkspace } from "./WorkspaceContext";
 import { Avatar, Status, Empty, SectionHeading, ExternalLink } from "./ui";
-import { founderSessions, companySessions } from "@/lib/domain";
-import { niceDate, dateTime } from "@/lib/selectors";
+import { profileSpaceWeeks } from "@/lib/space-data";
+import FounderSpaces from "./FounderSpaces";
+import { niceDate } from "@/lib/selectors";
 import type { Resource } from "./RecordEditor";
 type Editor = (resource: Resource, record?: Record<string, unknown>) => void;
 export default function Directory({
@@ -362,7 +363,7 @@ function FounderProfile({ id, edit }: { id: string; edit: Editor }) {
     .filter((m) => m.founderId === id)
     .map((m) => s.companies.find((c) => c.id === m.companyId))
     .filter((c) => !!c);
-  const sessions = founderSessions(s, id);
+  const sessions = profileSpaceWeeks(s, { founderId: id });
   return (
     <>
       <Link className="back-link" href={path("founders")}>
@@ -389,6 +390,7 @@ function FounderProfile({ id, edit }: { id: string; edit: Editor }) {
           </button>
         )}
       </div>
+      <FounderSpaces founderId={id} />
       <section className="panel padded">
         <h2>Founder details</h2>
         <dl className="facts">
@@ -433,27 +435,6 @@ function FounderProfile({ id, edit }: { id: string; edit: Editor }) {
         ))}
         {!companies.length && <Empty>No company added yet.</Empty>}
       </section>
-      <section className="panel">
-        <SectionHeading title="Space appearances & recordings" />
-        {sessions.map(({ session, participation }) => (
-          <div className="timeline-item" key={participation.id}>
-            <div>
-              <Link className="text-link" href={path("spaces", session.id)}>
-                {session.title}
-                <ArrowUpRight size={14} />
-              </Link>
-              <small>{dateTime(session.startsAt, session.timezone)}</small>
-              <div className="inline">
-                <Status value={participation.attendance} />
-                <ExternalLink href={session.recordingUrl}>
-                  Session recording
-                </ExternalLink>
-              </div>
-            </div>
-          </div>
-        ))}
-        {!sessions.length && <Empty>No approved appearances yet.</Empty>}
-      </section>
     </>
   );
 }
@@ -465,7 +446,6 @@ function CompanyProfile({ id, edit }: { id: string; edit: Editor }) {
     .filter((m) => m.companyId === id)
     .map((m) => s.founders.find((f) => f.id === m.founderId))
     .filter((f) => !!f);
-  const sessions = companySessions(s, id);
   return (
     <>
       <Link className="back-link" href={path("companies")}>
@@ -535,21 +515,7 @@ function CompanyProfile({ id, edit }: { id: string; edit: Editor }) {
           </Link>
         ))}
       </section>
-      <section className="panel padded">
-        <h2>Spaces & recordings</h2>
-        {sessions.map((session) => (
-          <div className="compact-note" key={session.id}>
-            <Link className="text-link" href={path("spaces", session.id)}>
-              {session.title}
-            </Link>
-            <p>{dateTime(session.startsAt, session.timezone)}</p>
-            <ExternalLink href={session.recordingUrl}>
-              Shared session recording
-            </ExternalLink>
-          </div>
-        ))}
-        {!sessions.length && <Empty>No approved appearances yet.</Empty>}
-      </section>
+      <FounderSpaces companyId={id} />
     </>
   );
 }

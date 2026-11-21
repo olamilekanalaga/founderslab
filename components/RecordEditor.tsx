@@ -108,6 +108,7 @@ export default function RecordEditor({
       researchStatus: "Not started",
       liveUrl: "",
       recordingUrl: "",
+      postUrl: "",
       notes: "",
     },
     need: {
@@ -271,6 +272,7 @@ export default function RecordEditor({
         "Cancelled",
       ]),
       f("liveUrl", "X Spaces live URL", "url", undefined, false, true),
+      f("postUrl", "Shared X post URL", "url", undefined, false, true),
       f("recordingUrl", "Shared recording URL", "url", undefined, false, true),
       f("notes", "Internal notes", "textarea", undefined, false, true),
     ],

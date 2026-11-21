@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { useState } from "react";
 import dynamic from "next/dynamic";
 import {
   Users,
@@ -11,7 +12,12 @@ import {
 } from "lucide-react";
 import { useWorkspace } from "./WorkspaceContext";
 import { groupBy, growthData, dateTime } from "@/lib/selectors";
-import { spaceTotals, durationLabel } from "@/lib/space-data";
+import {
+  spaceTotals,
+  durationLabel,
+  spaceGrowth,
+  type SpaceMetric,
+} from "@/lib/space-data";
 import { SectionHeading, Empty, Status } from "./ui";
 const Chart = dynamic(() => import("./Charts"), { ssr: false });
 export default function Overview({ addFounder }: { addFounder: () => void }) {
@@ -21,6 +27,8 @@ export default function Overview({ addFounder }: { addFounder: () => void }) {
     .filter((v) => v.status === "Scheduled")
     .toSorted((a, b) => a.startsAt.localeCompare(b.startsAt));
   const totals = spaceTotals(s);
+  const [metric, setMetric] = useState<SpaceMetric>("founders");
+  const chart = spaceGrowth(s, metric);
   const metrics = [
     {
       label: "Founders",
@@ -94,8 +102,8 @@ export default function Overview({ addFounder }: { addFounder: () => void }) {
         <SectionHeading
           title="Space totals"
           action={
-            <Link className="text-link" href={path("space-data")}>
-              Enter Space data
+            <Link className="text-link" href={path("founders")}>
+              Open founder records
               <ArrowUpRight size={14} />
             </Link>
           }
@@ -113,6 +121,31 @@ export default function Overview({ addFounder }: { addFounder: () => void }) {
             </div>
           ))}
         </div>
+      </section>
+      <section className="panel">
+        <div className="section-heading">
+          <h2>Space growth over time</h2>
+          <select
+            aria-label="Growth metric"
+            value={metric}
+            onChange={(e) => setMetric(e.target.value as SpaceMetric)}
+          >
+            <option value="founders">Founders attended</option>
+            <option value="people">Team attendees</option>
+            <option value="listeners">Live listeners</option>
+            <option value="durationMinutes">Hours hosted</option>
+          </select>
+        </div>
+        {chart.length ? (
+          <Chart
+            data={chart}
+            type="area"
+            fractional={metric === "durationMinutes"}
+            label={`Cumulative ${metric === "durationMinutes" ? "hours hosted" : metric} by Space date`}
+          />
+        ) : (
+          <Empty>No Space numbers recorded yet.</Empty>
+        )}
       </section>
       <section className="panel">
         <SectionHeading

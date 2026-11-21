@@ -402,6 +402,7 @@ try {
   );
   const stats = {
     sessionId: session.id,
+    postUrl: "https://posts.example.invalid/shared/week",
     liveListeners: 150,
     durationMinutes: 95,
     notes: "Host attendance count",
@@ -415,6 +416,10 @@ try {
     150,
   );
   state = await command("space-data.save", { ...stats, liveListeners: 160 });
+  assert.equal(
+    state.sessions.find((row) => row.id === session.id)!.postUrl,
+    stats.postUrl,
+  );
   assert.equal(
     state.spaceData.filter((r) => r.sessionId === session.id).length,
     1,
@@ -446,7 +451,7 @@ try {
   );
   const recording = "https://spaces.example.invalid/recording/database-shared";
   state = await command("session.save", {
-    ...session,
+    ...state.sessions.find((row) => row.id === session.id)!,
     recordingUrl: recording,
   });
   const { founderSessions, companySessions } = await import("../lib/domain");

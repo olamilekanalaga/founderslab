@@ -14,9 +14,13 @@ export default async function PrivateWorkspace({
   id?: string;
 }) {
   if (
-    ["research", "classification", "market-map", "opportunities"].includes(
-      section,
-    )
+    [
+      "research",
+      "classification",
+      "market-map",
+      "opportunities",
+      "space-data",
+    ].includes(section)
   )
     redirect("/founders");
   if (!SECTIONS.includes(section as Section)) notFound();

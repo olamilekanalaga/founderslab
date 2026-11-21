@@ -584,3 +584,101 @@ test("founder record reports contain short descriptions without research stories
   assert.ok(!text.includes("Business needs"));
   assert.ok(!text.includes("Opportunity pipeline"));
 });
+
+test("weekly profiles share one Space record but preserve per-company figures and deduplicate cofounders", async () => {
+  const { profileSpaceWeeks, spaceTotals } = await import("../lib/space-data");
+  let s = makeSeed();
+  const a = s.participants.find((p) => p.sessionId === "s1")!;
+  const b = s.participants.find(
+    (p) => p.sessionId === "s1" && p.companyId !== a.companyId,
+  )!;
+  s = applyCommand(
+    s,
+    {
+      type: "space-data.save",
+      payload: {
+        sessionId: "s1",
+        postUrl: "https://posts.example.invalid/weekly/s1",
+        liveUrl: "https://spaces.example.invalid/weekly/s1",
+        liveListeners: 200,
+        durationMinutes: 90,
+        notes: "",
+        teams: [
+          { companyId: a.companyId, foundersCount: 1, otherTeamCount: 3 },
+          { companyId: b.companyId, foundersCount: 2, otherTeamCount: 4 },
+        ],
+      },
+    },
+    admin,
+  );
+  const first = profileSpaceWeeks(s, { founderId: a.founderId }).find(
+    (w) => w.session.id === "s1",
+  )!;
+  const second = profileSpaceWeeks(s, { founderId: b.founderId }).find(
+    (w) => w.session.id === "s1",
+  )!;
+  assert.equal(first.record!.id, second.record!.id);
+  assert.equal(first.session.postUrl, second.session.postUrl);
+  assert.equal(
+    first.session.postUrl,
+    "https://posts.example.invalid/weekly/s1",
+  );
+  assert.equal(first.session.liveUrl, second.session.liveUrl);
+  assert.equal(first.totals.listeners, second.totals.listeners);
+  assert.equal(first.totals.founders, 3);
+  assert.equal(
+    first.teams.find((t) => t.company.id === a.companyId)!.people,
+    4,
+  );
+  assert.equal(
+    second.teams.find((t) => t.company.id === b.companyId)!.people,
+    6,
+  );
+  s.participants.push({
+    ...a,
+    id: "cofounder-appearance",
+    founderId: b.founderId,
+  });
+  const cofounder = profileSpaceWeeks(s, { founderId: b.founderId }).find(
+    (w) => w.session.id === "s1",
+  )!;
+  assert.equal(
+    cofounder.teams.filter((t) => t.company.id === a.companyId).length,
+    1,
+  );
+  assert.equal(cofounder.totals.founders, 3);
+  assert.equal(spaceTotals(s).listeners, 200);
+  const otherCompany = s.companies.find(
+    (c) =>
+      !s.participants.some((p) => p.sessionId === "s1" && p.companyId === c.id),
+  )!;
+  const otherFounder = s.memberships.find(
+    (m) => m.companyId === otherCompany.id,
+  )!;
+  s = applyCommand(
+    s,
+    {
+      type: "space-data.save",
+      payload: {
+        sessionId: "s1",
+        liveListeners: 200,
+        durationMinutes: 90,
+        notes: "",
+        teams: [
+          { companyId: otherCompany.id, foundersCount: 1, otherTeamCount: 0 },
+        ],
+      },
+    },
+    admin,
+  );
+  assert.ok(
+    profileSpaceWeeks(s, { founderId: otherFounder.founderId }).some(
+      (w) => w.session.id === "s1",
+    ),
+  );
+  assert.ok(
+    profileSpaceWeeks(s, { companyId: otherCompany.id }).some(
+      (w) => w.session.id === "s1",
+    ),
+  );
+});

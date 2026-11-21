@@ -16,6 +16,7 @@ import { spaceTotals } from "@/lib/space-data";
 import { approvedSeats } from "@/lib/domain";
 import { dateTime, niceDate } from "@/lib/selectors";
 import { BOOKING_STATUSES } from "@/lib/catalog";
+import WeeklySpaceEditor from "./WeeklySpaceEditor";
 import SessionCalendar from "./SessionCalendar";
 import type { Resource } from "./RecordEditor";
 type Editor = (resource: Resource, record?: Record<string, unknown>) => void;
@@ -57,12 +58,7 @@ export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
               </button>
             )}
           </div>
-          <Link
-            className="button primary space-data-link"
-            href={`${path("space-data")}?session=${encodeURIComponent(session.id)}`}
-          >
-            Enter Space data
-          </Link>
+          <WeeklySpaceEditor session={session} />
           <div className="metric-grid three">
             <section className="metric-card">
               <div>
@@ -91,7 +87,7 @@ export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
               <strong>{actual.people ?? "—"}</strong>
               <small>
                 {actual.founders === null
-                  ? "Enter actual attendance in Space Data"
+                  ? "No actual attendance entered yet"
                   : `${actual.founders} founders attended`}
               </small>
             </section>
@@ -102,6 +98,7 @@ export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
               <Status value={session.status} />
             </div>
             <div className="inline">
+              <ExternalLink href={session.postUrl}>Weekly X post</ExternalLink>
               <ExternalLink href={session.liveUrl}>Live Space</ExternalLink>
               <ExternalLink href={session.recordingUrl}>
                 {demo

@@ -198,6 +198,7 @@ model Session {
   status         String               @default("Scheduled")
   researchStatus String               @default("Not started")
   liveUrl        String               @default("")
+  postUrl        String               @default("")
   recordingUrl   String               @default("")
   notes          String               @default("")
   participants   SessionParticipant[]

@@ -8,7 +8,6 @@ A private founder register and X Spaces booking programme, with a no-login ficti
 - **Founders:** searchable cards/table, company links, short descriptions, contact details and Space appearances.
 - **Companies:** company name, country, short product description, team size, sector/stage, founders and shared recording links.
 - **Founder Spaces:** applications, booking approvals and weekly sessions.
-- **Space Data:** actual founders/team members per project, live listeners, hours/minutes, and cumulative charts.
 - **Reports:** filtered founder/company records, country/team counts, CSV and PDF exports.
 - **Campaigns & awards:** programme cohorts and manually recorded award decisions; no payment automation.
 - **Settings:** administrator access, company options and programme configuration.
@@ -39,7 +38,7 @@ npm run dev
 
 Sign in at `/signin`. To seed fictional records into a development database, run `npm run db:seed -- --demo`; inspect the script before using it against an existing database. Never seed a production founder database just to test the interface.
 
-Migration uses the checked-in PostgreSQL runner (`npm run db:migrate`), not Prisma's native migration engine. Existing installations must apply the additive Space Data migration before serving the current revision. See [DEPLOYMENT.md](DEPLOYMENT.md).
+Migration uses the checked-in PostgreSQL runner (`npm run db:migrate`), not Prisma's native migration engine. Existing installations must apply the additive Space Data and shared weekly post migrations before serving the current revision. See [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## Founder booking flow
 
@@ -53,11 +52,11 @@ Only future Saturday sessions with an open deadline and remaining approved capac
 
 Confirmation links use random, expiring capabilities and reveal only the submitting project's status. The public calendar exposes no founder identities or private session notes. Automatic email/Telegram notifications are not configured.
 
-## Space numbers
+## Weekly Spaces inside founder profiles
 
-Enter actual attendance in **Space Data**, independently of booked places and expected speakers. Founders plus other team members form total attendance. Blank figures remain unknown; explicit zero is preserved. Edits replace a Space's numbers rather than counting it twice. Charts accumulate recorded activity by Space date. Repeat attendees/listeners across different Spaces count again; totals are not deduplicated unique audience figures.
+Open a founder card and use **Weekly Spaces → Edit weekly Space data**. The same editor is available on the weekly session page. Enter actual attendance independently of booked places and expected speakers. Founders plus other team members form total attendance. Blank figures remain unknown; explicit zero is preserved. Edits replace a Space's numbers rather than counting it twice. Charts accumulate recorded activity by Space date. Repeat attendees/listeners across different Spaces count again; totals are not deduplicated unique audience figures.
 
-A recording URL is stored once on the session and inherited by linked founder/company pages. There is no recording upload, transcription or automatic capture of X conversations.
+The weekly X post, live Space URL and recording URL are stored once on the session and inherited by linked founder/company pages. There is no recording upload, transcription or automatic capture of X conversations.
 
 ## Access and persistence
 
@@ -87,3 +86,9 @@ Playwright uses `/usr/bin/chromium` here; `PLAYWRIGHT_CHROMIUM_EXECUTABLE` and `
 The existing Vercel project is linked to `olamilekanalaga/founderslab`, production branch `main`, at `https://founderslab-orcin.vercel.app`. Deployment success alone does not verify the public browser flow. All data shown without live database configuration is fictional browser-local demonstration data.
 
 The initial programme uses an authorised snapshot rather than server pagination. General concurrent field edits use last committed values; booking capacity and Space Data updates serialize per session. Retention settings record policy but do not schedule automatic deletion. Reports describe programme participants, not the entire Web3 industry. No external X ingestion, automated research, cryptocurrency payments or paid integrations run in this version.
+
+## Shared weekly mapping
+
+Space Data is no longer a navigation page; its old route redirects to founders. A founder's Weekly Spaces view resolves their named session participation and recorded company-level attendance. Co-founders sharing a company see the same project row. Within a weekly Space, the X post, Space/recording links, live listeners, duration and recorded session totals are shared. Each company retains its own founders attended, other team members, total attendance and expected speakers. Expected speakers come from approved participation and are not treated as actual attendance.
+
+The same-week table links the other participating founders and companies. Existing booking approvals assign the founder/project to the week; attendance rows also link a project to that week without inventing named individual attendance. Unknown figures remain blank. Global growth charts and Space totals remain on Overview and count each session once, regardless of the number of founder profiles displaying it.

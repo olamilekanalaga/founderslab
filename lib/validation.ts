@@ -131,6 +131,9 @@ export const schemas = {
     status: z.enum(["Approved", "Waitlisted", "Declined"]),
   }),
   "space-data.save": z.object({
+    postUrl: z.union([safeUrl, z.literal("")]).optional(),
+    liveUrl: z.union([safeUrl, z.literal("")]).optional(),
+    recordingUrl: z.union([safeUrl, z.literal("")]).optional(),
     sessionId: required,
     liveListeners: z.number().int().min(0).max(100000000).nullable(),
     durationMinutes: z.number().int().min(0).max(1000000).nullable(),
@@ -158,6 +161,7 @@ export const schemas = {
       researchStatus: z.enum(["Not started", "In progress", "Complete"]),
       liveUrl: optionalUrl,
       recordingUrl: optionalUrl,
+      postUrl: optionalUrl,
       notes: text,
     })
     .refine(

@@ -21,7 +21,6 @@ import {
   X,
   LogOut,
   ShieldCheck,
-  ClipboardList,
 } from "lucide-react";
 import type { Section, DataState, Viewer } from "@/lib/types";
 import { ROLES } from "@/lib/catalog";
@@ -32,7 +31,6 @@ import RecordEditor, { type Resource } from "./RecordEditor";
 import Overview from "./Overview";
 import Directory from "./Directory";
 import Spaces from "./Spaces";
-import SpaceData from "./SpaceData";
 import Reports from "./Reports";
 import Campaigns from "./Campaigns";
 import TeamSettings from "./Settings";
@@ -41,7 +39,6 @@ const navigation = [
   { id: "founders", label: "Founders", icon: Users },
   { id: "companies", label: "Companies", icon: Building2 },
   { id: "spaces", label: "Founder Spaces", icon: Mic2 },
-  { id: "space-data", label: "Space Data", icon: ClipboardList },
   { id: "reports", label: "Reports", icon: ChartNoAxesCombined },
   { id: "campaigns", label: "Campaigns & awards", icon: Award },
   { id: "settings", label: "Settings", icon: SettingsIcon },
@@ -285,8 +282,6 @@ function Shell({ section, id }: { section: Section; id?: string }) {
             <Directory kind={section} id={id} edit={edit} />
           ) : section === "spaces" ? (
             <Spaces id={id} edit={edit} />
-          ) : section === "space-data" ? (
-            <SpaceData />
           ) : section === "reports" ? (
             <Reports />
           ) : section === "campaigns" ? (
@@ -396,8 +391,8 @@ function Tour({
     },
     {
       name: "Record Space numbers",
-      url: path("space-data"),
-      text: "Enter founders, team attendance, live listeners and hours for each Space.",
+      url: path("founders"),
+      text: "Open a founder card, select their weekly Space and enter the shared numbers and team attendance.",
     },
     {
       name: "Keep founder details up to date",

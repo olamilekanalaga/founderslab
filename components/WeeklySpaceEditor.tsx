@@ -1,188 +1,38 @@
 "use client";
 import { useState } from "react";
-import { useSearchParams } from "next/navigation";
-import {
-  Plus,
-  Save,
-  Trash2,
-  Users,
-  Headphones,
-  Clock,
-  UserRound,
-} from "lucide-react";
+import { Plus, Save, Trash2, Pencil } from "lucide-react";
 import { useWorkspace } from "./WorkspaceContext";
-import { Empty, Status } from "./ui";
-import Chart from "./Charts";
-import {
-  spaceTotals,
-  durationLabel,
-  spaceGrowth,
-  type SpaceMetric,
-} from "@/lib/space-data";
+import { Status, Modal } from "./ui";
 import { dateTime } from "@/lib/selectors";
 import type { DataState } from "@/lib/types";
-export default function SpaceData() {
-  const { state: s } = useWorkspace(),
-    params = useSearchParams();
-  const [selected, setSelected] = useState(
-    params.get("session") ||
-      s.sessions.find((v) => v.status === "Completed")?.id ||
-      s.sessions[0]?.id ||
-      "",
-  );
-  const [metric, setMetric] = useState<SpaceMetric>("founders");
-  const growth = spaceGrowth(s, metric);
-  const session = s.sessions.find((v) => v.id === selected) || s.sessions[0];
-  const totals = spaceTotals(s);
-  const record = (s.spaceData || []).find((r) => r.sessionId === session?.id);
+export default function WeeklySpaceEditor({
+  session,
+}: {
+  session: DataState["sessions"][number];
+}) {
+  const { state: s, viewer } = useWorkspace();
+  const [open, setOpen] = useState(false);
+  const record = s.spaceData.find((r) => r.sessionId === session.id);
+  if (!viewer.permissions.includes("booking.write")) return null;
   return (
     <>
-      <div className="page-heading">
-        <h1>Space Data</h1>
-        <span className="small-tag">
-          {totals.recordedSpaces} Spaces recorded
-        </span>
-      </div>
-      <div className="metric-grid">
-        {[
-          {
-            label: "Founders attended",
-            value: totals.founders,
-            icon: UserRound,
-            key: "founders",
-          },
-          {
-            label: "All team attendees",
-            value: totals.people,
-            icon: Users,
-            key: "people",
-          },
-          {
-            label: "Live listener total",
-            value: totals.listeners,
-            icon: Headphones,
-            key: "listeners",
-          },
-          {
-            label: "Total time",
-            value: durationLabel(totals.durationMinutes),
-            icon: Clock,
-            key: "time",
-          },
-        ].map(({ label, value, icon: Icon, key }) => (
-          <div className="metric-card" key={key}>
-            <div>
-              {label}
-              <Icon size={18} />
-            </div>
-            <strong data-testid={`space-total-${key}`}>{value ?? "—"}</strong>
-          </div>
-        ))}
-      </div>
-      <section className="panel">
-        <div className="section-heading">
-          <h2>Growth over time</h2>
-          <select
-            aria-label="Growth metric"
-            value={metric}
-            onChange={(e) => setMetric(e.target.value as SpaceMetric)}
-          >
-            <option value="founders">Founders attended</option>
-            <option value="people">All team attendees</option>
-            <option value="listeners">Live listeners</option>
-            <option value="durationMinutes">Hours hosted</option>
-          </select>
-        </div>
-        {growth.length ? (
-          <Chart
-            data={growth}
-            type="area"
-            fractional={metric === "durationMinutes"}
-            label={`Cumulative ${metric === "durationMinutes" ? "hours hosted" : metric} by Space date`}
+      <button className="button" onClick={() => setOpen(true)}>
+        <Pencil size={15} />
+        Edit weekly Space data
+      </button>
+      {open && (
+        <Modal title="Weekly Space data" close={() => setOpen(false)} wide>
+          <p className="weekly-edit-hint">
+            The X post, Space links, listeners and time are shared by everyone
+            in this Space. Each project has its own attendance counts.
+          </p>
+          <SpaceForm
+            key={`${session.id}:${record?.updatedAt || "new"}`}
+            session={session}
+            record={record}
           />
-        ) : (
-          <Empty>Save attendance, listeners or time to start this chart.</Empty>
-        )}
-        <p className="space-chart-caption">
-          Cumulative recorded totals · by Space date
-        </p>
-      </section>
-      <label className="space-picker">
-        Choose a Space
-        <select
-          aria-label="Choose a Space"
-          value={session?.id || ""}
-          onChange={(e) => setSelected(e.target.value)}
-        >
-          {s.sessions.map((v) => (
-            <option key={v.id} value={v.id}>
-              {v.title} · {v.startsAt.slice(0, 10)}
-            </option>
-          ))}
-        </select>
-      </label>
-      {session ? (
-        <SpaceForm
-          key={`${session.id}:${record?.updatedAt || "new"}`}
-          session={session}
-          record={record}
-        />
-      ) : (
-        <Empty>Create a Space first.</Empty>
+        </Modal>
       )}
-      <section className="panel">
-        <div className="section-heading">
-          <h2>Recorded Spaces</h2>
-        </div>
-        <div
-          className="table-wrap"
-          tabIndex={0}
-          role="region"
-          aria-label="Recorded Space data"
-        >
-          <table>
-            <thead>
-              <tr>
-                <th>Space</th>
-                <th>Founders</th>
-                <th>Team attendees</th>
-                <th>Live listeners</th>
-                <th>Time</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {(s.spaceData || []).map((r) => {
-                const stats = spaceTotals(s, r.sessionId);
-                return (
-                  <tr key={r.id}>
-                    <td>
-                      {s.sessions.find((v) => v.id === r.sessionId)?.title}
-                    </td>
-                    <td>{stats.founders ?? "—"}</td>
-                    <td>{stats.people ?? "—"}</td>
-                    <td>{r.liveListeners ?? "—"}</td>
-                    <td>{durationLabel(r.durationMinutes)}</td>
-                    <td>
-                      <button
-                        className="button"
-                        onClick={() => setSelected(r.sessionId)}
-                      >
-                        Open
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          {!s.spaceData?.length && <Empty>No Space data recorded yet.</Empty>}
-        </div>
-      </section>
-      <p className="workspace-footnote">
-        Totals add the recorded attendance for each Space. Repeat attendees and
-        listeners can be counted in more than one Space.
-      </p>
     </>
   );
 }
@@ -200,6 +50,9 @@ function SpaceForm({
   record: DataState["spaceData"][number] | undefined;
 }) {
   const { state: s, commit, busy, viewer } = useWorkspace();
+  const [postUrl, setPostUrl] = useState(session.postUrl || "");
+  const [liveUrl, setLiveUrl] = useState(session.liveUrl || "");
+  const [recordingUrl, setRecordingUrl] = useState(session.recordingUrl || "");
   const [listeners, setListeners] = useState(
       record?.liveListeners?.toString() ?? "",
     ),
@@ -259,6 +112,9 @@ function SpaceForm({
           type: "space-data.save",
           payload: {
             sessionId: session.id,
+            postUrl,
+            liveUrl,
+            recordingUrl,
             liveListeners: listeners === "" ? null : Number(listeners),
             durationMinutes:
               hours === "" && minutes === ""
@@ -285,6 +141,38 @@ function SpaceForm({
       </div>
       <fieldset disabled={!can || busy} className="space-data-inputs">
         <legend className="sr-only">Space results</legend>
+        <div className="weekly-link-fields">
+          <label>
+            Shared X post URL
+            <input
+              aria-label="Shared X post URL"
+              type="url"
+              value={postUrl}
+              onChange={(e) => setPostUrl(e.target.value)}
+              placeholder="https://x.com/…"
+            />
+          </label>
+          <label>
+            Shared Space URL
+            <input
+              aria-label="Shared Space URL"
+              type="url"
+              value={liveUrl}
+              onChange={(e) => setLiveUrl(e.target.value)}
+              placeholder="https://x.com/i/spaces/…"
+            />
+          </label>
+          <label>
+            Shared recording URL
+            <input
+              aria-label="Shared recording URL"
+              type="url"
+              value={recordingUrl}
+              onChange={(e) => setRecordingUrl(e.target.value)}
+              placeholder="https://…"
+            />
+          </label>
+        </div>
         <div className="space-data-fields">
           <label>
             Live listeners

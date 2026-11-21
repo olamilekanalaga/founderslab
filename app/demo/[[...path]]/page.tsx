@@ -10,9 +10,13 @@ export default async function Demo({
   const { path = [] } = await params;
   const section = (path[0] || "dashboard") as Section;
   if (
-    ["research", "classification", "market-map", "opportunities"].includes(
-      section,
-    )
+    [
+      "research",
+      "classification",
+      "market-map",
+      "opportunities",
+      "space-data",
+    ].includes(section)
   )
     redirect("/demo/founders");
   if (

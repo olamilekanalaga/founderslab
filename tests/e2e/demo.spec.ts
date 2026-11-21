@@ -192,7 +192,6 @@ test("iPhone, tablet and desktop views have working navigation and no horizontal
       "/demo",
       "/demo/founders",
       "/demo/spaces",
-      "/demo/space-data",
       "/demo/reports",
       "/apply?mode=demo",
     ]) {
@@ -228,7 +227,6 @@ test("core mobile views pass automated accessibility checks", async ({
     "/demo/companies",
     "/demo/companies/c1",
     "/demo/spaces",
-    "/demo/space-data",
     "/demo/reports",
     "/apply?mode=demo",
     "/book?mode=demo",
@@ -315,62 +313,86 @@ test("short founder answers submit and invalid inputs show a readable message", 
   await expect(page).toHaveURL(/confirmation#demo=/);
 });
 
-test("Space Data records actual team attendance and persists totals on mobile", async ({
+test("weekly Space totals are shared between founders while team attendance stays separate", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 393, height: 852 });
-  await page.goto("/demo/space-data");
-  await expect(page.getByTestId("space-total-people")).toContainText("—");
+  await page.goto("/demo/founders/f1");
+  await expect(
+    page.getByRole("link", { name: "Space Data", exact: true }),
+  ).toHaveCount(0);
+  await expect(page.getByTestId("week-listeners")).toContainText("—");
+  await page
+    .getByRole("button", { name: "Edit weekly Space data", exact: true })
+    .click();
+  await page
+    .getByLabel("Shared X post URL", { exact: true })
+    .fill("https://posts.example.invalid/weekly/s1");
+  await page
+    .getByLabel("Shared Space URL", { exact: true })
+    .fill("https://spaces.example.invalid/weekly/s1");
   await page.getByLabel("Live listeners", { exact: true }).fill("120");
   await page.getByLabel("Space hours", { exact: true }).fill("1");
   await page.getByLabel("Space minutes", { exact: true }).fill("30");
   await page.getByRole("button", { name: "Add team", exact: true }).click();
-  await page.getByLabel("Founders attended 1", { exact: true }).fill("2");
-  await page.getByLabel("Other team members 1", { exact: true }).fill("1");
+  await page.getByLabel("Founders attended 1", { exact: true }).fill("1");
+  await page.getByLabel("Other team members 1", { exact: true }).fill("3");
+  await page.getByRole("button", { name: "Add team", exact: true }).click();
+  await page.getByLabel("Founders attended 2", { exact: true }).fill("2");
+  await page.getByLabel("Other team members 2", { exact: true }).fill("4");
   await page
     .getByRole("button", { name: "Save Space data", exact: true })
     .click();
-  await expect(page.getByTestId("space-total-people")).toContainText("3");
+  await expect(page.getByRole("status")).toContainText("saved");
+  await page.getByRole("button", { name: "Close dialog", exact: true }).click();
+  await expect(page.getByTestId("week-founders")).toHaveText("3");
+  await expect(page.getByTestId("week-people")).toHaveText("10");
+  await expect(page.getByTestId("project-people-c1")).toHaveText("4");
+  await page.goto("/demo/founders/f2");
+  await expect(page.getByTestId("week-listeners")).toHaveText("120");
   await expect(
-    page.getByRole("img", { name: /Cumulative founders/ }),
-  ).toBeVisible();
+    page.getByRole("link", { name: "Weekly X post", exact: true }),
+  ).toHaveAttribute("href", "https://posts.example.invalid/weekly/s1");
+  await expect(
+    page.getByRole("link", { name: "Weekly Space", exact: true }),
+  ).toHaveAttribute("href", "https://spaces.example.invalid/weekly/s1");
+  await expect(page.getByTestId("week-duration")).toHaveText("1h 30m");
+  await expect(page.getByTestId("project-founders-c2")).toHaveText("2");
+  await expect(page.getByTestId("project-people-c2")).toHaveText("6");
+  await page
+    .getByRole("button", { name: "Edit weekly Space data", exact: true })
+    .click();
+  await page.getByLabel("Live listeners", { exact: true }).fill("200");
+  await page
+    .getByRole("button", { name: "Save Space data", exact: true })
+    .click();
+  await expect(page.getByRole("status")).toContainText("saved");
+  await page.getByRole("button", { name: "Close dialog", exact: true }).click();
+  await page.goto("/demo/founders/f1");
+  await expect(page.getByTestId("week-listeners")).toHaveText("200");
+  await expect(
+    page.getByRole("link", { name: "Weekly X post", exact: true }),
+  ).toHaveAttribute("href", "https://posts.example.invalid/weekly/s1");
+  await expect(page.getByTestId("project-people-c1")).toHaveText("4");
+  await page.reload();
+  await expect(page.getByTestId("week-founders")).toHaveText("3");
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.screenshot({
+    path: "artifacts/founder-week-mobile.png",
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 1536, height: 1024 });
+  await page.screenshot({
+    path: "artifacts/founder-week-desktop.png",
+    fullPage: true,
+  });
+  await page.goto("/demo");
   await page.getByLabel("Growth metric").selectOption("durationMinutes");
   await expect(
     page.getByRole("img", { name: /Cumulative hours hosted/ }),
   ).toHaveAttribute("aria-label", /1.5/);
-  await expect(page.getByTestId("space-total-time")).toContainText("1h 30m");
-  await page.reload();
-  await expect(page.getByTestId("space-total-listeners")).toContainText("120");
-  await page.getByLabel("Founders attended 1", { exact: true }).fill("1");
-  await page
-    .getByRole("button", { name: "Save Space data", exact: true })
-    .click();
-  await expect(page.getByTestId("space-total-people")).toContainText("2");
-  await page.getByLabel("Choose a Space").selectOption({ index: 1 });
-  await page.getByLabel("Live listeners", { exact: true }).fill("80");
-  await page.getByLabel("Space hours", { exact: true }).fill("0");
-  await page.getByLabel("Space minutes", { exact: true }).fill("45");
-  await page.getByRole("button", { name: "Add team", exact: true }).click();
-  await page.getByLabel("Founders attended 1", { exact: true }).fill("1");
-  await page
-    .getByRole("button", { name: "Save Space data", exact: true })
-    .click();
-  await expect(page.getByTestId("space-total-listeners")).toContainText("200");
-  await expect(page.getByTestId("space-total-time")).toContainText("2h 15m");
-  await page.getByRole("button", { name: "Dismiss notification" }).click();
-  await page.evaluate(() => {
-    (document.activeElement as HTMLElement)?.blur();
-    window.scrollTo(0, 0);
-  });
-  await page.screenshot({
-    path: "artifacts/space-data-filled-mobile.png",
-    fullPage: true,
-  });
-  expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= innerWidth,
-    ),
-  ).toBe(true);
+  await page.goto("/demo/space-data");
+  await expect(page).toHaveURL(/demo\/founders$/);
 });
 
 test("public booking calendar enables only open Saturdays and disables full dates", async ({

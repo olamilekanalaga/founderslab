@@ -41,3 +41,7 @@ A production deployment URL is only verified after the deployed flows have been 
 ### Space Data update
 
 Before serving this revision against an existing PostgreSQL database, run `npm run db:migrate` with the production database environment. Migration `202611210002_space_data` adds the Space Data and team attendance tables without changing existing bookings or recordings. The no-login demo needs no database migration and starts with unknown actual attendance metrics.
+
+### Shared weekly X post
+
+Run `npm run db:migrate` against database-backed installations before serving this revision. Migration `202611210003_shared_weekly_post` adds `Session.postUrl` with an empty default, preserving existing sessions and attendance rows. X post and Space links are edited once per session and inherited by profiles. The former Space Data route redirects to founders; no database migration is needed for browser-local demo usage.

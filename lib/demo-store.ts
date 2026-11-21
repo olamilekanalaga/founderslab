@@ -41,7 +41,11 @@ export function hydrateDemo() {
     if (valid(saved))
       snapshot = {
         ...saved,
-        sessions: saved.sessions.map((session) => {
+        sessions: saved.sessions.map((savedSession) => {
+          const session = {
+            ...savedSession,
+            postUrl: savedSession.postUrl || "",
+          };
           const index = ["up1", "up2", "up3", "up4"].indexOf(session.id);
           const fresh = serverSnapshot.sessions.find(
             (s) => s.id === session.id,

@@ -115,7 +115,6 @@ export const SECTIONS: Section[] = [
   "founders",
   "companies",
   "spaces",
-  "space-data",
   "reports",
   "campaigns",
   "settings",
