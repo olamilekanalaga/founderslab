@@ -5488,3 +5488,4 @@ td > b,
 .booking-days>button .booking-day-count{font-size:10px;font-variant-numeric:tabular-nums}
 .booking-days>button.has-slots:disabled{opacity:1;color:#737b8f;background:#f1f1f6}
 .booking-capacity-key{text-align:center;color:#65708a;font-size:11px;margin:10px 0 0;line-height:1.5}
+.booking-days>button.selected small{color:#fff}
