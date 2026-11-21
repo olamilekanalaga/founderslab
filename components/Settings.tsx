@@ -11,6 +11,7 @@ export default function Settings({
   edit: (resource: Resource, record?: Record<string, unknown>) => void;
 }) {
   const { state: s, commit, busy, invitationPath, demo } = useWorkspace(),
+    [tab, setTab] = useState("Team"),
     [group, setGroup] = useState("Sector"),
     [userId, setUser] = useState<string | null>(null),
     [copied, setCopied] = useState(false);
@@ -24,6 +25,17 @@ export default function Settings({
         <button className="button primary" onClick={() => edit("invitation")}>
           <UserPlus size={16} /> Invite collaborator
         </button>
+      </div>
+      <div className="tabs settings-tabs">
+        {["Team", "Classification", "Programme", "Activity"].map((t) => (
+          <button
+            key={t}
+            className={tab === t ? "active" : ""}
+            onClick={() => setTab(t)}
+          >
+            {t}
+          </button>
+        ))}
       </div>
       {invitationPath && (
         <div className="notice">
@@ -52,7 +64,7 @@ export default function Settings({
           <code>{window.location.origin + invitationPath}</code>
         </div>
       )}
-      <section className="panel">
+      <section className="panel" hidden={tab !== "Team"}>
         <SectionHeading
           title="Team access"
           detail={
@@ -100,7 +112,7 @@ export default function Settings({
           </table>
         </div>
       </section>
-      <div className="two-grid">
+      <div className="two-grid" hidden={tab !== "Programme"}>
         <section className="panel padded">
           <div className="row-between">
             <h2>Programme defaults</h2>
@@ -167,7 +179,7 @@ export default function Settings({
           )}
         </section>
       </div>
-      <section className="panel">
+      <section className="panel" hidden={tab !== "Classification"}>
         <SectionHeading
           title="Controlled research taxonomies"
           detail="Classify independently by sector, economic function, customer and need."
@@ -222,7 +234,7 @@ export default function Settings({
             ))}
         </div>
       </section>
-      <section className="panel">
+      <section className="panel" hidden={tab !== "Activity"}>
         <SectionHeading
           title="Recent audit trail"
           detail="Changes retain actor, action and timestamp."

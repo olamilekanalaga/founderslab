@@ -4,6 +4,7 @@ export const SECTION_PERMISSIONS: Record<Section, string> = {
   founders: "directory.read",
   companies: "directory.read",
   spaces: "booking.read",
+  classification: "directory.read",
   research: "research.read",
   "market-map": "research.read",
   opportunities: "commercial.read",

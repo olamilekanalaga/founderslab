@@ -15,7 +15,8 @@ import {
   BriefcaseBusiness,
   CheckCircle2,
 } from "lucide-react";
-import { countryCode } from "@/lib/catalog";
+import { countryRegion } from "@/lib/catalog";
+import { chartPalette } from "@/lib/design";
 import { useWorkspace } from "./WorkspaceContext";
 import {
   reportData,
@@ -32,6 +33,13 @@ export default function Overview({ addFounder }: { addFounder: () => void }) {
   const { state: s, viewer, path, demo } = useWorkspace();
   const [country, setCountry] = useState("");
   const r = reportData(s, { ...blankFilters, country });
+  const regions = Object.entries(
+    r.founders.reduce<Record<string, number>>((counts, f) => {
+      const region = countryRegion(f.country);
+      counts[region] = (counts[region] || 0) + 1;
+      return counts;
+    }, {}),
+  ).map(([name, value]) => ({ name, value }));
   const pending = s.applications.filter((a) => a.status === "Pending");
   const completed = s.sessions.filter((v) => v.status === "Completed"),
     upcoming = s.sessions
@@ -43,43 +51,70 @@ export default function Overview({ addFounder }: { addFounder: () => void }) {
   ).length;
   const cards = [
     {
-      name: "Founders in the lab",
+      name: "Founders",
       value: r.founders.length,
       icon: Users,
       detail: "People, not just projects",
       link: "founders",
     },
     {
-      name: "Companies mapped",
+      name: "Companies",
       value: r.companies.length,
       icon: Building2,
       detail: "Products with a clearer picture",
       link: "companies",
     },
     {
-      name: "Countries represented",
+      name: "Countries",
       value: r.countries.length,
       icon: Globe2,
       detail: "An African focus. A global outlook.",
       link: "founders",
     },
     {
-      name: "Completed Spaces",
+      name: "Spaces",
       value: completed.length,
       icon: Mic2,
       detail: `${upcoming.length} upcoming sessions`,
       link: "spaces",
     },
   ];
+  cards.push(
+    {
+      name: "Business needs",
+      value: r.needs.length,
+      icon: Lightbulb,
+      detail: "",
+      link: "research",
+    },
+    {
+      name: "Integrations",
+      value: r.integrations.length,
+      icon: Building2,
+      detail: "",
+      link: "market-map",
+    },
+    {
+      name: "Partnerships",
+      value: r.partnerships.length,
+      icon: Users,
+      detail: "",
+      link: "market-map",
+    },
+    {
+      name: "Hiring signals",
+      value: r.hiring.length,
+      icon: BriefcaseBusiness,
+      detail: "",
+      link: "opportunities",
+    },
+  );
   const bookingAccess = viewer.permissions.includes("booking.read");
   return (
     <>
       <div className="page-heading">
         <div>
-          <h1>
-            Good morning, {viewer.name.split(" ")[0]}
-            <span className="gold-dot">.</span>
-          </h1>
+          <h1>Overview</h1>
         </div>
         <div className="heading-actions">
           <Link className="button" href={path("reports")}>
@@ -119,26 +154,20 @@ export default function Overview({ addFounder }: { addFounder: () => void }) {
         </label>
       </div>
       <div className="metric-grid">
-        {cards.map(({ name, value, icon: Icon, detail, link }) => (
+        {cards.map(({ name, value, icon: Icon, link }) => (
           <Link className="metric-card" key={name} href={path(link)}>
             <div>
               <span>{name}</span>
               <Icon size={19} />
             </div>
-            <strong>
-              {name === "Completed Spaces" && !bookingAccess ? "—" : value}
-            </strong>
-            <small>
-              {detail}
-              <ArrowUpRight size={13} />
-            </small>
+            <strong>{name === "Spaces" && !bookingAccess ? "—" : value}</strong>
           </Link>
         ))}
       </div>
       <div className="dashboard-main-grid">
         <section className="panel growth-panel">
           <SectionHeading
-            title="A growing founder network"
+            title="Founder growth"
             detail="Cumulative founders from the records in this workspace"
             action={<span className="small-tag">All time</span>}
           />
@@ -155,30 +184,29 @@ export default function Overview({ addFounder }: { addFounder: () => void }) {
         </section>
         <section className="panel country-panel">
           <SectionHeading
-            title="Where founders are building"
+            title="By region"
             detail={`${r.countries.length} countries represented`}
           />
-          <div className="country-bars">
-            {r.countries.slice(0, 5).map((v, i) => (
-              <button
-                key={v.name}
-                onClick={() => setCountry(country === v.name ? "" : v.name)}
-              >
-                <span className={`country-mark tone-${i % 5}`}>
-                  {countryCode(v.name)}
-                </span>
-                <span className="country-bar-label">
-                  {v.name}
-                  <span className="progress">
-                    <i
-                      style={{
-                        width: `${(v.value / Math.max(1, r.founders.length)) * 100}%`,
-                      }}
-                    />
-                  </span>
-                </span>
-                <b>{v.value}</b>
-              </button>
+          <div className="region-chart">
+            <Chart
+              label="Founder regions"
+              type="donut"
+              data={regions}
+              center={{ value: r.founders.length, label: "Founders" }}
+            />
+          </div>
+          <div className="region-legend">
+            {regions.map((v, i) => (
+              <div key={v.name}>
+                <i
+                  style={{ background: chartPalette[i % chartPalette.length] }}
+                />
+                <span>{v.name}</span>
+                <b>
+                  {Math.round((v.value / Math.max(1, r.founders.length)) * 100)}
+                  %
+                </b>
+              </div>
             ))}
           </div>
           <Link className="panel-bottom-link" href={path("founders")}>
@@ -303,21 +331,25 @@ export default function Overview({ addFounder }: { addFounder: () => void }) {
       <div className="three-grid">
         <section className="panel">
           <SectionHeading
-            title="Products taking shape"
+            title="Product stages"
             detail="Company product stages"
           />
           <Chart label="Product stages" data={r.stages} />
         </section>
         <section className="panel">
           <SectionHeading
-            title="What founders need"
+            title="Top business needs"
             detail="Explicit needs from recorded evidence"
           />
-          <Chart label="Business needs" data={r.businessNeeds} />
+          <Chart
+            label="Business needs"
+            data={r.businessNeeds}
+            type="horizontal"
+          />
         </section>
         <section className="panel">
           <SectionHeading
-            title="Sectors in the room"
+            title="By sector"
             detail="Primary sectors, not competitor assumptions"
           />
           <Chart label="Sectors" data={r.sectors} type="donut" />

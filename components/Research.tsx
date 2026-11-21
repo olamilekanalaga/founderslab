@@ -1,4 +1,5 @@
 "use client";
+import ResearchBrowser from "./ResearchBrowser";
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Plus, Pencil, BookOpen, ArrowUpRight } from "lucide-react";
@@ -19,6 +20,7 @@ export default function Research({
     params = useSearchParams();
   const [founder, setFounder] = useState(params.get("founder") || ""),
     [status, setStatus] = useState(""),
+    [mode, setMode] = useState("workspace"),
     [record, setRecord] = useState<RecordRow | null | undefined>(undefined);
   const filtered = s.research.filter(
     (r) =>
@@ -71,65 +73,94 @@ export default function Research({
           {filtered.length} research records · {s.needs.length} documented needs
         </span>
       </div>
-      <section className="panel">
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Founder / company</th>
-                <th>Space</th>
-                <th>Researcher / date</th>
-                <th>Confidence</th>
-                <th>Status</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((r) => (
-                <tr key={r.id}>
-                  <td>
-                    <b>{s.founders.find((f) => f.id === r.founderId)?.name}</b>
-                    <small>
-                      {s.companies.find((c) => c.id === r.companyId)?.name}
-                    </small>
-                  </td>
-                  <td>
-                    <Link
-                      className="text-link"
-                      href={path("spaces", r.sessionId)}
-                    >
-                      {s.sessions.find((v) => v.id === r.sessionId)?.title}
-                    </Link>
-                  </td>
-                  <td>
-                    <b>{r.researcher}</b>
-                    <small>{niceDate(r.recordedAt)}</small>
-                  </td>
-                  <td>
-                    {r.confidence}
-                    <small>{r.visibility}</small>
-                  </td>
-                  <td>
-                    <Status value={r.status} />
-                  </td>
-                  <td>
-                    <button className="button" onClick={() => setRecord(r)}>
-                      {can ? "Open / edit" : "Read notes"}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {!filtered.length && (
-            <Empty>
-              No research records match. Approve a session participant before
-              adding an appearance record.
-            </Empty>
-          )}
+      <div className="directory-view-bar">
+        <span>{filtered.length} interviews</span>
+        <div className="segmented">
+          <button
+            aria-pressed={mode === "workspace"}
+            onClick={() => setMode("workspace")}
+          >
+            Workspace
+          </button>
+          <button
+            aria-pressed={mode === "table"}
+            onClick={() => setMode("table")}
+          >
+            Table
+          </button>
+          <button
+            aria-pressed={mode === "needs"}
+            onClick={() => setMode("needs")}
+          >
+            Business needs
+          </button>
         </div>
-      </section>
-      <section className="panel">
+      </div>
+      {mode === "workspace" ? (
+        <ResearchBrowser records={filtered} onEdit={setRecord} />
+      ) : mode === "table" ? (
+        <section className="panel">
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Founder / company</th>
+                  <th>Space</th>
+                  <th>Researcher / date</th>
+                  <th>Confidence</th>
+                  <th>Status</th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((r) => (
+                  <tr key={r.id}>
+                    <td>
+                      <b>
+                        {s.founders.find((f) => f.id === r.founderId)?.name}
+                      </b>
+                      <small>
+                        {s.companies.find((c) => c.id === r.companyId)?.name}
+                      </small>
+                    </td>
+                    <td>
+                      <Link
+                        className="text-link"
+                        href={path("spaces", r.sessionId)}
+                      >
+                        {s.sessions.find((v) => v.id === r.sessionId)?.title}
+                      </Link>
+                    </td>
+                    <td>
+                      <b>{r.researcher}</b>
+                      <small>{niceDate(r.recordedAt)}</small>
+                    </td>
+                    <td>
+                      {r.confidence}
+                      <small>{r.visibility}</small>
+                    </td>
+                    <td>
+                      <Status value={r.status} />
+                    </td>
+                    <td>
+                      <button className="button" onClick={() => setRecord(r)}>
+                        {can ? "Open / edit" : "Read notes"}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {!filtered.length && (
+              <Empty>
+                No research records match. Approve a session participant before
+                adding an appearance record.
+              </Empty>
+            )}
+          </div>
+        </section>
+      ) : null}
+      <section className="panel" hidden={mode !== "needs"}>
         <SectionHeading
           title="Business needs & explicit signals"
           detail="Needs preserve the evidence they came from. Hiring is never inferred from team size."

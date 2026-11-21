@@ -11,7 +11,7 @@ export default function MarketMap({
   edit: (resource: Resource, record?: Record<string, unknown>) => void;
 }) {
   const { state: s, viewer, path } = useWorkspace();
-  const [mode, setMode] = useState("list"),
+  const [mode, setMode] = useState("network"),
     [type, setType] = useState(""),
     [company, setCompany] = useState("");
   const rows = s.relationships.filter(
@@ -119,7 +119,7 @@ export default function MarketMap({
                       x2={b.x}
                       y2={b.y}
                       stroke={
-                        r.type.includes("competitor") ? "#b69b8a" : "#8ca294"
+                        r.type.includes("competitor") ? "#e293ab" : "#b7a2ed"
                       }
                       strokeWidth={2}
                       strokeDasharray={
@@ -139,8 +139,8 @@ export default function MarketMap({
                     cx={n.x}
                     cy={n.y}
                     r={25}
-                    fill={i % 2 ? "#f1eadb" : "#e5ede7"}
-                    stroke="#a7b5a9"
+                    fill={i % 2 ? "#ede7ff" : "#e6e9ff"}
+                    stroke="#9c83e5"
                   />
                   <text
                     x={n.x}

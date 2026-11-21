@@ -9,10 +9,11 @@ test("demo opens without login, edits persist, and reset restores 50 fictional f
   await page.setViewportSize({ width: 393, height: 852 });
   await page.goto("/demo");
   await expect(
-    page.getByRole("heading", { name: /Good morning/ }),
+    page.getByRole("heading", { name: "Overview", exact: true }),
   ).toBeVisible();
   await expect(page.locator(".demo-banner")).toContainText("Fictional demo");
   await page.goto("/demo/founders");
+  await page.getByRole("button", { name: "Table", exact: true }).click();
   await page.getByRole("button", { name: "Add founder", exact: true }).click();
   await field(page, "Founder name", "Fictional Test Founder");
   await field(page, "Role", "Founder");
@@ -21,6 +22,7 @@ test("demo opens without login, edits persist, and reset restores 50 fictional f
   await page.getByLabel("Search founders").fill("Fictional Test Founder");
   await expect(page.locator("tbody tr")).toHaveCount(1);
   await page.reload();
+  await page.getByRole("button", { name: "Table", exact: true }).click();
   await page.getByLabel("Search founders").fill("Fictional Test Founder");
   await expect(page.locator("tbody")).toContainText("Fictional Test Founder");
   await page.getByRole("button", { name: "Reset demo", exact: true }).click();
@@ -28,6 +30,7 @@ test("demo opens without login, edits persist, and reset restores 50 fictional f
     .getByRole("button", { name: "Reset fictional demo", exact: true })
     .click();
   await page.goto("/demo/founders");
+  await page.getByRole("button", { name: "Table", exact: true }).click();
   await expect(page.locator("tbody tr")).toHaveCount(50);
 });
 test("demo application, approval, booking and one recording propagate to linked profiles", async ({
@@ -341,6 +344,10 @@ test("core mobile views pass automated accessibility checks", async ({
     "/demo",
     "/demo/founders",
     "/demo/founders/f1",
+    "/demo/spaces",
+    "/demo/classification",
+    "/demo/research",
+    "/demo/reports",
     "/apply?mode=demo",
     "/book?mode=demo",
   ]) {
@@ -351,4 +358,52 @@ test("core mobile views pass automated accessibility checks", async ({
       .analyze();
     expect(result.violations, route).toEqual([]);
   }
+});
+
+test("redesigned founder cards, classification labels and calendar preserve working records", async ({
+  page,
+}) => {
+  await page.goto("/demo/founders");
+  await expect(page.locator(".founder-tile")).toHaveCount(12);
+  await page.getByLabel("Search founders").fill("Amara");
+  await expect(page.locator(".founder-tile")).toHaveCount(1);
+  await page.getByRole("link", { name: "Amara Okafor", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Amara Okafor", exact: true }),
+  ).toBeVisible();
+  await page.goto("/demo/classification");
+  await page
+    .locator(".classification-group")
+    .filter({ has: page.getByRole("heading", { name: "Sector", exact: true }) })
+    .getByRole("button", { name: "Identity", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Save labels", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Saved", exact: true }),
+  ).toBeVisible();
+  await page.reload();
+  await expect(
+    page
+      .locator(".classification-group")
+      .filter({
+        has: page.getByRole("heading", { name: "Sector", exact: true }),
+      })
+      .getByRole("button", { name: "Identity", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await page.goto("/demo/companies");
+  await page.getByLabel("Filter sector").selectOption("Identity");
+  await expect(page.locator("tbody tr")).toHaveCount(6);
+  await page.goto("/demo/spaces");
+  await expect(page.locator(".agenda-session")).toHaveCount(4);
+  await page
+    .getByRole("button", { name: "Previous month", exact: true })
+    .click();
+  await expect(page.locator(".calendar-panel")).toContainText("November 2026");
+  await page.getByRole("button", { name: "Next month", exact: true }).click();
+  await expect(page.locator(".agenda-session")).toHaveCount(4);
+  await page.goto("/demo/research");
+  await page.getByRole("button", { name: "Notes", exact: true }).click();
+  await expect(page.locator(".research-takeaways article")).toHaveCount(12);
+  await page.getByRole("button", { name: "Actions", exact: true }).click();
+  await expect(page.locator(".research-takeaways")).toContainText("Follow-up");
 });

@@ -98,6 +98,7 @@ export type Section =
   | "founders"
   | "companies"
   | "spaces"
+  | "classification"
   | "research"
   | "market-map"
   | "opportunities"
@@ -110,6 +111,7 @@ export const SECTIONS: Section[] = [
   "companies",
   "spaces",
   "research",
+  "classification",
   "market-map",
   "opportunities",
   "reports",

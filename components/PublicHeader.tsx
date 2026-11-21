@@ -4,14 +4,15 @@ const subscribe = () => () => {};
 const clientSnapshot = () => true;
 const serverSnapshot = () => false;
 import Link from "next/link";
-import { FlaskConical, ArrowUpRight } from "lucide-react";
+import BrandMark from "./BrandMark";
+import { ArrowUpRight } from "lucide-react";
 export default function PublicHeader() {
   const ready = useSyncExternalStore(subscribe, clientSnapshot, serverSnapshot);
   return (
     <header className="public-header" data-ready={ready}>
       <Link className="brand" href="/">
         <span className="brand-mark">
-          <FlaskConical size={22} />
+          <BrandMark />
         </span>
         <span>
           Founders Lab<small>with Ola_Crrypt</small>

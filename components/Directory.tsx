@@ -12,6 +12,8 @@ import {
   Building2,
   Link2,
   Users,
+  LayoutGrid,
+  List,
 } from "lucide-react";
 import { useWorkspace } from "./WorkspaceContext";
 import {
@@ -41,7 +43,9 @@ export default function Directory({
     [country, setCountry] = useState(""),
     [sector, setSector] = useState(""),
     [stage, setStage] = useState(""),
-    [label, setLabel] = useState("");
+    [label, setLabel] = useState(""),
+    [view, setView] = useState("cards"),
+    [page, setPage] = useState(0);
   if (id)
     return kind === "founders" ? (
       <FounderProfile id={id} edit={edit} />
@@ -77,6 +81,11 @@ export default function Directory({
       (!country || c.country === country) &&
       `${c.name} ${c.description}`.toLowerCase().includes(query.toLowerCase()),
   );
+  const currentPage = Math.min(
+    page,
+    Math.max(0, Math.ceil(founders.length / 12) - 1),
+  );
+  const shownFounders = founders.slice(currentPage * 12, currentPage * 12 + 12);
   const count = kind === "founders" ? founders.length : visibleCompanies.length;
   const options = (values: string[]) => Array.from(new Set(values)).sort();
   return (
@@ -103,13 +112,19 @@ export default function Directory({
             aria-label={`Search ${kind}`}
             placeholder={`Search ${kind}, ${kind === "founders" ? "X handles" : "products"}…`}
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setPage(0);
+            }}
           />
         </label>
         <select
           aria-label="Filter country"
           value={country}
-          onChange={(e) => setCountry(e.target.value)}
+          onChange={(e) => {
+            setCountry(e.target.value);
+            setPage(0);
+          }}
         >
           <option value="">All countries</option>
           {options(s.founders.map((f) => f.country)).map((v) => (
@@ -119,7 +134,10 @@ export default function Directory({
         <select
           aria-label="Filter sector"
           value={sector}
-          onChange={(e) => setSector(e.target.value)}
+          onChange={(e) => {
+            setSector(e.target.value);
+            setPage(0);
+          }}
         >
           <option value="">All sectors</option>
           {options(s.companies.map((c) => c.sector)).map((v) => (
@@ -129,7 +147,10 @@ export default function Directory({
         <select
           aria-label="Filter stage"
           value={stage}
-          onChange={(e) => setStage(e.target.value)}
+          onChange={(e) => {
+            setStage(e.target.value);
+            setPage(0);
+          }}
         >
           <option value="">All stages</option>
           {options(s.companies.map((c) => c.stage)).map((v) => (
@@ -139,7 +160,10 @@ export default function Directory({
         <select
           aria-label="Filter classification label"
           value={label}
-          onChange={(e) => setLabel(e.target.value)}
+          onChange={(e) => {
+            setLabel(e.target.value);
+            setPage(0);
+          }}
         >
           <option value="">All labels</option>
           {s.labels
@@ -151,122 +175,223 @@ export default function Directory({
             ))}
         </select>
       </div>
-      <section className="panel">
-        <SectionHeading
-          title={`${count} ${kind}`}
-          detail={
-            kind === "founders"
-              ? "One founder can be connected to multiple companies."
-              : "Classification labels describe distinct dimensions."
-          }
-        />
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>{kind === "founders" ? "Founder" : "Company"}</th>
-                <th>{kind === "founders" ? "Company / team" : "Founders"}</th>
-                <th>Country</th>
-                <th>Sector</th>
-                <th>{kind === "founders" ? "Relationship" : "Stage"}</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {kind === "founders"
-                ? founders.map((f, i) => {
-                    const co = s.memberships
-                      .filter((m) => m.founderId === f.id)
-                      .map((m) =>
-                        s.companies.find((c) => c.id === m.companyId)!,
+      {kind === "founders" && (
+        <div className="directory-view-bar">
+          <span>{count} founders</span>
+          <div className="segmented">
+            <button
+              aria-pressed={view === "cards"}
+              onClick={() => setView("cards")}
+            >
+              <LayoutGrid size={15} />
+              Cards
+            </button>
+            <button
+              aria-pressed={view === "table"}
+              onClick={() => setView("table")}
+            >
+              <List size={15} />
+              Table
+            </button>
+          </div>
+        </div>
+      )}
+      {kind === "founders" && view === "cards" ? (
+        <div className="founder-card-grid">
+          {shownFounders.map((f, i) => {
+            const co = s.memberships
+              .filter((m) => m.founderId === f.id)
+              .map((m) => s.companies.find((c) => c.id === m.companyId)!)
+              .filter(Boolean);
+            return (
+              <article className="founder-tile" key={f.id}>
+                <div className="row-between">
+                  <Avatar name={f.name} index={i} />
+                  <Link
+                    className="icon-button"
+                    href={path("founders", f.id)}
+                    aria-label={`Open ${f.name}`}
+                  >
+                    <ArrowUpRight size={16} />
+                  </Link>
+                </div>
+                <Link
+                  href={path("founders", f.id)}
+                  className="founder-tile-name"
+                >
+                  {f.name}
+                </Link>
+                <span className="founder-tile-company">
+                  {co.map((c) => c.name).join(" · ") || f.role}
+                </span>
+                <span className="founder-tile-handle">@{f.xHandle}</span>
+                <div className="founder-tile-footer">
+                  <span>{f.country}</span>
+                  <span>{co[0]?.sector || "Unclassified"}</span>
+                </div>
+              </article>
+            );
+          })}
+          {!count && <Empty>No founders match these filters.</Empty>}
+          {count > 0 && (
+            <div className="directory-pagination">
+              <span>
+                {currentPage * 12 + 1}–{Math.min((currentPage + 1) * 12, count)}{" "}
+                of {count} founders
+              </span>
+              <div>
+                <button
+                  className="button"
+                  disabled={currentPage === 0}
+                  onClick={() => setPage(currentPage - 1)}
+                >
+                  Previous
+                </button>
+                <button
+                  className="button"
+                  disabled={(currentPage + 1) * 12 >= count}
+                  onClick={() => setPage(currentPage + 1)}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <section className="panel">
+          <SectionHeading title={`${count} ${kind}`} />
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>{kind === "founders" ? "Founder" : "Company"}</th>
+                  <th>{kind === "founders" ? "Company / team" : "Founders"}</th>
+                  <th>Country</th>
+                  <th>Sector</th>
+                  <th>{kind === "founders" ? "Relationship" : "Stage"}</th>
+                  {kind === "companies" && (
+                    <>
+                      <th>Team</th>
+                      <th>Needs</th>
+                    </>
+                  )}
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                {kind === "founders"
+                  ? founders.map((f, i) => {
+                      const co = s.memberships
+                        .filter((m) => m.founderId === f.id)
+                        .map((m) =>
+                          s.companies.find((c) => c.id === m.companyId)!,
+                        );
+                      return (
+                        <tr key={f.id}>
+                          <td>
+                            <Link
+                              className="table-person"
+                              href={path(kind, f.id)}
+                            >
+                              <Avatar name={f.name} index={i} />
+                              <span>
+                                <b>{f.name}</b>
+                                <small>@{f.xHandle}</small>
+                              </span>
+                            </Link>
+                          </td>
+                          <td>
+                            <b>
+                              {co.map((c) => c.name).join(", ") ||
+                                "Not recorded"}
+                            </b>
+                            <small>{co[0]?.teamSize || "—"} people</small>
+                          </td>
+                          <td>{f.country}</td>
+                          <td>{co[0]?.sector || "—"}</td>
+                          <td>
+                            <Status value={f.relationshipStatus} />
+                          </td>
+                          <td>
+                            <Link
+                              className="icon-button"
+                              aria-label={`Open ${f.name}`}
+                              href={path(kind, f.id)}
+                            >
+                              <ArrowUpRight size={17} />
+                            </Link>
+                          </td>
+                        </tr>
                       );
-                    return (
-                      <tr key={f.id}>
+                    })
+                  : visibleCompanies.map((c, i) => (
+                      <tr key={c.id}>
                         <td>
                           <Link
                             className="table-person"
-                            href={path(kind, f.id)}
+                            href={path(kind, c.id)}
                           >
-                            <Avatar name={f.name} index={i} />
+                            <Avatar name={c.name} index={i} />
                             <span>
-                              <b>{f.name}</b>
-                              <small>@{f.xHandle}</small>
+                              <b>{c.name}</b>
+                              <small>
+                                {c.economicFunctions.join(" · ") ||
+                                  "Function not classified"}
+                              </small>
                             </span>
                           </Link>
                         </td>
                         <td>
-                          <b>
-                            {co.map((c) => c.name).join(", ") || "Not recorded"}
-                          </b>
-                          <small>{co[0]?.teamSize || "—"} people</small>
+                          {s.memberships
+                            .filter((m) => m.companyId === c.id)
+                            .map(
+                              (m) =>
+                                s.founders.find((f) => f.id === m.founderId)
+                                  ?.name,
+                            )
+                            .join(", ") || "Not recorded"}
                         </td>
-                        <td>{f.country}</td>
-                        <td>{co[0]?.sector || "—"}</td>
+                        <td>{c.country}</td>
+                        <td>{c.sector}</td>
                         <td>
-                          <Status value={f.relationshipStatus} />
+                          <Status value={c.stage} />
+                        </td>
+                        <td>{c.teamSize}</td>
+                        <td>
+                          <div className="table-tags">
+                            {s.needs
+                              .filter((n) => n.companyId === c.id)
+                              .slice(0, 2)
+                              .map((n) => (
+                                <span className="tag" key={n.id}>
+                                  {n.kind}
+                                </span>
+                              ))}
+                          </div>
                         </td>
                         <td>
                           <Link
                             className="icon-button"
-                            aria-label={`Open ${f.name}`}
-                            href={path(kind, f.id)}
+                            aria-label={`Open ${c.name}`}
+                            href={path(kind, c.id)}
                           >
                             <ArrowUpRight size={17} />
                           </Link>
                         </td>
                       </tr>
-                    );
-                  })
-                : visibleCompanies.map((c, i) => (
-                    <tr key={c.id}>
-                      <td>
-                        <Link className="table-person" href={path(kind, c.id)}>
-                          <Avatar name={c.name} index={i} />
-                          <span>
-                            <b>{c.name}</b>
-                            <small>
-                              {c.economicFunctions.join(" · ") ||
-                                "Function not classified"}
-                            </small>
-                          </span>
-                        </Link>
-                      </td>
-                      <td>
-                        {s.memberships
-                          .filter((m) => m.companyId === c.id)
-                          .map(
-                            (m) =>
-                              s.founders.find((f) => f.id === m.founderId)
-                                ?.name,
-                          )
-                          .join(", ") || "Not recorded"}
-                      </td>
-                      <td>{c.country}</td>
-                      <td>{c.sector}</td>
-                      <td>
-                        <Status value={c.stage} />
-                      </td>
-                      <td>
-                        <Link
-                          className="icon-button"
-                          aria-label={`Open ${c.name}`}
-                          href={path(kind, c.id)}
-                        >
-                          <ArrowUpRight size={17} />
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-            </tbody>
-          </table>
-          {!count && (
-            <Empty>
-              No records match these filters. Try a different country, sector or
-              search.
-            </Empty>
-          )}
-        </div>
-      </section>
+                    ))}
+              </tbody>
+            </table>
+            {!count && (
+              <Empty>
+                No records match these filters. Try a different country, sector
+                or search.
+              </Empty>
+            )}
+          </div>
+        </section>
+      )}
     </>
   );
 }

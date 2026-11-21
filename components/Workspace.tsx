@@ -1,9 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import BrandMark from "./BrandMark";
 import { useRouter } from "next/navigation";
 import {
-  FlaskConical,
   LayoutDashboard,
   Users,
   Building2,
@@ -24,6 +24,7 @@ import {
   X,
   LogOut,
   ShieldCheck,
+  Tags,
 } from "lucide-react";
 import type { Section, DataState, Viewer } from "@/lib/types";
 import { ROLES } from "@/lib/catalog";
@@ -35,6 +36,7 @@ import Overview from "./Overview";
 import Directory from "./Directory";
 import Spaces from "./Spaces";
 import Research from "./Research";
+import Classification from "./Classification";
 import MarketMap from "./MarketMap";
 import Opportunities from "./Opportunities";
 import Reports from "./Reports";
@@ -46,6 +48,7 @@ const navigation = [
   { id: "companies", label: "Companies", icon: Building2 },
   { id: "spaces", label: "Founder Spaces", icon: Mic2 },
   { id: "research", label: "Research", icon: NotebookPen },
+  { id: "classification", label: "Classification", icon: Tags },
   { id: "market-map", label: "Market map", icon: Network },
   { id: "opportunities", label: "Opportunities", icon: BriefcaseBusiness },
   { id: "reports", label: "Reports", icon: ChartNoAxesCombined },
@@ -136,7 +139,7 @@ function Shell({ section, id }: { section: Section; id?: string }) {
       <aside className="sidebar">
         <Link className="brand" href={path("dashboard")}>
           <span className="brand-mark">
-            <FlaskConical size={21} strokeWidth={1.8} />
+            <BrandMark />
           </span>
           <span>
             Founders Lab<small>with Ola_Crrypt</small>
@@ -310,6 +313,8 @@ function Shell({ section, id }: { section: Section; id?: string }) {
             <Spaces id={id} edit={edit} />
           ) : section === "research" ? (
             <Research edit={edit} />
+          ) : section === "classification" ? (
+            <Classification />
           ) : section === "market-map" ? (
             <MarketMap edit={edit} />
           ) : section === "opportunities" ? (

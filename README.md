@@ -1,6 +1,6 @@
 # Founders Lab with Ola_Crrypt
 
-A working, mobile-first founder programme and private research workspace. SiteFlow informed the navigation, neutral visual system and guided-demo patterns; the domain and workflows are specific to founder research. Built with Next.js App Router, React, TypeScript, Tailwind/CSS, Lucide, Recharts, PostgreSQL, Prisma and Zod.
+A working, mobile-first founder programme and private research workspace. The supplied navy-and-violet Founders Lab reference defines the visual system: dark navigation, compact cards, violet charts and a light research workspace. SiteFlow informed the initial workflow structure. Built with Next.js App Router, React, TypeScript, Tailwind/CSS, Lucide, Recharts, PostgreSQL, Prisma and Zod.
 
 **Open `/demo` without an account.** It contains 50 fictional founders, 50 companies, 53 founder/company memberships, 10 completed Spaces plus four upcoming examples, interview records, needs, relationship hypotheses, opportunities and two monthly campaigns. All names, contacts, businesses, evidence and recording links in this dataset are fictional. `.invalid` links intentionally do not resolve.
 
@@ -44,8 +44,10 @@ Migrations live under `prisma/migrations/`. `db:migrate` applies SQL transaction
 - Public Space request: dates with IANA timezones, deadlines, available project seats, host and approval status. Speakers are counted separately from project seats.
 - Admin approval: create/link founder and company profiles, assign a Space, approve/waitlist/decline/cancel, mark attendance/no-show, and preserve application history.
 - Shared recording: paste one URL on a session. Founder appearances and company timelines derive their recording links from that session. No recording upload or transcription.
-- Founder/company directory: search, country/sector/stage filters, many-to-many memberships, relationship status, source/evidence, contacts, follow-up actions and company classifications.
-- Research: twelve structured sections, manual/pasted notes, classification, researcher/date/confidence, evidence, verification and private/public review. Publishing requires administrator review; public highlights also require promotional consent for that exact founder/company.
+- Founder/company directory: paginated founder cards with a table alternative, search, country/sector/stage filters, many-to-many memberships, relationship status, source/evidence, contacts, follow-up actions and company classifications.
+- Research: split-view interview reader with Summary/Notes/Actions, a table alternative and twelve structured sections, manual/pasted notes, classification, researcher/date/confidence, evidence, verification and private/public review. Publishing requires administrator review; public highlights also require promotional consent for that exact founder/company.
+- Classification: a dedicated company workspace for multi-label editing; existing company-save permissions and persistence apply. Geographic market labels remain independent of operating-country records.
+- Spaces calendar: month/day navigation with an agenda, project-seat counts and shared recording links.
 - Market map: explicit company relationships in list and network modes, with reason, evidence, reviewer, confidence and review date. Matches remain hypotheses; a shared sector does not imply competition.
 - Opportunities: editable board/list pipeline, documented company need, related founder, owner, budget/unknown, next action, follow-up, outcome and change history. Hiring claims require supporting evidence.
 - Reports: stored-record-derived counts, charts, date/country/cohort/sector/stage filters, coverage/missing responses, sources/limitations, CSV and actual PDF download.
@@ -56,7 +58,7 @@ Migrations live under `prisma/migrations/`. `db:migrate` applies SQL transaction
 
 Public routes: `/`, `/apply`, `/book`, `/confirmation`, `/terms`, `/demo`, `/signin`, `/invite`.
 
-Private routes: `/dashboard`, `/founders`, `/companies`, `/spaces`, `/research`, `/market-map`, `/opportunities`, `/reports`, `/campaigns`, `/settings` and entity details. Private data is not embedded in public pages.
+Private routes: `/dashboard`, `/founders`, `/companies`, `/spaces`, `/research`, `/classification`, `/market-map`, `/opportunities`, `/reports`, `/campaigns`, `/settings` and entity details. Private data is not embedded in public pages.
 
 | Role                 | Default scope                                                |
 | -------------------- | ------------------------------------------------------------ |
@@ -109,4 +111,4 @@ Invitations are generated for manual secure sharing; email delivery, forgotten-p
 
 The workspace loads its authorised dataset as a single snapshot, appropriate for this initial programme size; large deployments need server pagination, narrower queries and concurrent-edit conflict handling. Session approval capacity is protected by PostgreSQL row locks. More general simultaneous edits currently use last committed field values. No audio processing, automated research, messaging, external analytics, token trading or award payments run in V1.
 
-No public deployment has been provisioned by this implementation. Follow `DEPLOYMENT.md` for a **new Founders Lab project**, keeping the previous Aladdin deployment separate.
+The dedicated Vercel project is connected to `olamilekanalaga/founderslab`, production branch `main`. Follow `DEPLOYMENT.md` for environment and database setup. Browser and database checks are run locally against the production build; a successful deployment status alone does not verify every live flow.

@@ -2,15 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-  Plus,
-  ArrowUpRight,
-  ArrowLeft,
-  CalendarDays,
-  Mic2,
-  Pencil,
-  Users,
-} from "lucide-react";
+import { Plus, ArrowLeft, Mic2, Pencil, Users } from "lucide-react";
 import { useWorkspace } from "./WorkspaceContext";
 import {
   Avatar,
@@ -23,6 +15,7 @@ import {
 import { approvedSeats } from "@/lib/domain";
 import { dateTime, niceDate } from "@/lib/selectors";
 import { BOOKING_STATUSES } from "@/lib/catalog";
+import SessionCalendar from "./SessionCalendar";
 import type { Resource } from "./RecordEditor";
 type Editor = (resource: Resource, record?: Record<string, unknown>) => void;
 export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
@@ -246,58 +239,7 @@ export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
             </span>
           </div>
           {tab === "sessions" ? (
-            <div className="session-grid">
-              {[...s.sessions]
-                .sort((a, b) => b.startsAt.localeCompare(a.startsAt))
-                .filter((v) => filter === "All" || v.status === filter)
-                .map((session) => (
-                  <article className="panel session-card" key={session.id}>
-                    <div className="row-between">
-                      <span className="session-icon">
-                        <CalendarDays size={21} />
-                      </span>
-                      <Status value={session.status} />
-                    </div>
-                    <Link href={path("spaces", session.id)}>
-                      <h2>{session.title}</h2>
-                    </Link>
-                    <p>
-                      {dateTime(session.startsAt, session.timezone)}
-                      <br />
-                      {session.timezone} · {session.host}
-                    </p>
-                    <div className="session-capacity">
-                      <span>
-                        {approvedSeats(s, session.id)} / {session.capacity}{" "}
-                        project seats
-                      </span>
-                      <span>{session.researchStatus}</span>
-                    </div>
-                    <div className="session-card-actions">
-                      <Link
-                        className="text-link"
-                        href={path("spaces", session.id)}
-                      >
-                        View session <ArrowUpRight size={14} />
-                      </Link>
-                      {can && (
-                        <button
-                          className="icon-button"
-                          aria-label={`Edit ${session.title}`}
-                          onClick={() =>
-                            edit(
-                              "session",
-                              session as unknown as Record<string, unknown>,
-                            )
-                          }
-                        >
-                          <Pencil size={16} />
-                        </button>
-                      )}
-                    </div>
-                  </article>
-                ))}
-            </div>
+            <SessionCalendar sessions={s.sessions} filter={filter} />
           ) : tab === "applications" ? (
             <section className="panel">
               <div className="table-wrap">

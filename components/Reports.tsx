@@ -166,7 +166,12 @@ export default function Reports() {
             title="Sector analysis"
             detail={`Base: ${r.companies.length} companies`}
           />
-          <Chart label="Report sectors" data={r.sectors} />
+          <Chart
+            label="Report sectors"
+            data={r.sectors}
+            type="donut"
+            center={{ value: r.companies.length, label: "Companies" }}
+          />
         </section>
         <section className="panel">
           <SectionHeading title="Product maturity" />
@@ -174,7 +179,11 @@ export default function Reports() {
         </section>
         <section className="panel">
           <SectionHeading title="Common business challenges" />
-          <Chart label="Report needs" data={r.businessNeeds} />
+          <Chart
+            label="Report needs"
+            data={r.businessNeeds}
+            type="horizontal"
+          />
         </section>
       </div>
       <section className="panel">

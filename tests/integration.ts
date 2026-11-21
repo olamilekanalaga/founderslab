@@ -262,6 +262,32 @@ try {
     ).status,
     409,
   );
+  const companyToClassify = state.companies.find(
+    (c) => c.id === linked.companyId,
+  )!;
+  const labelIds = state.labels
+    .filter(
+      (l) =>
+        (l.group === "Sector" && l.name === "Payments") ||
+        (l.group === "Product stage" && l.name === "MVP") ||
+        (l.group === "Business model" && l.name === "Subscription"),
+    )
+    .map((l) => l.id);
+  state = await command("company.save", {
+    ...companyToClassify,
+    founderIds: [linked.founderId],
+    labelIds,
+    businessModels: ["Subscription"],
+  });
+  assert.equal(
+    state.companyLabels.filter((l) => l.companyId === linked.companyId).length,
+    labelIds.length,
+  );
+  const classificationPage = await fetch(origin + "/classification", {
+    headers: { Cookie: admin.cookie },
+  });
+  assert.equal(classificationPage.status, 200);
+  assert.ok((await classificationPage.text()).includes("Classification"));
   pass(
     "Public application validation, normalised duplicate prevention, approval and limited-scope confirmation",
   );
@@ -494,7 +520,9 @@ try {
     await page.getByLabel("Password", { exact: true }).fill(password);
     await page.getByRole("button", { name: "Sign in", exact: true }).click();
     await page.waitForURL("**/dashboard");
-    await page.getByRole("heading", { name: /Good morning/ }).waitFor();
+    await page
+      .getByRole("heading", { name: "Overview", exact: true })
+      .waitFor();
     await page.goto(origin + "/founders/" + linked.founderId);
     await page
       .getByRole("heading", { name: "Integration Fictional", exact: true })

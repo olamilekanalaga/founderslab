@@ -12,26 +12,19 @@ import {
   PieChart,
   Pie,
   Cell,
+  Label,
 } from "recharts";
-const palette = [
-  "#4f685b",
-  "#d7b259",
-  "#748fa3",
-  "#b497a4",
-  "#abaf9c",
-  "#c6bfb0",
-  "#98a69b",
-  "#c89475",
-  "#7d7e88",
-  "#c4cbd0",
-];
+import { chartPalette } from "@/lib/design";
+const palette = chartPalette;
 export default function Chart({
   data,
   type = "bar",
   label,
+  center,
 }: {
   data: { name: string; value: number }[];
-  type?: "bar" | "area" | "donut";
+  type?: "bar" | "area" | "donut" | "horizontal";
+  center?: { value: string | number; label: string };
   label: string;
 }) {
   return (
@@ -46,18 +39,30 @@ export default function Chart({
             data={data}
             margin={{ top: 15, right: 12, left: -20, bottom: 0 }}
           >
-            <CartesianGrid vertical={false} stroke="#eeeae2" />
+            <defs>
+              <linearGradient
+                id="founder-growth-fill"
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="1"
+              >
+                <stop offset="0%" stopColor="#a889f6" stopOpacity={0.5} />
+                <stop offset="100%" stopColor="#a889f6" stopOpacity={0.02} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid vertical={false} stroke="#ececf5" />
             <XAxis
               dataKey="name"
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 11, fill: "#71766e" }}
+              tick={{ fontSize: 11, fill: "#65708a" }}
             />
             <YAxis
               allowDecimals={false}
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 11, fill: "#71766e" }}
+              tick={{ fontSize: 11, fill: "#65708a" }}
             />
             <Tooltip
               contentStyle={{
@@ -70,8 +75,8 @@ export default function Chart({
               isAnimationActive={false}
               type="monotone"
               dataKey="value"
-              stroke="#aa8133"
-              fill="#f2e8cd"
+              stroke="#8758eb"
+              fill="url(#founder-growth-fill)"
               strokeWidth={2.5}
             />
           </AreaChart>
@@ -87,6 +92,34 @@ export default function Chart({
               paddingAngle={3}
               stroke="none"
             >
+              {center && (
+                <Label
+                  position="center"
+                  content={({ viewBox }) => {
+                    const box = viewBox as { cx: number; cy: number };
+                    return (
+                      <text
+                        x={box.cx}
+                        y={box.cy}
+                        textAnchor="middle"
+                        fill="#242441"
+                      >
+                        <tspan
+                          x={box.cx}
+                          dy="-3"
+                          fontSize="27"
+                          fontWeight="700"
+                        >
+                          {center.value}
+                        </tspan>
+                        <tspan x={box.cx} dy="21" fontSize="12" fill="#65708a">
+                          {center.label}
+                        </tspan>
+                      </text>
+                    );
+                  }}
+                />
+              )}
               {data.map((d, i) => (
                 <Cell key={d.name} fill={palette[i % palette.length]} />
               ))}
@@ -99,17 +132,45 @@ export default function Chart({
               }}
             />
           </PieChart>
+        ) : type === "horizontal" ? (
+          <BarChart
+            data={data}
+            layout="vertical"
+            margin={{ top: 8, right: 26, left: 6, bottom: 8 }}
+          >
+            <XAxis type="number" hide allowDecimals={false} />
+            <YAxis
+              type="category"
+              dataKey="name"
+              width={110}
+              tick={{ fontSize: 11, fill: "#59637f" }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <Tooltip
+              cursor={{ fill: "#f3efff" }}
+              contentStyle={{ borderRadius: 9, border: "1px solid #e4dff3" }}
+            />
+            <Bar
+              dataKey="value"
+              fill="#9b72ee"
+              radius={[0, 4, 4, 0]}
+              maxBarSize={20}
+              isAnimationActive={false}
+              label={{ position: "right", fill: "#5f4d8a", fontSize: 11 }}
+            />
+          </BarChart>
         ) : (
           <BarChart
             data={data}
             margin={{ top: 10, right: 8, left: -20, bottom: 35 }}
           >
-            <CartesianGrid vertical={false} stroke="#eeeae2" />
+            <CartesianGrid vertical={false} stroke="#ececf5" />
             <XAxis
               dataKey="name"
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 10, fill: "#666b64" }}
+              tick={{ fontSize: 10, fill: "#65708a" }}
               angle={-23}
               textAnchor="end"
             />
@@ -117,7 +178,7 @@ export default function Chart({
               allowDecimals={false}
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 11, fill: "#71766e" }}
+              tick={{ fontSize: 11, fill: "#65708a" }}
             />
             <Tooltip
               contentStyle={{
