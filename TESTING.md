@@ -18,7 +18,7 @@ Verified locally against Node.js 24, PostgreSQL 17, Next.js 16.4.6 and Chromium.
 
 1. No-login demo opens; add/search a founder; refresh preserves changes; reset restores 50 founders.
 2. Submit fictional application → limited confirmation → admin approval → request booking → approve project → edit one recording → recording inherited by founder and company → document all twelve research sections → add a business need → create an opportunity → report contains 51 founders.
-3. Company classification filter, market-map network/type filter, opportunity board/list/status changes, country-filtered report counts, real CSV/PDF downloads, and persistent analyst preview with restricted navigation.
+3. Company classification filter, market-map network/type filter, opportunity board/list/status changes, country-filtered report counts, real CSV/PDF downloads, and removal of role switching from the Admin preview. Public booking has no workspace navigation.
 4. Research edits, campaign eligibility assessment and a manual award selection without a transfer.
 5. Navigation and document overflow at 375×812, 393×852, 834×1112 and 1440×1000 across overview, founder directory, Spaces, market map, reports and application.
 6. Automated accessibility checks at 393×852 for overview, founder directory/profile, Spaces, classification, research, reports, public application and booking.
@@ -32,7 +32,7 @@ The integration runner creates a randomly named local test database, runs the ch
 - Public applications validate, normalised duplicates return 409, approval creates the correct founder/company membership, and confirmation returns only limited project/status/session data. A reference alone cannot retrieve it.
 - Six simultaneous approvals into a five-project session produce five successes and one capacity rejection. Five seats can represent fifteen speakers. Capacity cannot be reduced below occupancy. Public session responses omit internal notes/participants.
 - Company classification saves preserve typed company data and persist label relationships; the authenticated classification route renders correctly. A recording persists in exactly one database column, `Session.recordingUrl`, and resolves on every connected founder/company timeline.
-- Invitations are accepted once; a researcher cannot access team/commercial datasets or submit settings/commercial/team commands.
+- Admin invitations are accepted once. Invitations for removed roles are rejected. A retired-role account cannot sign in, reuse an existing session, accept an old invitation or access private workspace pages/APIs. Public booking remains anonymous.
 - Reports derive 51 founders/21 Nigeria founders after a new application. A public research record is withheld without matching promotional consent and appears after consent exists for the exact founder/company.
 - Mobile production sign-in → private dashboard → newly approved founder profile has no page runtime errors or document overflow.
 

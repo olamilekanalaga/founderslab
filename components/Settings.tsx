@@ -11,7 +11,7 @@ export default function Settings({
   edit: (resource: Resource, record?: Record<string, unknown>) => void;
 }) {
   const { state: s, commit, busy, invitationPath, demo } = useWorkspace(),
-    [tab, setTab] = useState("Team"),
+    [tab, setTab] = useState("Admins"),
     [group, setGroup] = useState("Sector"),
     [userId, setUser] = useState<string | null>(null),
     [copied, setCopied] = useState(false);
@@ -20,14 +20,14 @@ export default function Settings({
     <>
       <div className="page-heading">
         <div>
-          <h1>Team & settings</h1>
+          <h1>Admin settings</h1>
         </div>
         <button className="button primary" onClick={() => edit("invitation")}>
-          <UserPlus size={16} /> Invite collaborator
+          <UserPlus size={16} /> Invite admin
         </button>
       </div>
       <div className="tabs settings-tabs">
-        {["Team", "Classification", "Programme", "Activity"].map((t) => (
+        {["Admins", "Classification", "Programme", "Activity"].map((t) => (
           <button
             key={t}
             className={tab === t ? "active" : ""}
@@ -64,13 +64,11 @@ export default function Settings({
           <code>{window.location.origin + invitationPath}</code>
         </div>
       )}
-      <section className="panel" hidden={tab !== "Team"}>
+      <section className="panel" hidden={tab !== "Admins"}>
         <SectionHeading
-          title="Team access"
+          title="Admin access"
           detail={
-            demo
-              ? "Role previews below are fictional. Production permissions are enforced by the server."
-              : "Sessions and permission checks are enforced on the server."
+            demo ? "Fictional admin account" : "Authorised administrators"
           }
         />
         <div className="table-wrap">
@@ -85,29 +83,31 @@ export default function Settings({
               </tr>
             </thead>
             <tbody>
-              {s.users.map((u, i) => (
-                <tr key={u.id}>
-                  <td>
-                    <div className="table-person">
-                      <Avatar name={u.name} index={i} />
-                      <span>
-                        <b>{u.name}</b>
-                        <small>{u.email}</small>
-                      </span>
-                    </div>
-                  </td>
-                  <td>{ROLES[u.roleId]?.name || u.roleId}</td>
-                  <td>{u.permissions.length} permissions</td>
-                  <td>
-                    <Status value={u.active ? "Active" : "Inactive"} />
-                  </td>
-                  <td>
-                    <button className="button" onClick={() => setUser(u.id)}>
-                      <ShieldCheck size={14} /> Permissions
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {s.users
+                .filter((u) => u.roleId === "admin")
+                .map((u, i) => (
+                  <tr key={u.id}>
+                    <td>
+                      <div className="table-person">
+                        <Avatar name={u.name} index={i} />
+                        <span>
+                          <b>{u.name}</b>
+                          <small>{u.email}</small>
+                        </span>
+                      </div>
+                    </td>
+                    <td>{ROLES[u.roleId]?.name || u.roleId}</td>
+                    <td>{u.permissions.length} permissions</td>
+                    <td>
+                      <Status value={u.active ? "Active" : "Inactive"} />
+                    </td>
+                    <td>
+                      <button className="button" onClick={() => setUser(u.id)}>
+                        <ShieldCheck size={14} /> Permissions
+                      </button>
+                    </td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         </div>
@@ -154,27 +154,29 @@ export default function Settings({
         </section>
         <section className="panel padded">
           <h2>Invitations</h2>
-          {s.invitations.map((i) => (
-            <div className="compact-note" key={i.id}>
-              <b>{i.name}</b>
-              <p>
-                {i.email} · {ROLES[i.roleId]?.name}
-              </p>
-              <Status
-                value={
-                  i.acceptedAt
-                    ? "Accepted"
-                    : new Date(i.expiresAt) < new Date()
-                      ? "Expired"
-                      : "Pending"
-                }
-              />
-            </div>
-          ))}
+          {s.invitations
+            .filter((i) => i.roleId === "admin")
+            .map((i) => (
+              <div className="compact-note" key={i.id}>
+                <b>{i.name}</b>
+                <p>
+                  {i.email} · {ROLES[i.roleId]?.name}
+                </p>
+                <Status
+                  value={
+                    i.acceptedAt
+                      ? "Accepted"
+                      : new Date(i.expiresAt) < new Date()
+                        ? "Expired"
+                        : "Pending"
+                  }
+                />
+              </div>
+            ))}
           {!s.invitations.length && (
             <p>
-              No invitations yet. Invite collaborators by role; links can be
-              shared manually.
+              No invitations yet. Invite admins by role; links can be shared
+              manually.
             </p>
           )}
         </section>

@@ -51,7 +51,7 @@ export async function POST(
         user?.passwordHash ||
         "0123456789abcdef:00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
       const valid = verifyPassword(p.password, encoded);
-      if (!user || !user.active || !valid)
+      if (!user || !user.active || user.roleId !== "admin" || !valid)
         throw new DomainError("Email or password is incorrect.", 401);
       await startSession(user.id);
       return json({ ok: true });
@@ -78,7 +78,12 @@ export async function POST(
         const found = await tx.invitation.findUnique({
           where: { tokenHash: hash(p.token) },
         });
-        if (!found || found.acceptedAt || found.expiresAt < new Date())
+        if (
+          !found ||
+          found.roleId !== "admin" ||
+          found.acceptedAt ||
+          found.expiresAt < new Date()
+        )
           throw new DomainError("This invitation is invalid or expired.", 400);
         const claim = await tx.invitation.updateMany({
           where: { id: found.id, acceptedAt: null },

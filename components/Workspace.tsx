@@ -53,7 +53,7 @@ const navigation = [
   { id: "opportunities", label: "Opportunities", icon: BriefcaseBusiness },
   { id: "reports", label: "Reports", icon: ChartNoAxesCombined },
   { id: "campaigns", label: "Campaigns & awards", icon: Award },
-  { id: "settings", label: "Team & settings", icon: SettingsIcon },
+  { id: "settings", label: "Settings", icon: SettingsIcon },
 ] as const;
 export default function Workspace(props: {
   section: Section;
@@ -78,7 +78,6 @@ function Shell({ section, id }: { section: Section; id?: string }) {
       viewer,
       demo,
       path,
-      setRole,
       message,
       setMessage,
       reset,
@@ -281,22 +280,6 @@ function Shell({ section, id }: { section: Section; id?: string }) {
               <span className="demo-dot" />
               <b>{demo ? "Fictional demo" : "Fictional seed data"}</b>
             </div>
-            {demo && (
-              <label>
-                Preview as
-                <select
-                  aria-label="Demo role preview"
-                  value={viewer.roleId}
-                  onChange={(e) => setRole(e.target.value)}
-                >
-                  {Object.entries(ROLES).map(([id, r]) => (
-                    <option key={id} value={id}>
-                      {r.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
           </div>
         )}
         <main className="workspace-main" id="main-content">

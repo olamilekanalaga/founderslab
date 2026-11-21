@@ -139,6 +139,8 @@ export function applyCommand(
   actor: Viewer,
   now = new Date().toISOString(),
 ): DataState {
+  if (actor.roleId !== "admin")
+    throw new DomainError("You need admin permission for this action.", 403);
   const permission = actionPermission(command.type);
   if (!permission || !actor.permissions.includes(permission))
     throw new DomainError("You do not have permission for this action.", 403);
@@ -710,9 +712,10 @@ export function applyCommand(
 export function demoViewer(role = "admin"): Viewer {
   return {
     id: `demo-user-${role}`,
-    name: role === "admin" ? "Ola_Crrypt" : ROLES[role].name,
+    name:
+      role === "admin" ? "Ola_Crrypt" : ROLES[role]?.name || "Unsupported role",
     email: `${role}@example.invalid`,
     roleId: role,
-    permissions: ROLES[role].permissions,
+    permissions: ROLES[role]?.permissions || [],
   };
 }

@@ -1,20 +1,10 @@
 "use client";
-import { ROLES } from "./catalog";
 import { makeSeed } from "./seed";
 import type { DataState } from "./types";
 const key = "founders-lab-demo-v1";
 const serverSnapshot = makeSeed();
 let snapshot = serverSnapshot;
 let ready = false;
-let role = "admin";
-export const getRoleSnapshot = () => role;
-export const getServerRoleSnapshot = () => "admin";
-export function setDemoRole(value: string) {
-  if (!Object.hasOwn(ROLES, value)) return;
-  role = value;
-  localStorage.setItem(`${key}-role`, value);
-  listeners.forEach((fn) => fn());
-}
 const listeners = new Set<() => void>();
 export function subscribe(callback: () => void) {
   listeners.add(callback);
@@ -46,8 +36,7 @@ export function hydrateDemo() {
   if (ready) return;
   ready = true;
   try {
-    const savedRole = localStorage.getItem(`${key}-role`);
-    if (savedRole && Object.hasOwn(ROLES, savedRole)) role = savedRole;
+    localStorage.removeItem(`${key}-role`);
     const saved = JSON.parse(localStorage.getItem(key) || "null");
     if (valid(saved)) snapshot = saved;
   } catch {}
@@ -59,6 +48,5 @@ export function saveDemo(value: DataState) {
   listeners.forEach((fn) => fn());
 }
 export function resetDemo() {
-  setDemoRole("admin");
   saveDemo(makeSeed());
 }

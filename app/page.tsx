@@ -1,4 +1,4 @@
-import { Landing } from "@/components/PublicPages";
+import { redirect } from "next/navigation";
 export default function Page() {
-  return <Landing />;
+  redirect("/book");
 }

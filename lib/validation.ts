@@ -7,7 +7,6 @@ import {
   VERIFICATION,
   PIPELINE,
   PERMISSIONS,
-  ROLES,
 } from "./catalog";
 const text = z.string().trim().max(5000);
 const short = z.string().trim().max(200);
@@ -286,7 +285,7 @@ export const schemas = {
   "invite.create": z.object({
     email: z.email().transform((v) => v.toLowerCase()),
     name: required,
-    roleId: z.string().refine((v) => Object.hasOwn(ROLES, v), "Unknown role"),
+    roleId: z.literal("admin").default("admin"),
   }),
   "user.permissions": z.object({
     id: required,

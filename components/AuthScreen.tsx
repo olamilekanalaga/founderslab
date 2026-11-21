@@ -2,7 +2,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FlaskConical, ArrowRight, ShieldCheck } from "lucide-react";
+import BrandMark from "./BrandMark";
+import { ArrowRight, ShieldCheck } from "lucide-react";
 export default function AuthScreen({
   invite = false,
   configured,
@@ -20,7 +21,7 @@ export default function AuthScreen({
       <section className="auth-card">
         <Link className="brand" href="/">
           <span className="brand-mark">
-            <FlaskConical size={21} />
+            <BrandMark />
           </span>
           <span>
             Founders Lab<small>with Ola_Crrypt</small>
@@ -29,7 +30,7 @@ export default function AuthScreen({
         <div className="eyebrow">
           <ShieldCheck size={13} /> PRIVATE WORKSPACE
         </div>
-        <h1>{invite ? "Join the programme team." : "Welcome back."}</h1>
+        <h1>{invite ? "Accept admin invitation." : "Welcome back."}</h1>
         <p>
           {invite
             ? "Set a strong password to accept your one-time invitation."

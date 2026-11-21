@@ -19,7 +19,7 @@ npm run db:admin
 
 Set `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_NAME` and a strong `BOOTSTRAP_ADMIN_PASSWORD` for the final command only. Remove bootstrap secrets afterwards. `db:seed` without `--demo` adds defaults without fictional founders. **Never run `--demo` against a real programme database.** Do not run migrations or bootstrap commands on every web request.
 
-5. Deploy and verify `/demo`, `/apply`, `/book`, private sign-in, approvals, one shared recording, reports and collaborator restrictions on the actual HTTPS URL. Confirm the production Secure cookie is set, anonymous `/api/workspace` returns 401, and no applicant/contact/commercial data appears in public responses.
+5. Deploy and verify `/demo`, `/apply`, `/book`, private sign-in, approvals, one shared recording, reports and admin-only access restrictions on the actual HTTPS URL. Confirm the production Secure cookie is set, anonymous `/api/workspace` returns 401, and no applicant/contact/commercial data appears in public responses.
 6. Configure database backups, host monitoring, recovery procedures and the programme's actual privacy/award terms before collecting real applicant data. Set the public programme rules and retention policy in Settings.
 
 The application does not send invitation emails or award transfers. Invitations produce manual one-time links; award records document human decisions and separately executed transfers. No API subscriptions are needed.

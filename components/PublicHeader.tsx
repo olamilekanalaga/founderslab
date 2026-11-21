@@ -5,7 +5,6 @@ const clientSnapshot = () => true;
 const serverSnapshot = () => false;
 import Link from "next/link";
 import BrandMark from "./BrandMark";
-import { ArrowUpRight } from "lucide-react";
 export default function PublicHeader() {
   const ready = useSyncExternalStore(subscribe, clientSnapshot, serverSnapshot);
   return (
@@ -19,10 +18,9 @@ export default function PublicHeader() {
         </span>
       </Link>
       <nav aria-label="Programme navigation">
-        <Link href="/book">Spaces</Link>
-        <Link href="/terms">Programme terms</Link>
-        <Link className="button" href="/demo">
-          Explore demo <ArrowUpRight size={14} />
+        <Link href="/book">Booking</Link>
+        <Link className="button" href="/signin">
+          Admin
         </Link>
         <Link className="button primary" href="/apply">
           Apply as a founder

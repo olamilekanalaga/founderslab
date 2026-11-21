@@ -18,9 +18,6 @@ import {
   resetDemo,
   getReadySnapshot,
   getServerReadySnapshot,
-  getRoleSnapshot,
-  getServerRoleSnapshot,
-  setDemoRole,
 } from "@/lib/demo-store";
 import { applyCommand, demoViewer, scopeState } from "@/lib/domain";
 interface Context {
@@ -30,7 +27,6 @@ interface Context {
   busy: boolean;
   message: string;
   setMessage: (s: string) => void;
-  setRole: (s: string) => void;
   commit: (c: Command) => Promise<boolean>;
   reset: () => void;
   invitationPath: string;
@@ -54,12 +50,6 @@ export function WorkspaceProvider({
     getServerReadySnapshot,
   );
   const saved = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  const role = useSyncExternalStore(
-    subscribe,
-    getRoleSnapshot,
-    getServerRoleSnapshot,
-  );
-  const setRole = setDemoRole;
   const [privateState, setPrivateState] = useState(initialState),
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState(""),
@@ -67,7 +57,7 @@ export function WorkspaceProvider({
   useEffect(() => {
     if (demo) hydrateDemo();
   }, [demo]);
-  const viewer = demo ? demoViewer(role) : initialViewer!;
+  const viewer = demo ? demoViewer() : initialViewer!;
   const state = demo ? scopeState(saved, viewer.permissions) : privateState!;
   async function commit(command: Command) {
     setBusy(true);
@@ -120,12 +110,10 @@ export function WorkspaceProvider({
         busy,
         message,
         setMessage,
-        setRole,
         commit,
         invitationPath,
         reset: () => {
           resetDemo();
-          setRole("admin");
           setMessage("Demo reset to 50 fictional founders.");
         },
         path: (section, id) =>

@@ -286,7 +286,11 @@ test("role restrictions apply to commands and redact commercial, contact and tea
       ),
     /permission/,
   );
-  const visible = scopeState(s, demoViewer("analyst").permissions);
+  const visible = scopeState(s, [
+    "directory.read",
+    "research.read",
+    "reports.read",
+  ]);
   assert.equal(visible.opportunities.length, 0);
   assert.equal(visible.users.length, 0);
   assert.equal(visible.applications.length, 0);

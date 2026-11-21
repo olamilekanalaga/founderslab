@@ -129,44 +129,6 @@ export const PERMISSIONS = [
 ] as const;
 export const ROLES: Record<string, { name: string; permissions: string[] }> = {
   admin: { name: "Admin", permissions: [...PERMISSIONS] },
-  researcher: {
-    name: "Researcher",
-    permissions: [
-      "directory.read",
-      "research.read",
-      "research.write",
-      "booking.read",
-      "reports.read",
-    ],
-  },
-  coordinator: {
-    name: "Booking coordinator",
-    permissions: ["directory.read", "booking.read", "booking.write"],
-  },
-  host: {
-    name: "Interview host",
-    permissions: [
-      "directory.read",
-      "booking.read",
-      "booking.write",
-      "research.read",
-      "research.write",
-    ],
-  },
-  development: {
-    name: "Business development",
-    permissions: [
-      "directory.read",
-      "research.read",
-      "commercial.read",
-      "commercial.write",
-      "reports.read",
-    ],
-  },
-  analyst: {
-    name: "Read-only analyst",
-    permissions: ["directory.read", "research.read", "reports.read"],
-  },
 };
 export const defaultSettings = {
   countryOptions: COUNTRIES,

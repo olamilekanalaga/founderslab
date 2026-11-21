@@ -208,7 +208,7 @@ test("demo application, approval, booking and one recording propagate to linked 
   await page.goto("/demo/reports");
   await expect(page.getByTestId("report-founders")).toHaveText("51");
 });
-test("company classifications, opportunity stages, role previews and exports are interactive", async ({
+test("company classifications, opportunity stages, admin access and exports are interactive", async ({
   page,
 }) => {
   await page.goto("/demo/companies");
@@ -251,13 +251,18 @@ test("company classifications, opportunity stages, role previews and exports are
   await expect((await pdf).suggestedFilename()).toBe(
     "founders-lab-research.pdf",
   );
-  await page.getByLabel("Demo role preview").selectOption("analyst");
-  await expect(
-    page.getByRole("link", { name: "Opportunities", exact: true }),
-  ).toHaveCount(0);
-  await expect(page.getByText("This role does not have access")).toHaveCount(0);
+  await expect(page.getByLabel("Demo role preview")).toHaveCount(0);
   await page.goto("/demo/opportunities");
-  await expect(page.getByText(/does not have access/)).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Opportunity pipeline", exact: true }),
+  ).toBeVisible();
+  await page.goto("/book?mode=demo");
+  await expect(
+    page.getByRole("navigation", { name: "Workspace navigation" }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("link", { name: "Admin", exact: true }),
+  ).toHaveAttribute("href", "/signin");
 });
 test("research saves all twelve sections and campaign award decisions remain manual", async ({
   page,

@@ -15,7 +15,7 @@ npm run dev
 
 Open **http://localhost:3000/demo**. No environment variables or paid APIs are necessary. Without a database, public application/booking forms default to the clearly labelled browser-local demonstration. The private workspace requires a database and real authentication.
 
-Demo changes persist in this browser. **Reset demo** restores the fixture; **Walkthrough** guides the application → approval → session → research → opportunity → report sequence. The role selector previews collaborator access only in the fictional demo. It does not grant server permissions. Public demo forms are `/apply?mode=demo` and `/book?mode=demo`.
+Demo changes persist in this browser. **Reset demo** restores the fixture; **Walkthrough** guides the application → approval → session → research → opportunity → report sequence. The demo previews Admin only. There is no role switcher, and the preview does not grant server authentication. Public demo forms are `/apply?mode=demo` and `/book?mode=demo`.
 
 ## Database and private workspace
 
@@ -52,7 +52,7 @@ Migrations live under `prisma/migrations/`. `db:migrate` applies SQL transaction
 - Opportunities: editable board/list pipeline, documented company need, related founder, owner, budget/unknown, next action, follow-up, outcome and change history. Hiring claims require supporting evidence.
 - Reports: stored-record-derived counts, charts, date/country/cohort/sector/stage filters, coverage/missing responses, sources/limitations, CSV and actual PDF download.
 - Monthly campaigns: target 20 founders by default, eligibility assessments, published rules, manual winner selection and 1 SOL award record. Recording an external transfer requires a reference. The app never executes a cryptocurrency payment.
-- Team/settings: manually shared expiring one-use invitations, six role templates, per-user permission grants, enabled countries, taxonomy labels, session capacity, campaign defaults, published terms, retention policy and audit trail.
+- Admin settings: manually shared one-use admin invitations, enabled countries, taxonomy labels, session capacity, campaign defaults, published terms, retention policy and audit trail.
 
 ## Access and security boundaries
 
@@ -60,14 +60,16 @@ Public routes: `/`, `/apply`, `/book`, `/confirmation`, `/terms`, `/demo`, `/sig
 
 Private routes: `/dashboard`, `/founders`, `/companies`, `/spaces`, `/research`, `/classification`, `/market-map`, `/opportunities`, `/reports`, `/campaigns`, `/settings` and entity details. Private data is not embedded in public pages.
 
-| Role                 | Default scope                                                |
-| -------------------- | ------------------------------------------------------------ |
-| Administrator        | Full programme, commercial and team management               |
-| Researcher           | Founder/company and research editing, sessions, reports      |
-| Booking coordinator  | Directory and booking/session management                     |
-| Interview host       | Sessions, research and directory access                      |
-| Business development | Directory, commercial opportunities and reports              |
-| Read-only analyst    | Directory/research/report reading; no commercial/team access |
+There are two supported access experiences:
+
+| Experience | Access                                                                                                             |
+| ---------- | ------------------------------------------------------------------------------------------------------------------ |
+| Admin      | Authenticated access to the private workspace and its founder, research, session, opportunity and reporting tools. |
+| Booking    | Public application, session request and limited confirmation flow; no account or internal workspace access.        |
+
+The homepage redirects to `/book`. Public navigation exposes booking/application and Admin sign-in. `/demo` remains a clearly fictional, no-login **Admin preview**, not a production account or a third access role.
+
+Only `admin` accounts can sign in to the real workspace or accept new invitations. Retired collaborator roles cannot reuse old sessions or invitations to enter it. Existing database records are retained for history; no destructive data migration is required.
 
 The server resolves current permissions on every authenticated request, checks writes and redacts unavailable datasets before returning them. The demo applies the same domain permissions locally, but contains no real private data. Sessions use random opaque tokens, server-side hashed storage, HttpOnly/SameSite cookies, production Secure cookies, expiry, origin/CSRF checks and durable request limits. Passwords use salted scrypt. Multiple normal sessions are supported.
 

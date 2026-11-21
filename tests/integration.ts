@@ -383,27 +383,41 @@ try {
   pass(
     "Relational persistence and one shared recording inherited by all linked profiles",
   );
+  const rejectedRole = await request(
+    "/api/workspace",
+    {
+      type: "invite.create",
+      payload: {
+        email: "removed_role@integration.example.invalid",
+        name: "Removed role",
+        roleId: "researcher",
+      },
+    },
+    admin,
+  );
+  assert.equal(rejectedRole.status, 400);
   const invitation = await request(
     "/api/workspace",
     {
       type: "invite.create",
       payload: {
-        email: "researcher@integration.example.invalid",
-        name: "Test Researcher",
-        roleId: "researcher",
+        email: "extra_admin@integration.example.invalid",
+        name: "Additional Admin",
+        roleId: "admin",
       },
     },
     admin,
   );
   assert.equal(invitation.status, 200);
   const inviteToken = invitation.data.invitationPath.split("token=")[1];
-  const researcher: Jar = { cookie: "", csrf: "" };
+  const invited: Jar = { cookie: "", csrf: "" },
+    invitedPassword = randomBytes(24).toString("hex");
   assert.equal(
     (
       await request(
         "/api/auth/accept-invite",
-        { token: inviteToken, password: randomBytes(24).toString("hex") },
-        researcher,
+        { token: inviteToken, password: invitedPassword },
+        invited,
       )
     ).status,
     200,
@@ -412,37 +426,93 @@ try {
     (
       await request("/api/auth/accept-invite", {
         token: inviteToken,
-        password: randomBytes(24).toString("hex"),
+        password: invitedPassword,
       })
     ).status,
     400,
   );
-  const researcherMe = await request("/api/auth/me", undefined, researcher);
-  researcher.csrf = researcherMe.data.viewer.csrf;
-  const scoped = await request("/api/workspace", undefined, researcher);
-  assert.equal(scoped.status, 200);
-  assert.equal(scoped.data.state.opportunities.length, 0);
-  assert.equal(scoped.data.state.users.length, 0);
-  assert.equal(scoped.data.state.invitations.length, 0);
-  for (const type of [
-    "settings.save",
-    "opportunity.save",
-    "user.permissions",
-    "invite.create",
-  ])
-    assert.equal(
-      (await request("/api/workspace", { type, payload: {} }, researcher))
-        .status,
-      403,
-    );
-  const privatePage = await fetch(origin + "/opportunities", {
-    headers: { Cookie: researcher.cookie },
-  });
-  assert.ok(
-    !(await privatePage.text()).includes("Private opportunity intelligence"),
+  const invitedMe = await request("/api/auth/me", undefined, invited);
+  assert.equal(invitedMe.data.viewer.roleId, "admin");
+  invited.csrf = invitedMe.data.viewer.csrf;
+  assert.equal(
+    (await request("/api/workspace", undefined, invited)).status,
+    200,
+  );
+  // A previously valid session must lose access immediately if its role is retired.
+  const policyDb = new Client({ connectionString: url.toString() });
+  await policyDb.connect();
+  await policyDb.query('INSERT INTO "Role" (id,name) VALUES ($1,$2),($3,$4)', [
+    "researcher",
+    "Retired researcher",
+    "host",
+    "Retired host",
+  ]);
+  await policyDb.query('UPDATE "User" SET "roleId"=$1 WHERE email=$2', [
+    "researcher",
+    "extra_admin@integration.example.invalid",
+  ]);
+  assert.equal((await request("/api/auth/me", undefined, invited)).status, 401);
+  assert.equal(
+    (await request("/api/workspace", undefined, invited)).status,
+    401,
+  );
+  assert.equal(
+    (
+      await request(
+        "/api/workspace",
+        { type: "settings.save", payload: {} },
+        invited,
+      )
+    ).status,
+    401,
+  );
+  assert.equal(
+    (
+      await request("/api/auth/login", {
+        email: "extra_admin@integration.example.invalid",
+        password: invitedPassword,
+      })
+    ).status,
+    401,
+  );
+  assert.equal(
+    (
+      await fetch(origin + "/dashboard", {
+        headers: { Cookie: invited.cookie },
+        redirect: "manual",
+      })
+    ).status,
+    307,
+  );
+  const oldInvitation = await request(
+    "/api/workspace",
+    {
+      type: "invite.create",
+      payload: {
+        email: "old_invite@integration.example.invalid",
+        name: "Old invitation",
+        roleId: "admin",
+      },
+    },
+    admin,
+  );
+  assert.equal(oldInvitation.status, 200);
+  await policyDb.query('UPDATE "Invitation" SET "roleId"=$1 WHERE email=$2', [
+    "host",
+    "old_invite@integration.example.invalid",
+  ]);
+  await policyDb.end();
+  assert.equal(
+    (
+      await request("/api/auth/accept-invite", {
+        token: oldInvitation.data.invitationPath.split("token=")[1],
+        password: invitedPassword,
+      })
+    ).status,
+    400,
   );
   pass(
-    "One-use collaborator invitations and backend permissions with redacted commercial/team records",
+    "Admin-only invitations and workspace access; retired-role logins, existing sessions and invitations are rejected",
   );
   const research = state.research[0],
     answers = Object.fromEntries(

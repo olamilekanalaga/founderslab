@@ -31,6 +31,7 @@ export async function getViewer(): Promise<Viewer | null> {
   if (!session || session.expiresAt < new Date() || !session.user.active)
     return null;
   const u = session.user;
+  if (u.roleId !== "admin") return null;
   return {
     id: u.id,
     name: u.name,

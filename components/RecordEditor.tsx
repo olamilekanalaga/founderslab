@@ -14,7 +14,6 @@ import {
   PIPELINE,
   CONFIDENCE,
   VERIFICATION,
-  ROLES,
 } from "@/lib/catalog";
 interface Option {
   value: string;
@@ -174,7 +173,7 @@ export default function RecordEditor({
     },
     taxonomy: { group: "Sector", name: "", active: true },
     settings: { ...state.settings },
-    invitation: { name: "", email: "", roleId: "researcher" },
+    invitation: { name: "", email: "", roleId: "admin" },
   };
   const initial = { ...defaults[resource], ...record };
   if (record && resource === "founder")
@@ -570,16 +569,7 @@ export default function RecordEditor({
         true,
       ),
     ],
-    invitation: [
-      f("name", "Collaborator name"),
-      f("email", "Email address", "email"),
-      f(
-        "roleId",
-        "Role",
-        "select",
-        Object.entries(ROLES).map(([value, r]) => ({ value, label: r.name })),
-      ),
-    ],
+    invitation: [f("name", "Admin name"), f("email", "Email address", "email")],
   };
   const verbs: Record<Resource, string> = {
     founder: "founder.save",

@@ -305,8 +305,7 @@ export function PublicFooter() {
       </span>
       <div>
         <Link href="/terms">Privacy & programme terms</Link>
-        <Link href="/demo">Fictional demo</Link>
-        <Link href="/signin">Team sign in</Link>
+        <Link href="/signin">Admin sign in</Link>
       </div>
     </footer>
   );
@@ -1000,11 +999,6 @@ export function Confirmation() {
             >
               Explore session requests <ArrowRight size={16} />
             </Link>
-            {demo && (
-              <Link className="button" href="/demo/spaces?tab=applications">
-                Review in the fictional demo <ArrowUpRight size={14} />
-              </Link>
-            )}
           </div>
         ) : (
           <p role="status">Retrieving your confirmation…</p>
