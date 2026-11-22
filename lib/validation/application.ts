@@ -5,16 +5,38 @@ import {
   short,
   required,
   optionalList,
-  safeUrl,
   country,
   xHandle,
 } from "./primitives";
+
+/** Accept bare company domains; persist a complete HTTP(S) URL for safe links. */
+export const companyWebsite = z
+  .string()
+  .trim()
+  .min(1, "Enter a company website")
+  .max(2000)
+  .transform((value) =>
+    /^https?:\/\//i.test(value) ? value : `https://${value}`,
+  )
+  .refine((value) => {
+    try {
+      const url = new URL(value);
+      return (
+        ["http:", "https:"].includes(url.protocol) &&
+        url.hostname.includes(".") &&
+        !url.username &&
+        !url.password
+      );
+    } catch {
+      return false;
+    }
+  }, "Enter a valid website, for example example.com");
 
 export const applicationSchema = z.object({
   founderName: required,
   companyName: required,
   xHandle,
-  website: safeUrl,
+  website: companyWebsite,
   country,
   description: text.min(1, "Add a product description"),
   speakers: z.coerce.number().int().min(1).max(10),

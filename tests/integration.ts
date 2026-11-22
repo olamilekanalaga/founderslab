@@ -344,7 +344,7 @@ try {
     founderName: "Integration Fictional",
     companyName: "Isolated Example",
     xHandle: "isolated_example",
-    website: "https://isolated.example.invalid",
+    website: "isolated.example.invalid",
     country: "Nigeria",
     description: "Pay",
     speakers: 3,
@@ -396,6 +396,11 @@ try {
   });
   const linked = state.applications.find((a) => a.id === app.id)!;
   assert.ok(linked.founderId && linked.companyId);
+  assert.equal(linked.website, "https://isolated.example.invalid");
+  assert.equal(
+    state.companies.find((c) => c.id === linked.companyId)?.website,
+    "https://isolated.example.invalid",
+  );
   assert.ok(
     state.memberships.some(
       (m) =>
@@ -1087,7 +1092,8 @@ try {
   );
   const browserManagerToken = emailToken();
   const managerBrowser = await chromium.launch({
-    executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || "/usr/bin/chromium",
+    executablePath:
+      process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || "/usr/bin/chromium",
     headless: true,
     args: ["--no-sandbox"],
   });
@@ -1620,7 +1626,8 @@ try {
     (f) => f.xHandle === "delete_ui_fixture",
   )!;
   const finalBrowser = await chromium.launch({
-    executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || "/usr/bin/chromium",
+    executablePath:
+      process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || "/usr/bin/chromium",
     args: ["--no-sandbox"],
     headless: true,
   });

@@ -1,3 +1,4 @@
+import { companyWebsite } from "./application";
 import { z } from "zod";
 import {
   TEAM_SIZES,
@@ -48,7 +49,7 @@ export const schemas = {
       id,
       name: required,
       description: text.min(1, "This field is required"),
-      website: safeUrl,
+      website: companyWebsite,
       country,
       operatingCountries: optionalList,
       teamSize: z.enum(TEAM_SIZES),

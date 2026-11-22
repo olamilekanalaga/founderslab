@@ -30,11 +30,11 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
     companyName: "",
     xHandle: "",
     website: "",
-    country: "Nigeria",
+    country: "",
     description: "",
     teamSize: "2–5",
-    stage: "MVP",
-    sector: "Payments",
+    stage: "",
+    sector: "",
     focus: "",
     founderRole: "Founder",
     contact: "",
@@ -200,12 +200,15 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
             <label>
               Company website or public project link
               <input
-                type="url"
+                type="text"
+                inputMode="url"
+                autoCapitalize="none"
+                autoCorrect="off"
                 name="website"
                 value={fields.website}
                 onChange={(e) => change("website", e.target.value)}
                 required
-                placeholder="https://"
+                placeholder="example.com"
                 maxLength={2000}
               />
             </label>
@@ -217,6 +220,7 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
                 value={fields.country}
                 onChange={(e) => change("country", e.target.value)}
                 required
+                placeholder="United Kingdom"
                 autoComplete="country-name"
               />
               <datalist id="application-countries">
@@ -283,9 +287,13 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
               Product stage
               <select
                 name="stage"
+                required
                 value={fields.stage}
                 onChange={(e) => change("stage", e.target.value)}
               >
+                <option value="" disabled>
+                  Select an option
+                </option>
                 {stages.map((v) => (
                   <option key={v}>{v}</option>
                 ))}
@@ -295,9 +303,13 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
               Primary sector
               <select
                 name="sector"
+                required
                 value={fields.sector}
                 onChange={(e) => change("sector", e.target.value)}
               >
+                <option value="" disabled>
+                  Select an option
+                </option>
                 {sectors.map((v) => (
                   <option key={v}>{v}</option>
                 ))}
