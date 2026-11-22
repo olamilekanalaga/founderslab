@@ -1087,7 +1087,7 @@ try {
   );
   const browserManagerToken = emailToken();
   const managerBrowser = await chromium.launch({
-    executablePath: "/usr/bin/chromium",
+    executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || "/usr/bin/chromium",
     headless: true,
     args: ["--no-sandbox"],
   });
@@ -1620,7 +1620,7 @@ try {
     (f) => f.xHandle === "delete_ui_fixture",
   )!;
   const finalBrowser = await chromium.launch({
-    executablePath: "/usr/bin/chromium",
+    executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || "/usr/bin/chromium",
     args: ["--no-sandbox"],
     headless: true,
   });

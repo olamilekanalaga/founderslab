@@ -3,8 +3,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { saturdaySessions } from "@/lib/dates/saturday-schedule";
 import type { PublicSession } from "@/lib/dates/booking";
 
-const headline =
-  "Building connections between founders, products and opportunities.";
+const headline = "Meet the founders building Web3.";
 for (const [label, width, height] of [
   ["desktop", 1440, 1024],
   ["mobile", 393, 852],
@@ -77,10 +76,13 @@ for (const [label, width, height] of [
       .analyze();
     expect(audit.violations).toEqual([]);
     await page.screenshot({
-      path: `artifacts/v4-homepage-${label}.png`,
+      path: `artifacts/saas-homepage-${label}.png`,
       fullPage: true,
     });
-    await page.getByRole("link", { name: "View All Available Dates" }).click();
+    await page
+      .locator(".fl-upcoming")
+      .getByRole("link", { name: "Choose a Saturday" })
+      .click();
     await expect(page).toHaveURL(/\/book$/);
     await expect(page.locator(".weekly-date")).toHaveCount(8);
   });
@@ -146,7 +148,9 @@ test("full, closed, empty and failed availability never invent bookable seats or
     route.fulfill({ json: { sessions: [] } }),
   );
   await page.goto("/");
-  await expect(page.getByRole("status")).toContainText("No upcoming Saturdays");
+  await expect(page.locator(".programme-availability-message")).toContainText(
+    "No upcoming Saturdays",
+  );
   await expect(page.locator(".programme-session-card")).toHaveCount(0);
   await page.goto("/book");
   await expect(page.locator(".calendar-empty-state")).toBeVisible();
@@ -156,7 +160,7 @@ test("full, closed, empty and failed availability never invent bookable seats or
     route.fulfill({ status: 503, json: { error: "Unavailable" } }),
   );
   await page.goto("/");
-  await expect(page.getByRole("status")).toContainText(
+  await expect(page.locator(".programme-availability-message")).toContainText(
     "Live availability is temporarily unavailable",
   );
   await expect(page.locator(".programme-session-card")).toHaveCount(0);

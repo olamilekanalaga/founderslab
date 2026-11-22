@@ -6,12 +6,12 @@ test("public booking is light, backend-backed and limited to eight Saturdays", a
   await page.setViewportSize({ width: 393, height: 852 });
   await page.goto("/book?mode=demo");
   await expect(page.locator(".weekly-date")).toHaveCount(8);
-  await expect(page.locator(".weekly-heading")).toContainText("7:00 PM London");
-  await expect(page.locator(".weekly-heading")).toContainText(
-    "Two four-week cycles",
+  await expect(page.locator(".fl-date-panel-heading")).toContainText(
+    "7 PM London",
   );
+  await expect(page.locator(".fl-date-group")).toHaveCount(2);
   await expect(page.getByText("Demo mode", { exact: true })).toHaveCount(0);
-  await expect(page.locator(".public-footer")).toContainText("⭕️La_Crrypt💰₿");
+  await expect(page.locator(".public-footer")).toContainText("Ola_Crrypt");
   await expect(page.locator(".weekly-date").first()).toContainText(
     /slots? left|Full/,
   );
@@ -20,7 +20,7 @@ test("public booking is light, backend-backed and limited to eight Saturdays", a
     .analyze();
   expect(audit.violations).toEqual([]);
   await page.screenshot({
-    path: "artifacts/booking-eight-weeks-mobile.png",
+    path: "artifacts/saas-booking-mobile.png",
     fullPage: true,
   });
 });

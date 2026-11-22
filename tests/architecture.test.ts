@@ -175,7 +175,7 @@ test("Prisma schema and ordered historical migration files remain byte-identical
   }
   const sql = readdirSync("prisma/migrations", { recursive: true })
     .filter((f) => String(f).endsWith(".sql"))
-    .map((f) => `prisma/migrations/${f}`)
+    .map((f) => `prisma/migrations/${String(f).replaceAll("\\", "/")}`)
     .sort();
   assert.deepEqual(
     sql,
