@@ -1,6 +1,5 @@
 import { z } from "zod";
 import {
-  COUNTRIES,
   TEAM_SIZES,
   BOOKING_STATUSES,
   CONFIDENCE,
@@ -8,74 +7,20 @@ import {
   PIPELINE,
   PERMISSIONS,
 } from "@/lib/catalog";
-const text = z.string().trim().max(5000);
-const short = z.string().trim().max(200);
-const required = short.min(1, "This field is required");
-const list = z.union([
-  z.array(short),
-  text.transform((v) =>
-    v
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean),
-  ),
-]);
-const optionalList = list.optional().default([]);
-const id = short.optional();
-export const safeUrl = z
-  .string()
-  .trim()
-  .max(2000)
-  .refine((v) => {
-    try {
-      return new URL(v).protocol === "https:";
-    } catch {
-      return false;
-    }
-  }, "Enter a valid https:// URL");
-const optionalUrl = z
-  .union([safeUrl, z.literal("")])
-  .optional()
-  .default("");
-const date = z
-  .string()
-  .refine((v) => Number.isFinite(Date.parse(v)), "Enter a valid date and time");
-const country = z
-  .string()
-  .refine((v) => COUNTRIES.includes(v), "Choose a country from the list");
-const xHandle = short
-  .transform((v) => v.replace(/^@/, "").toLowerCase())
-  .pipe(
-    z.string().regex(/^[a-z0-9_]{1,50}$/, "Use an X username without a URL"),
-  );
-export const applicationSchema = z.object({
-  founderName: required,
-  companyName: required,
-  xHandle,
-  website: safeUrl,
+import {
+  text,
+  short,
+  required,
+  list,
+  optionalList,
+  id,
+  safeUrl,
+  optionalUrl,
+  date,
   country,
-  description: text.min(1, "Add a product description"),
-  speakers: z.coerce.number().int().min(1).max(10),
-  teamSize: z.enum(TEAM_SIZES),
-  stage: required,
-  sector: required,
-  focus: text.min(1, "Add your main business focus"),
-  founderRole: short.optional().default("Founder"),
-  contact: short.optional().default(""),
-  teamCountries: optionalList,
-  ecosystem: short.optional().default(""),
-  hiring: z.boolean().optional().default(false),
-  seeking: text.optional().default(""),
-  comments: text.optional().default(""),
-  privacyConsent: z.literal(true, {
-    error: "Accept the privacy notice to submit",
-  }),
-  promotionalConsent: z.boolean().optional().default(false),
-  websiteTrap: z
-    .string()
-    .optional()
-    .refine((v) => !v, "Submission rejected"),
-});
+  xHandle,
+} from "./primitives";
+
 export const schemas = {
   "founder.save": z.object({
     id,
@@ -318,5 +263,3 @@ export function parseCommand(type: string, payload: unknown) {
   if (!schema) throw new Error("Unknown action");
   return schema.parse(payload);
 }
-export const normaliseKey = (handle: string, company: string) =>
-  `${handle.replace(/^@/, "").trim().toLowerCase()}:${company.trim().toLowerCase().replace(/\s+/g, " ")}`;

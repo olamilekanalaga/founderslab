@@ -1,6 +1,6 @@
 "use client";
 import { useSyncExternalStore } from "react";
-import { LONDON_TIME_ZONE } from "@/lib/saturday-schedule";
+import { LONDON_TIME_ZONE } from "@/lib/dates/saturday-schedule";
 const subscribe = () => () => {};
 const browserZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
 const serverZone = () => "";

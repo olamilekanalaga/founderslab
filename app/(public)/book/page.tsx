@@ -1,4 +1,4 @@
-import { databaseUrl } from "@/lib/server-env";
+import { databaseUrl } from "@/server/config/environment";
 import { BookingPage } from "@/features/bookings/components/BookingPage";
 import { Suspense } from "react";
 export const dynamic = "force-dynamic";

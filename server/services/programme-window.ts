@@ -3,7 +3,7 @@ import {
   saturdaySessions,
   londonDay,
   saturdaySchedulePlan,
-} from "@/lib/saturday-schedule";
+} from "@/lib/dates/saturday-schedule";
 import { DomainError } from "@/lib/domain";
 export const WINDOW_WEEKS = 8,
   CYCLE_WEEKS = 4;

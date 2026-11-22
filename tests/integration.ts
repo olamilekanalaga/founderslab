@@ -7,7 +7,7 @@ import { once } from "node:events";
 import { Client } from "pg";
 import AxeBuilder from "@axe-core/playwright";
 import { chromium } from "@playwright/test";
-import { isLondonProgrammeTime } from "@/lib/saturday-schedule";
+import { isLondonProgrammeTime } from "@/lib/dates/saturday-schedule";
 import type { DataState } from "@/lib/types";
 try {
   process.loadEnvFile(".env");
@@ -694,7 +694,7 @@ try {
   }
   const policyDb = new Client({ connectionString: url.toString() });
   await policyDb.connect();
-  const { passwordHash } = await import("@/lib/auth");
+  const { passwordHash } = await import("@/server/auth/passwords");
   await policyDb.query(
     'INSERT INTO "User" (id,email,name,"passwordHash","roleId",active,"customPermissions","createdAt","updatedAt") VALUES ($1,$2,$3,$4,$5,true,false,NOW(),NOW())',
     [
@@ -1261,7 +1261,8 @@ try {
     ),
   );
   assert.ok(!("founders" in programme.data));
-  const { reportData, blankFilters } = await import("@/lib/selectors");
+  const { reportData, blankFilters } =
+    await import("@/features/reports/lib/selectors");
   const report = reportData(state, blankFilters);
   assert.equal(report.founders.length, 51);
   assert.equal(

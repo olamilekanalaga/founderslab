@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Plus, Save, Trash2, Pencil } from "lucide-react";
 import { useWorkspace } from "@/components/layout/WorkspaceContext";
 import { Status, Modal } from "@/components/ui";
-import { dateTime } from "@/lib/selectors";
+import { dateTime } from "@/lib/dates/format";
 import type { DataState } from "@/lib/types";
 export default function WeeklySpaceEditor({
   session,

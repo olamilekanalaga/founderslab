@@ -1,6 +1,6 @@
 /** Runs only inside a production Vercel build, using its already connected database. */
 import { spawnSync } from "node:child_process";
-import { databaseUrl, migrationUrl } from "@/lib/server-env";
+import { databaseUrl, migrationUrl } from "@/server/config/environment";
 if (process.env.VERCEL_ENV !== "production") {
   console.log("Production database preparation skipped for this environment.");
   process.exit(0);

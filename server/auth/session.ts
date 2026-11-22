@@ -1,22 +1,10 @@
-import { databaseUrl } from "@/lib/server-env";
+import "server-only";
+import { databaseUrl } from "@/server/config/environment";
 import { cookies } from "next/headers";
-import { scryptSync, timingSafeEqual, randomBytes } from "node:crypto";
-import { db, hash, token } from "@/lib/db";
+import { timingSafeEqual } from "node:crypto";
+import { db, hash, token } from "@/server/db";
 import { DomainError } from "@/lib/domain";
 import type { Viewer } from "@/lib/types";
-export function passwordHash(password: string) {
-  const salt = randomBytes(16).toString("hex");
-  return `${salt}:${scryptSync(password, salt, 64).toString("hex")}`;
-}
-export function verifyPassword(password: string, encoded: string) {
-  const [salt, key] = encoded.split(":");
-  if (!salt || !key) return false;
-  const expected = Buffer.from(key, "hex"),
-    received = scryptSync(password, salt, 64);
-  return (
-    expected.length === received.length && timingSafeEqual(expected, received)
-  );
-}
 export function isProvisionedAdmin(user: {
   email: string;
   roleId: string;

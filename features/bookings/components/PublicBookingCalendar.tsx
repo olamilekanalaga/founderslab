@@ -6,7 +6,7 @@ import {
   BOOKING_TIME_LABEL,
   publicSlotOpen,
   type PublicSession,
-} from "@/lib/booking";
+} from "@/lib/dates/booking";
 import SessionTime from "@/components/shared/SessionTime";
 export default function PublicBookingCalendar({
   sessions,

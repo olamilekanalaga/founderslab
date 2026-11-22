@@ -5,10 +5,10 @@ import Link from "next/link";
 import { ArrowUpRight, ArrowLeft, Pencil, Building2 } from "lucide-react";
 import { useWorkspace } from "@/components/layout/WorkspaceContext";
 import { Avatar, Empty, SectionHeading } from "@/components/ui";
-import { profileSpaceWeeks } from "@/lib/space-data";
+import { profileSpaceWeeks } from "@/features/spaces/lib/space-data";
 import DeleteRecordButton from "@/features/founders/components/DeleteRecordButton";
 import FounderSpaces from "@/features/spaces/components/FounderSpaces";
-import { niceDate } from "@/lib/selectors";
+import { niceDate } from "@/lib/dates/format";
 import type { Resource } from "@/components/shared/RecordEditor";
 type Editor = (resource: Resource, record?: Record<string, unknown>) => void;
 export default function FounderProfile({

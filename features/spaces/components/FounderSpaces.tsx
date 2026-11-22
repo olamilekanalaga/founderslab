@@ -3,8 +3,11 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { useWorkspace } from "@/components/layout/WorkspaceContext";
-import { profileSpaceWeeks, durationLabel } from "@/lib/space-data";
-import { dateTime } from "@/lib/selectors";
+import {
+  profileSpaceWeeks,
+  durationLabel,
+} from "@/features/spaces/lib/space-data";
+import { dateTime } from "@/lib/dates/format";
 import { Empty, ExternalLink } from "@/components/ui";
 import WeeklySpaceEditor from "@/features/spaces/components/WeeklySpaceEditor";
 export default function FounderSpaces({

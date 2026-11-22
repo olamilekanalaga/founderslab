@@ -1,6 +1,6 @@
 import { redirect, notFound } from "next/navigation";
-import { getViewer } from "@/lib/auth";
-import { loadState } from "@/lib/db";
+import { getViewer } from "@/server/auth";
+import { loadState } from "@/server/db";
 import { scopeState } from "@/lib/domain";
 import { SECTIONS, type Section } from "@/lib/types";
 import { SECTION_PERMISSIONS } from "@/lib/sections";

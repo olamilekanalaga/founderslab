@@ -1,5 +1,6 @@
 import type { DataState } from "@/lib/types";
-import { reportData, type Filters } from "@/lib/selectors";
+import { reportData, type Filters } from "@/features/reports/lib/selectors";
+
 export function reportRows(s: DataState, filters: Filters, demo: boolean) {
   const r = reportData(s, filters);
   return [

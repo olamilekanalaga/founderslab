@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight, ArrowUpRight, Mic2 } from "lucide-react";
 import { useWorkspace } from "@/components/layout/WorkspaceContext";
 import { Avatar, Status, Empty, ExternalLink } from "@/components/ui";
 import { approvedSeats } from "@/lib/domain";
-import { dateTime } from "@/lib/selectors";
+import { dateTime } from "@/lib/dates/format";
 import type { DataState } from "@/lib/types";
 export default function SessionCalendar({
   sessions,

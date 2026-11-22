@@ -1,7 +1,8 @@
+import "server-only";
 import { cookies } from "next/headers";
-import { db, hash, token } from "@/lib/db";
+import { db, hash, token } from "@/server/db";
 import { DomainError } from "@/lib/domain";
-import { requireCsrf } from "@/lib/auth";
+import { requireCsrf } from "@/server/auth";
 import type { Prisma } from "@prisma/client";
 
 export const MANAGER_COOKIE = "fl_space_manager";

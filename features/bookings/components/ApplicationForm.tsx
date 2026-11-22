@@ -6,10 +6,10 @@ import { ArrowRight } from "lucide-react";
 import PublicHeader from "@/components/layout/PublicHeader";
 import SessionTime from "@/components/shared/SessionTime";
 
-import { publicSlotOpen, type PublicSession } from "@/lib/booking";
+import { publicSlotOpen, type PublicSession } from "@/lib/dates/booking";
 import { COUNTRIES, SECTORS, STAGES, TEAM_SIZES } from "@/lib/catalog";
-import { formError } from "@/lib/form-errors";
-import { applicationSchema } from "@/lib/validation";
+import { formError } from "@/lib/validation/form-errors";
+import { applicationSchema } from "@/lib/validation/application";
 
 import PublicFooter from "@/components/layout/PublicFooter";
 import { api } from "@/features/bookings/lib/public-api";

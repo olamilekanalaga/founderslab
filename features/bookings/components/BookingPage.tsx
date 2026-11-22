@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import PublicHeader from "@/components/layout/PublicHeader";
 
 import PublicBookingCalendar from "@/features/bookings/components/PublicBookingCalendar";
-import { type PublicSession } from "@/lib/booking";
+import { type PublicSession } from "@/lib/dates/booking";
 
 import PublicFooter from "@/components/layout/PublicFooter";
 import { api } from "@/features/bookings/lib/public-api";

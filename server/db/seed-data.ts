@@ -1,4 +1,5 @@
-import { saturdaySessions } from "@/lib/saturday-schedule";
+import { taxonomyDefaults } from "./taxonomy-defaults";
+import { saturdaySessions } from "@/lib/dates/saturday-schedule";
 import type { DataState } from "@/lib/types";
 import {
   defaultSettings,
@@ -544,31 +545,7 @@ export function makeSeed(): DataState {
       createdAt: at(11, 18),
     });
   }
-  for (const [group, values] of Object.entries({
-    Sector: SECTORS,
-    "Economic function": FUNCTIONS,
-    "Customer segment": [
-      "Small businesses",
-      "Web3 teams",
-      "Consumers",
-      "Developers",
-    ],
-    "Business model": [
-      "Subscription",
-      "Usage based",
-      "Transaction fee",
-      "Services",
-    ],
-    "Product stage": STAGES,
-    "Geographic market": ["Africa", "Global", "Nigeria", "East Africa"],
-    "Blockchain ecosystem": ["Solana", "Ethereum", "Base", "Multichain"],
-    "Business needs": NEEDS,
-    "Company relationship": RELATIONS,
-    "Opportunity type": OPPORTUNITY_TYPES,
-  }))
-    values.forEach((name, i) =>
-      s.labels.push({ id: `label-${group}-${i}`, group, name, active: true }),
-    );
+  s.labels.push(...taxonomyDefaults());
   s.companies.forEach((c) =>
     s.labels
       .filter(

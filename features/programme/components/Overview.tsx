@@ -11,13 +11,14 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 import { useWorkspace } from "@/components/layout/WorkspaceContext";
-import { groupBy, growthData, dateTime } from "@/lib/selectors";
+import { groupBy, growthData } from "@/features/reports/lib/selectors";
+import { dateTime } from "@/lib/dates/format";
 import {
   spaceTotals,
   durationLabel,
   spaceGrowth,
   type SpaceMetric,
-} from "@/lib/space-data";
+} from "@/features/spaces/lib/space-data";
 import { SectionHeading, Empty, Status } from "@/components/ui";
 const Chart = dynamic(() => import("@/components/ui/Charts"), { ssr: false });
 export default function Overview({ addFounder }: { addFounder: () => void }) {

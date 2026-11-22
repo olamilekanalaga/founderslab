@@ -13,9 +13,9 @@ import {
   Empty,
   ExternalLink,
 } from "@/components/ui";
-import { spaceTotals } from "@/lib/space-data";
+import { spaceTotals } from "@/features/spaces/lib/space-data";
 import { approvedSeats } from "@/lib/domain";
-import { dateTime, niceDate } from "@/lib/selectors";
+import { dateTime, niceDate } from "@/lib/dates/format";
 import { BOOKING_STATUSES } from "@/lib/catalog";
 
 import DeleteRecordButton from "@/features/founders/components/DeleteRecordButton";

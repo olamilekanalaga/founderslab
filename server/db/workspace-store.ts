@@ -1,29 +1,17 @@
+import { db } from "./client";
+import { hash, token } from "@/server/security/tokens";
 import {
   lockProgramme,
   ensureProgrammeWindow,
   requireProgrammeBooking,
-} from "@/lib/programme-window";
-import { databaseUrl } from "@/lib/server-env";
-import { PrismaPg } from "@prisma/adapter-pg";
+} from "@/server/services/programme-window";
+
 import { PrismaClient, Prisma } from "@prisma/client";
 import type { DataState, Viewer, Command } from "@/lib/types";
 import { defaultSettings, ROLES, PERMISSIONS } from "@/lib/catalog";
 import { applyCommand, DomainError, scopeState } from "@/lib/domain";
 import { normaliseKey } from "@/lib/validation";
-import { createHash, randomBytes } from "node:crypto";
-const globalDb = globalThis as unknown as { foundersDb?: PrismaClient };
-export function db() {
-  if (!databaseUrl())
-    throw new DomainError(
-      "Database is not configured. The fictional /demo workspace is available without a database.",
-      503,
-    );
-  return (globalDb.foundersDb ??= new PrismaClient({
-    adapter: new PrismaPg({ connectionString: databaseUrl() }),
-  }));
-}
-export const hash = (v: string) => createHash("sha256").update(v).digest("hex");
-export const token = () => randomBytes(32).toString("base64url");
+
 type Client = PrismaClient | Prisma.TransactionClient;
 type Row = Record<string, unknown>;
 interface Delegate {

@@ -1,3 +1,4 @@
+import "server-only";
 import { ZodError } from "zod";
 import { DomainError } from "@/lib/domain";
 export const json = (body: unknown, status = 200) =>

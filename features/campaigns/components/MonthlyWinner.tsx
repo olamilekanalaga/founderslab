@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Award } from "lucide-react";
 import { useWorkspace } from "@/components/layout/WorkspaceContext";
-import { londonDay } from "@/lib/saturday-schedule";
+import { londonDay } from "@/lib/dates/saturday-schedule";
 export default function Campaigns() {
   const { state: s, viewer, mutate, busy } = useWorkspace();
   const [period, setPeriod] = useState(() => londonDay(new Date()).slice(0, 7)),

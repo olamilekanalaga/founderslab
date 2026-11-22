@@ -1,4 +1,4 @@
-import { migrationUrl } from "@/lib/server-env";
+import { migrationUrl } from "@/server/config/environment";
 import { Client } from "pg";
 import { readdir, readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
