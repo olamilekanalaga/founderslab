@@ -70,7 +70,7 @@ async function request(
   const cookie = response.headers.get("set-cookie");
   if (jar && cookie) jar.cookie = cookie.split(";")[0];
   const data = await response.json().catch(() => null);
-  return { status: response.status, data };
+  return { status: response.status, data, headers: response.headers };
 }
 async function command(type: string, payload: unknown, jar = admin) {
   const r = await request("/api/workspace", { type, payload }, jar);
@@ -162,6 +162,41 @@ try {
   }
   assert.ok(ready, "Production server started");
   assert.equal((await request("/api/workspace")).status, 401);
+  for (const route of ["/", "/apply", "/book", "/confirmation", "/signin"]) {
+    assert.equal((await fetch(origin + route)).status, 200, route);
+  }
+  for (const route of [
+    "/dashboard",
+    "/founders",
+    "/founders/f1",
+    "/companies",
+    "/spaces",
+    "/reports",
+    "/campaigns",
+    "/settings",
+  ]) {
+    const response = await fetch(origin + route, { redirect: "manual" });
+    assert.equal(response.status, 307, route);
+    assert.equal(
+      new URL(response.headers.get("location")!, origin).pathname,
+      "/signin",
+    );
+  }
+  for (const route of ["/signup", "/register", "/invite"]) {
+    assert.equal((await fetch(origin + route)).status, 404, route);
+  }
+  assert.equal(
+    (await request("/api/workspace", { type: "settings.save", payload: {} }))
+      .status,
+    401,
+  );
+  assert.equal((await request("/api/auth/me")).status, 401);
+  const forged = { cookie: "fl_session=invalid-forged-session", csrf: "" };
+  assert.equal(
+    (await request("/api/workspace", undefined, forged)).status,
+    401,
+  );
+
   assert.equal((await request("/demo")).status, 404);
   assert.equal((await request("/api/health")).data.status, "ready");
   assert.equal(
@@ -190,6 +225,23 @@ try {
   const me = await request("/api/auth/me", undefined, admin);
   admin.csrf = me.data.viewer.csrf;
   assert.ok(admin.cookie && admin.csrf);
+  const cookieProbe = await request("/api/auth/login", {
+    email: env.BOOTSTRAP_ADMIN_EMAIL,
+    password,
+  });
+  const cookieHeader = cookieProbe.headers.get("set-cookie")!;
+  for (const attribute of ["HttpOnly", "Secure", "SameSite=strict", "Path=/"])
+    assert.ok(cookieHeader.toLowerCase().includes(attribute.toLowerCase()));
+  const foreign = await fetch(origin + "/api/auth/login", {
+    method: "POST",
+    headers: {
+      Origin: "https://evil.example.invalid",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email: env.BOOTSTRAP_ADMIN_EMAIL, password }),
+  });
+  assert.equal(foreign.status, 403);
+
   let state = (await request("/api/workspace", undefined, admin)).data
     .state as DataState;
   assert.equal(state.founders.length, 50);
@@ -538,136 +590,105 @@ try {
   pass(
     "Relational persistence and one shared recording inherited by all linked profiles",
   );
-  const rejectedRole = await request(
-    "/api/workspace",
-    {
-      type: "invite.create",
-      payload: {
-        email: "removed_role@integration.example.invalid",
-        name: "Removed role",
-        roleId: "researcher",
-      },
-    },
-    admin,
-  );
-  assert.equal(rejectedRole.status, 400);
-  const invitation = await request(
-    "/api/workspace",
-    {
-      type: "invite.create",
-      payload: {
-        email: "extra_admin@integration.example.invalid",
-        name: "Additional Admin",
-        roleId: "admin",
-      },
-    },
-    admin,
-  );
-  assert.equal(invitation.status, 200);
-  const inviteToken = invitation.data.invitationPath.split("token=")[1];
-  const invited: Jar = { cookie: "", csrf: "" },
-    invitedPassword = randomBytes(24).toString("hex");
-  assert.equal(
-    (
-      await request(
-        "/api/auth/accept-invite",
-        { token: inviteToken, password: invitedPassword },
-        invited,
-      )
-    ).status,
-    200,
-  );
-  assert.equal(
-    (
-      await request("/api/auth/accept-invite", {
-        token: inviteToken,
-        password: invitedPassword,
-      })
-    ).status,
-    400,
-  );
-  const invitedMe = await request("/api/auth/me", undefined, invited);
-  assert.equal(invitedMe.data.viewer.roleId, "admin");
-  invited.csrf = invitedMe.data.viewer.csrf;
-  assert.equal(
-    (await request("/api/workspace", undefined, invited)).status,
-    200,
-  );
-  // A previously valid session must lose access immediately if its role is retired.
+  for (const roleId of ["admin", "researcher"]) {
+    assert.equal(
+      (
+        await request(
+          "/api/workspace",
+          {
+            type: "invite.create",
+            payload: {
+              email: "blocked@example.invalid",
+              name: "Blocked",
+              roleId,
+            },
+          },
+          admin,
+        )
+      ).status,
+      403,
+    );
+  }
+  for (const action of ["accept-invite", "signup", "register", "bootstrap"]) {
+    assert.equal(
+      (
+        await request("/api/auth/" + action, {
+          token: "a".repeat(40),
+          password,
+        })
+      ).status,
+      404,
+    );
+  }
   const policyDb = new Client({ connectionString: url.toString() });
   await policyDb.connect();
-  await policyDb.query('INSERT INTO "Role" (id,name) VALUES ($1,$2),($3,$4)', [
+  const { passwordHash } = await import("../lib/auth");
+  await policyDb.query(
+    'INSERT INTO "User" (id,email,name,"passwordHash","roleId",active,"customPermissions","createdAt","updatedAt") VALUES ($1,$2,$3,$4,$5,true,false,NOW(),NOW())',
+    [
+      "other-admin",
+      "other@example.invalid",
+      "Other administrator",
+      passwordHash(password),
+      "admin",
+    ],
+  );
+  assert.equal(
+    (
+      await request("/api/auth/login", {
+        email: "other@example.invalid",
+        password,
+      })
+    ).status,
+    401,
+  );
+  const savedHash = (
+    await policyDb.query('SELECT "passwordHash" FROM "User" WHERE email=$1', [
+      env.BOOTSTRAP_ADMIN_EMAIL,
+    ])
+  ).rows[0].passwordHash;
+  assert.notEqual(savedHash, password);
+  await policyDb.query('UPDATE "User" SET active=false WHERE email=$1', [
+    env.BOOTSTRAP_ADMIN_EMAIL,
+  ]);
+  assert.equal((await request("/api/workspace", undefined, admin)).status, 401);
+  await policyDb.query('UPDATE "User" SET active=true WHERE email=$1', [
+    env.BOOTSTRAP_ADMIN_EMAIL,
+  ]);
+  await policyDb.query('INSERT INTO "Role" (id,name) VALUES ($1,$2)', [
     "researcher",
     "Retired researcher",
-    "host",
-    "Retired host",
   ]);
   await policyDb.query('UPDATE "User" SET "roleId"=$1 WHERE email=$2', [
     "researcher",
-    "extra_admin@integration.example.invalid",
+    env.BOOTSTRAP_ADMIN_EMAIL,
   ]);
-  assert.equal((await request("/api/auth/me", undefined, invited)).status, 401);
-  assert.equal(
-    (await request("/api/workspace", undefined, invited)).status,
-    401,
+  assert.equal((await request("/api/workspace", undefined, admin)).status, 401);
+  await policyDb.query('UPDATE "User" SET "roleId"=$1 WHERE email=$2', [
+    "admin",
+    env.BOOTSTRAP_ADMIN_EMAIL,
+  ]);
+  await policyDb.query(
+    'UPDATE "User" SET "customPermissions"=true WHERE email=$1',
+    [env.BOOTSTRAP_ADMIN_EMAIL],
   );
   assert.equal(
     (
       await request(
         "/api/workspace",
         { type: "settings.save", payload: {} },
-        invited,
+        admin,
       )
     ).status,
-    401,
+    403,
   );
-  assert.equal(
-    (
-      await request("/api/auth/login", {
-        email: "extra_admin@integration.example.invalid",
-        password: invitedPassword,
-      })
-    ).status,
-    401,
+  await policyDb.query(
+    'UPDATE "User" SET "customPermissions"=false WHERE email=$1',
+    [env.BOOTSTRAP_ADMIN_EMAIL],
   );
-  assert.equal(
-    (
-      await fetch(origin + "/dashboard", {
-        headers: { Cookie: invited.cookie },
-        redirect: "manual",
-      })
-    ).status,
-    307,
-  );
-  const oldInvitation = await request(
-    "/api/workspace",
-    {
-      type: "invite.create",
-      payload: {
-        email: "old_invite@integration.example.invalid",
-        name: "Old invitation",
-        roleId: "admin",
-      },
-    },
-    admin,
-  );
-  assert.equal(oldInvitation.status, 200);
-  await policyDb.query('UPDATE "Invitation" SET "roleId"=$1 WHERE email=$2', [
-    "host",
-    "old_invite@integration.example.invalid",
-  ]);
   await policyDb.end();
-  assert.equal(
-    (
-      await request("/api/auth/accept-invite", {
-        token: oldInvitation.data.invitationPath.split("token=")[1],
-        password: invitedPassword,
-      })
-    ).status,
-    400,
-  );
   pass(
-    "Admin-only invitations and workspace access; retired-role logins, existing sessions and invitations are rejected",
+    "Only the provisioned administrator can sign in; invitations/signup are disabled and inactive sessions lose access",
   );
   const research = state.research[0],
     answers = Object.fromEntries(
@@ -768,6 +789,25 @@ try {
   }
   pass(
     "Production mobile sign-in, private dashboard and newly approved founder profile render without runtime errors",
+  );
+  const oldCookie = admin.cookie;
+  assert.equal(
+    (await request("/api/auth/logout", {}, admin, false)).status,
+    403,
+  );
+  assert.equal((await request("/api/auth/logout", {}, admin)).status, 200);
+  assert.equal(
+    (
+      await request("/api/workspace", undefined, {
+        cookie: oldCookie,
+        csrf: "",
+      })
+    ).status,
+    401,
+  );
+  assert.equal((await request("/api/auth/me", undefined, admin)).status, 401);
+  pass(
+    "Logout requires CSRF and revokes the database session, including replay of its old cookie",
   );
   console.log(
     `${passed} PostgreSQL/production HTTP integration groups passed.`,

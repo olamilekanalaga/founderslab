@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { UserPlus, ShieldCheck, Plus, Pencil, Copy, Check } from "lucide-react";
+import { ShieldCheck, Plus, Pencil } from "lucide-react";
 import { useWorkspace } from "./WorkspaceContext";
 import { ROLES, PERMISSIONS } from "@/lib/catalog";
 import { SectionHeading, Status, Avatar, Modal } from "./ui";
@@ -10,11 +10,10 @@ export default function Settings({
 }: {
   edit: (resource: Resource, record?: Record<string, unknown>) => void;
 }) {
-  const { state: s, commit, busy, invitationPath, demo } = useWorkspace(),
+  const { state: s, commit, busy, demo } = useWorkspace(),
     [tab, setTab] = useState("Admins"),
     [group, setGroup] = useState("Sector"),
-    [userId, setUser] = useState<string | null>(null),
-    [copied, setCopied] = useState(false);
+    [userId, setUser] = useState<string | null>(null);
   const target = s.users.find((u) => u.id === userId);
   return (
     <>
@@ -22,9 +21,6 @@ export default function Settings({
         <div>
           <h1>Admin settings</h1>
         </div>
-        <button className="button primary" onClick={() => edit("invitation")}>
-          <UserPlus size={16} /> Invite admin
-        </button>
       </div>
       <div className="tabs settings-tabs">
         {["Admins", "Options", "Programme", "Activity"].map((t) => (
@@ -37,33 +33,6 @@ export default function Settings({
           </button>
         ))}
       </div>
-      {invitationPath && (
-        <div className="notice">
-          <div>
-            <b>One-time invitation created</b>
-            <p>
-              Expires in 7 days. Share this privately; no invitation email was
-              sent.
-            </p>
-          </div>
-          <button
-            className="button"
-            onClick={async () => {
-              try {
-                await navigator.clipboard.writeText(
-                  window.location.origin + invitationPath,
-                );
-                setCopied(true);
-              } catch {
-                setCopied(false);
-              }
-            }}
-          >
-            {copied ? <Check size={15} /> : <Copy size={15} />} Copy invitation
-          </button>
-          <code>{window.location.origin + invitationPath}</code>
-        </div>
-      )}
       <section className="panel" hidden={tab !== "Admins"}>
         <SectionHeading
           title="Admin access"
@@ -151,34 +120,6 @@ export default function Settings({
             Policy settings do not delete records automatically. Review
             retention and privacy requests with the programme administrator.
           </p>
-        </section>
-        <section className="panel padded">
-          <h2>Invitations</h2>
-          {s.invitations
-            .filter((i) => i.roleId === "admin")
-            .map((i) => (
-              <div className="compact-note" key={i.id}>
-                <b>{i.name}</b>
-                <p>
-                  {i.email} · {ROLES[i.roleId]?.name}
-                </p>
-                <Status
-                  value={
-                    i.acceptedAt
-                      ? "Accepted"
-                      : new Date(i.expiresAt) < new Date()
-                        ? "Expired"
-                        : "Pending"
-                  }
-                />
-              </div>
-            ))}
-          {!s.invitations.length && (
-            <p>
-              No invitations yet. Invite admins by role; links can be shared
-              manually.
-            </p>
-          )}
         </section>
       </div>
       <section className="panel" hidden={tab !== "Options"}>

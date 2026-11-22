@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { body, json, failure } from "@/lib/http";
-import { db, hash } from "@/lib/db";
+import { db } from "@/lib/db";
 import {
   getViewer,
   requireViewer,
@@ -9,7 +9,7 @@ import {
   rateLimit,
   startSession,
   endSession,
-  passwordHash,
+  isProvisionedAdmin,
   verifyPassword,
 } from "@/lib/auth";
 import { DomainError } from "@/lib/domain";
@@ -41,6 +41,7 @@ export async function POST(
           password: z.string().min(1).max(200),
         })
         .parse(await body(request));
+      await rateLimit(`login-account:${p.email}`, 8, 15 * 60000);
       await rateLimit(
         `login:${p.email}:${request.headers.get("x-forwarded-for") || "local"}`,
         8,
@@ -51,7 +52,7 @@ export async function POST(
         user?.passwordHash ||
         "0123456789abcdef:00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
       const valid = verifyPassword(p.password, encoded);
-      if (!user || !user.active || user.roleId !== "admin" || !valid)
+      if (!user || !isProvisionedAdmin(user) || !valid)
         throw new DomainError("Email or password is incorrect.", 401);
       await startSession(user.id);
       return json({ ok: true });
@@ -60,48 +61,6 @@ export async function POST(
       const viewer = await requireViewer();
       requireCsrf(request, viewer);
       await endSession();
-      return json({ ok: true });
-    }
-    if (action === "accept-invite") {
-      const p = z
-        .object({
-          token: z.string().min(30).max(100),
-          password: z.string().min(12, "Use at least 12 characters").max(200),
-        })
-        .parse(await body(request));
-      await rateLimit(
-        `invite:${request.headers.get("x-forwarded-for") || "local"}`,
-        15,
-        15 * 60000,
-      );
-      const userId = await db().$transaction(async (tx) => {
-        const found = await tx.invitation.findUnique({
-          where: { tokenHash: hash(p.token) },
-        });
-        if (
-          !found ||
-          found.roleId !== "admin" ||
-          found.acceptedAt ||
-          found.expiresAt < new Date()
-        )
-          throw new DomainError("This invitation is invalid or expired.", 400);
-        const claim = await tx.invitation.updateMany({
-          where: { id: found.id, acceptedAt: null },
-          data: { acceptedAt: new Date() },
-        });
-        if (claim.count !== 1)
-          throw new DomainError("Invitation already accepted.");
-        const user = await tx.user.create({
-          data: {
-            email: found.email,
-            name: found.name,
-            passwordHash: passwordHash(p.password),
-            roleId: found.roleId,
-          },
-        });
-        return user.id;
-      });
-      await startSession(userId);
       return json({ ok: true });
     }
     return json({ error: "Not found" }, 404);

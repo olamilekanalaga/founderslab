@@ -17,6 +17,19 @@ export function verifyPassword(password: string, encoded: string) {
     expected.length === received.length && timingSafeEqual(expected, received)
   );
 }
+export function isProvisionedAdmin(user: {
+  email: string;
+  roleId: string;
+  active: boolean;
+}) {
+  const email = process.env.BOOTSTRAP_ADMIN_EMAIL?.trim().toLowerCase();
+  return Boolean(
+    email &&
+    user.active &&
+    user.roleId === "admin" &&
+    user.email.toLowerCase() === email,
+  );
+}
 export async function getViewer(): Promise<Viewer | null> {
   if (!databaseUrl()) return null;
   const value = (await cookies()).get("fl_session")?.value;
@@ -32,7 +45,7 @@ export async function getViewer(): Promise<Viewer | null> {
   if (!session || session.expiresAt < new Date() || !session.user.active)
     return null;
   const u = session.user;
-  if (u.roleId !== "admin") return null;
+  if (!isProvisionedAdmin(u)) return null;
   return {
     id: u.id,
     name: u.name,
@@ -64,7 +77,7 @@ export function requireCsrf(request: Request, viewer: Viewer) {
     expected = viewer.csrf || "";
   if (
     !expected ||
-    incoming.length !== expected.length ||
+    Buffer.byteLength(incoming) !== Buffer.byteLength(expected) ||
     !timingSafeEqual(Buffer.from(incoming), Buffer.from(expected))
   )
     throw new DomainError("Session request token required.", 403);

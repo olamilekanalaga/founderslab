@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { body, json, failure } from "@/lib/http";
-import { db, hash, token, loadState, executeCommand } from "@/lib/db";
+import { db, loadState, executeCommand } from "@/lib/db";
 import { requireViewer, requireCsrf } from "@/lib/auth";
 import { actionPermission } from "@/lib/catalog";
 import { DomainError, scopeState } from "@/lib/domain";
@@ -28,30 +28,7 @@ export async function POST(request: Request) {
     if (!permission || !viewer.permissions.includes(permission))
       throw new DomainError("Permission required.", 403);
     if (command.type === "invite.create") {
-      const p = schemas["invite.create"].parse(command.payload),
-        raw = token();
-      if (await db().user.findUnique({ where: { email: p.email } }))
-        throw new DomainError("This team member already exists.");
-      await db().invitation.create({
-        data: {
-          ...p,
-          tokenHash: hash(raw),
-          invitedBy: viewer.id,
-          expiresAt: new Date(Date.now() + 7 * 864e5),
-        },
-      });
-      await db().auditLog.create({
-        data: {
-          actor: viewer.name,
-          action: "invite.create",
-          entityId: p.email,
-          detail: "Invitation link created for manual sharing; no email sent.",
-        },
-      });
-      return json({
-        state: scopeState(await loadState(), viewer.permissions),
-        invitationPath: `/invite#token=${raw}`,
-      });
+      throw new DomainError("Administrator invitations are disabled.", 403);
     }
     if (command.type === "user.permissions") {
       const p = schemas["user.permissions"].parse(command.payload);

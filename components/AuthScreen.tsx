@@ -5,11 +5,9 @@ import { useRouter } from "next/navigation";
 import BrandMark from "./BrandMark";
 import { ArrowRight, ShieldCheck } from "lucide-react";
 export default function AuthScreen({
-  invite = false,
   configured,
   allowDemo = true,
 }: {
-  invite?: boolean;
   configured: boolean;
   allowDemo?: boolean;
 }) {
@@ -32,12 +30,8 @@ export default function AuthScreen({
         <div className="eyebrow">
           <ShieldCheck size={13} /> PRIVATE WORKSPACE
         </div>
-        <h1>{invite ? "Accept admin invitation." : "Welcome back."}</h1>
-        <p>
-          {invite
-            ? "Set a strong password to accept your one-time invitation."
-            : "Sign in to manage founders, bookings and weekly Spaces."}
-        </p>
+        <h1>Welcome back.</h1>
+        <p>Sign in to manage founders, bookings and weekly Spaces.</p>
         {!configured && (
           <p className="error">
             The private database is not configured. Use the fictional demo
@@ -51,19 +45,11 @@ export default function AuthScreen({
             setBusy(true);
             setError("");
             try {
-              const token = new URLSearchParams(
-                window.location.hash.slice(1),
-              ).get("token");
-              const response = await fetch(
-                "/api/auth/" + (invite ? "accept-invite" : "login"),
-                {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify(
-                    invite ? { token, password } : { email, password },
-                  ),
-                },
-              );
+              const response = await fetch("/api/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password }),
+              });
               const v = await response.json();
               if (!response.ok) throw new Error(v.error);
               router.push("/dashboard");
@@ -75,7 +61,7 @@ export default function AuthScreen({
             }
           }}
         >
-          {!invite && (
+          {
             <label>
               Email address
               <input
@@ -86,13 +72,13 @@ export default function AuthScreen({
                 onChange={(e) => setEmail(e.target.value)}
               />
             </label>
-          )}
+          }
           <label>
-            {invite ? "Password · at least 12 characters" : "Password"}
+            Password
             <input
               type="password"
-              autoComplete={invite ? "new-password" : "current-password"}
-              minLength={invite ? 12 : 1}
+              autoComplete="current-password"
+              minLength={1}
               maxLength={200}
               required
               value={password}
@@ -109,7 +95,7 @@ export default function AuthScreen({
             disabled={busy || !configured}
             className="button primary"
           >
-            {busy ? "Please wait…" : invite ? "Accept invitation" : "Sign in"}
+            {busy ? "Please wait…" : "Sign in"}
             <ArrowRight size={16} />
           </button>
         </form>
@@ -119,9 +105,8 @@ export default function AuthScreen({
           </Link>
         )}
         <p className="muted">
-          Private accounts are created by an administrator or through a
-          role-specific invitation. There are no shared production demo
-          credentials.
+          Only the pre-provisioned administrator can sign in. There is no public
+          signup.
         </p>
       </section>
     </main>

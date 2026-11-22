@@ -62,7 +62,7 @@ The weekly X post, live Space URL and recording URL are stored once on the sessi
 
 The real workspace requires an authenticated, authorised Admin session. Public visitors can book without an account; they cannot access private founder data. Demo Admin is a fictional local preview, not real authentication. Server authorization, CSRF/origin checks, capability expiry, password hashing, rate limits and audit logs protect database-backed commands.
 
-Administrator invitations are generated for manual secure sharing. MFA, password recovery, email delivery and SSO are not integrated. Ordinary multi-device sessions are supported. Demo browser storage does not synchronize across devices.
+Administrator invitations and public account registration are disabled. Only the active Admin matching BOOTSTRAP_ADMIN_EMAIL can authenticate; keep that email configured after provisioning. MFA, password recovery, email delivery and SSO are not integrated. Ordinary multi-device sessions are supported. Demo browser storage does not synchronize across devices.
 
 ## Verification
 
