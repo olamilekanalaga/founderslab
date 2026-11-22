@@ -1,23 +1,35 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Menu, X } from "lucide-react";
+import { ArrowUpRight, Menu, X } from "lucide-react";
 import BrandMark from "@/components/shared/BrandMark";
-
-const publicLinks = [
+const links = [
   { href: "/", label: "Home" },
   { href: "/#about", label: "About" },
   { href: "/#how-it-works", label: "How It Works" },
-  { href: "/book", label: "Book a Space" },
 ];
 export default function PublicHeader() {
   const [open, setOpen] = useState(false);
+  const toggle = useRef<HTMLButtonElement>(null);
+  const pathname = usePathname();
+  useEffect(() => {
+    if (!open) return;
+    const close = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+        toggle.current?.focus();
+      }
+    };
+    document.addEventListener("keydown", close);
+    return () => document.removeEventListener("keydown", close);
+  }, [open]);
   return (
-    <header className="public-header programme-header">
+    <header className="public-header programme-header fl-header">
       <Link
         className="brand"
         href="/"
-        aria-label="Founders Lab with Ola_Crrypt — Home"
+        aria-label="Founders Lab with Ola_Crrypt, Home"
         onClick={() => setOpen(false)}
       >
         <span className="brand-mark" aria-hidden="true">
@@ -28,6 +40,7 @@ export default function PublicHeader() {
         </span>
       </Link>
       <button
+        ref={toggle}
         type="button"
         className="programme-menu-toggle"
         aria-label={
@@ -35,26 +48,38 @@ export default function PublicHeader() {
         }
         aria-expanded={open}
         aria-controls="programme-navigation"
-        onClick={() => setOpen(!open)}
+        onClick={() => setOpen((value) => !value)}
       >
-        {open ? <X size={22} /> : <Menu size={22} />}
+        {open ? (
+          <X size={21} aria-hidden="true" />
+        ) : (
+          <Menu size={21} aria-hidden="true" />
+        )}
       </button>
       <nav
         id="programme-navigation"
         aria-label="Programme navigation"
         className={open ? "is-expanded" : ""}
       >
-        {publicLinks.map(({ href, label }) => (
-          <Link key={href} href={href} onClick={() => setOpen(false)}>
-            {label}
+        {links.map((link) => (
+          <Link
+            key={link.href}
+            href={link.href}
+            aria-current={
+              link.href === "/" && pathname === "/" ? "page" : undefined
+            }
+            onClick={() => setOpen(false)}
+          >
+            {link.label}
           </Link>
         ))}
         <Link
-          className="button primary"
+          className="fl-action fl-action-primary"
           href="/book"
+          aria-current={pathname === "/book" ? "page" : undefined}
           onClick={() => setOpen(false)}
         >
-          Book a Founder Space
+          Choose a Saturday <ArrowUpRight size={17} aria-hidden="true" />
         </Link>
       </nav>
     </header>

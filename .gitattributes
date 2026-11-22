@@ -1,0 +1,3 @@
+# Preserve the existing SHA-256-pinned Prisma source on every checkout.
+prisma/schema.prisma text eol=lf
+prisma/migrations/** text eol=lf

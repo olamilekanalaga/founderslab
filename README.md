@@ -4,6 +4,8 @@ A Web3 founder conversation and relationship-building programme, supported by pr
 
 ## V4 public experience
 
+The SaaS-style public UI upgrade adds a product-led homepage, real availability preview and a calendar with persistent selected-date continuation on desktop and mobile. See the [UI upgrade](docs/saas/README.md) and [current validation](docs/saas/VALIDATION.md). The programme, public routes, application/approval rules and private workspaces remain on the existing backend.
+
 `/` introduces the programme in a light, responsive homepage. Founders book through `/book`, apply through `/apply` and retain their existing private confirmation link. Public navigation contains no workspace login links; Admin bookmarks `/signin` and invited managers use their existing passwordless email flow.
 
 Founder awards are retired for new participation. `/campaigns` is a protected read-only archive, available from Admin Settings → Programme. Historical award records and payment references remain intact; no new award decisions can be written through the old endpoints. BD introductions are invitation-only and informational; no referral accounts, commission rules or payouts are implemented.

@@ -1,47 +1,36 @@
 "use client";
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowUpRight, CalendarDays } from "lucide-react";
-import { api } from "@/features/bookings/lib/public-api";
-import { publicSlotOpen, type PublicSession } from "@/lib/dates/booking";
+import { ArrowUpRight, RefreshCw } from "lucide-react";
+import { publicSlotOpen } from "@/lib/dates/booking";
 import SessionTime from "@/components/shared/SessionTime";
-
-type Availability =
-  | { status: "loading" }
-  | { status: "error" }
-  | { status: "ready"; sessions: PublicSession[] };
+import { useProgrammeAvailability } from "./ProgrammeAvailability";
 export default function UpcomingSpaces() {
-  const [availability, setAvailability] = useState<Availability>({
-    status: "loading",
-  });
-  useEffect(() => {
-    let active = true;
-    void api("sessions")
-      .then(({ sessions }: { sessions: PublicSession[] }) => {
-        if (active)
-          setAvailability({
-            status: "ready",
-            sessions: sessions
-              .filter((s) => Date.parse(s.startsAt) > Date.now())
-              .slice(0, 3),
-          });
-      })
-      .catch(() => {
-        if (active) setAvailability({ status: "error" });
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
-  if (availability.status !== "ready")
+  const { availability, retry } = useProgrammeAvailability();
+  if (availability.status === "loading")
     return (
-      <p className="programme-availability-message" role="status">
-        {availability.status === "loading"
-          ? "Loading live availability…"
-          : "Live availability is temporarily unavailable. Please check the booking calendar again shortly."}
-      </p>
+      <div className="fl-session-skeleton" role="status">
+        <span />
+        <span />
+        <span />
+        <p>Loading live availability…</p>
+      </div>
     );
-  if (!availability.sessions.length)
+  if (availability.status === "error")
+    return (
+      <div className="programme-availability-message" role="status">
+        <p>
+          Live availability is temporarily unavailable. Please check the booking
+          calendar again shortly.
+        </p>
+        <button type="button" className="fl-inline-action" onClick={retry}>
+          <RefreshCw size={15} aria-hidden="true" /> Retry availability
+        </button>
+      </div>
+    );
+  const upcoming = availability.sessions
+    .filter((session) => Date.parse(session.startsAt) > availability.asOf)
+    .slice(0, 3);
+  if (!upcoming.length)
     return (
       <p className="programme-availability-message" role="status">
         No upcoming Saturdays are currently published. Please check back for the
@@ -49,16 +38,10 @@ export default function UpcomingSpaces() {
       </p>
     );
   return (
-    <div className="programme-session-grid">
-      {availability.sessions.map((session) => {
+    <div className="fl-upcoming-grid">
+      {upcoming.map((session) => {
+        const date = new Date(session.startsAt);
         const open = publicSlotOpen(session, session.availableSeats);
-        const date = new Intl.DateTimeFormat("en-GB", {
-          timeZone: "Europe/London",
-          weekday: "long",
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-        }).format(new Date(session.startsAt));
         const capacity =
           session.availableSeats > 0
             ? `${session.availableSeats} ${session.availableSeats === 1 ? "slot" : "slots"} left`
@@ -69,14 +52,15 @@ export default function UpcomingSpaces() {
             key={session.id}
             data-session-id={session.id}
           >
-            <div className="programme-session-top">
-              <CalendarDays size={20} aria-hidden="true" />
+            <div className="fl-session-top">
+              <span>
+                {new Intl.DateTimeFormat("en-GB", {
+                  weekday: "long",
+                  timeZone: "Europe/London",
+                }).format(date)}
+              </span>
               <span
-                className={
-                  open
-                    ? "programme-session-status is-open"
-                    : "programme-session-status"
-                }
+                className={open ? "fl-slot-state is-open" : "fl-slot-state"}
               >
                 {open
                   ? capacity
@@ -85,28 +69,33 @@ export default function UpcomingSpaces() {
                     : "Closed"}
               </span>
             </div>
-            <h3>{date}</h3>
-            <p className="programme-session-time">
+            <h3>
+              {new Intl.DateTimeFormat("en-GB", {
+                day: "numeric",
+                month: "long",
+                timeZone: "Europe/London",
+              }).format(date)}
+            </h3>
+            <p className="fl-session-time">
               <SessionTime startsAt={session.startsAt} />
             </p>
-            <p>
-              {capacity} · {session.capacity} project seats per Space
-            </p>
-            {open ? (
-              <Link
-                className="programme-session-link"
-                href={`/apply?session=${encodeURIComponent(session.id)}`}
-              >
-                Request this Saturday{" "}
-                <ArrowUpRight size={17} aria-hidden="true" />
-              </Link>
-            ) : (
-              <span className="programme-session-closed">
-                {session.submitted
-                  ? "Attendance received"
-                  : "Not available for booking"}
-              </span>
-            )}
+            <div className="fl-session-bottom">
+              <small>{session.capacity} project seats per Space</small>
+              {open ? (
+                <Link
+                  href={`/apply?session=${encodeURIComponent(session.id)}`}
+                  aria-label={`Request ${new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", timeZone: "Europe/London" }).format(date)}`}
+                >
+                  <ArrowUpRight size={22} aria-hidden="true" />
+                </Link>
+              ) : (
+                <span>
+                  {session.submitted
+                    ? "Attendance received"
+                    : "Not available for booking"}
+                </span>
+              )}
+            </div>
           </article>
         );
       })}
