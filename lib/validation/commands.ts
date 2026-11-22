@@ -20,6 +20,7 @@ import {
   date,
   country,
   xHandle,
+  optionalXHandle,
 } from "./primitives";
 
 export const schemas = {
@@ -50,6 +51,7 @@ export const schemas = {
       name: required,
       description: text.min(1, "This field is required"),
       website: companyWebsite,
+      xHandle: optionalXHandle,
       country,
       operatingCountries: optionalList,
       teamSize: z.enum(TEAM_SIZES),

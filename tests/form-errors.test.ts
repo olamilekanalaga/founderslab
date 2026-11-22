@@ -6,7 +6,7 @@ test("validation errors return a readable field message instead of raw issue JSO
   const result = applicationSchema.safeParse({
     founderName: "Founder",
     companyName: "Company",
-    xHandle: "bad handle",
+    xHandle: "bad/handle",
     website: "https://example.invalid",
     country: "Nigeria",
     description: "Pay",

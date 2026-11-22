@@ -9,7 +9,8 @@
       "refactor/feature-architecture": false,
       "feature/v4-public-homepage": false,
       "redesign/public-experience": false,
-      "redesign/admin-experience": false
+      "redesign/admin-experience": false,
+      "feature/founder-project-identity": false
     }
   }
 }

@@ -73,7 +73,7 @@ export default function Directory({
   const visibleCompanies = companies.filter(
     (c) =>
       (!country || c.country === country) &&
-      `${c.name} ${c.description}`.toLowerCase().includes(query.toLowerCase()),
+      `${c.name} ${c.xHandle || ""} ${c.description}`.toLowerCase().includes(query.toLowerCase()),
   );
   const count = kind === "founders" ? founders.length : visibleCompanies.length;
   const currentPage = Math.min(

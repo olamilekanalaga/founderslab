@@ -139,7 +139,7 @@ test.describe("Admin experience", () => {
       .getByLabel("Founder name", { exact: true })
       .fill("Invalid country acceptance");
     await page
-      .getByLabel("X username", { exact: true })
+      .getByLabel("Founder X", { exact: true })
       .fill("invalid_country_acceptance");
     await page
       .getByLabel("Country", { exact: true })

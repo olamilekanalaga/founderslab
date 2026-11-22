@@ -9,10 +9,11 @@ import SessionTime from "@/components/shared/SessionTime";
 import { publicSlotOpen, type PublicSession } from "@/lib/dates/booking";
 import { COUNTRIES, SECTORS, STAGES, TEAM_SIZES } from "@/lib/catalog";
 import { formError } from "@/lib/validation/form-errors";
-import { applicationSchema } from "@/lib/validation/application";
+import { publicApplicationSchema as applicationSchema } from "@/lib/validation/application";
 
 import PublicFooter from "@/components/layout/PublicFooter";
 import { api } from "@/features/bookings/lib/public-api";
+import { FounderContact } from "@/features/bookings/components/FounderContact";
 export function ApplicationForm({ configured }: { configured: boolean }) {
   const params = useSearchParams(),
     router = useRouter();
@@ -22,17 +23,17 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
   );
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
-    [speakers, setSpeakers] = useState("1"),
-    [other, setOther] = useState(4),
-    [expanded, setExpanded] = useState(false);
+    [speakers, setSpeakers] = useState(""),
+    [other, setOther] = useState(4);
   const [fields, setFields] = useState<Record<string, string>>({
     founderName: "",
     companyName: "",
     xHandle: "",
+    projectXHandle: "",
     website: "",
     country: "",
     description: "",
-    teamSize: "2–5",
+    teamSize: "",
     stage: "",
     sector: "",
     focus: "",
@@ -46,7 +47,7 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
   });
   const [privacy, setPrivacy] = useState(false),
     [promo, setPromo] = useState(false),
-    [hiring, setHiring] = useState(false);
+    [hiring, setHiring] = useState("");
   const [catalog, setCatalog] = useState({
     countries: COUNTRIES,
     sectors: SECTORS,
@@ -137,7 +138,7 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
                 speakers: speakers === "Other" ? other : Number(speakers),
                 privacyConsent: privacy,
                 promotionalConsent: promo,
-                hiring,
+                hiring: hiring === "yes",
               });
               if (!selectionValid)
                 throw new Error(
@@ -162,7 +163,7 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
         >
           <div className="form-section-title">
             <span>01</span>
-            <h2>You & your company</h2>
+            <h2>About you</h2>
           </div>
           <div className="record-form">
             <label>
@@ -177,6 +178,47 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
               />
             </label>
             <label>
+              Your personal X username
+              <input
+                name="xHandle"
+                value={fields.xHandle}
+                onChange={(e) => change("xHandle", e.target.value)}
+                required
+                placeholder="@yourhandle"
+                autoCapitalize="none"
+                autoCorrect="off"
+                maxLength={50}
+              />
+            </label>
+            <label>
+              Contact email (private)
+              <input
+                name="contact"
+                type="email"
+                placeholder="Optional"
+                autoComplete="email"
+                maxLength={200}
+                value={fields.contact}
+                onChange={(e) => change("contact", e.target.value)}
+              />
+            </label>
+            <label>
+              Your role
+              <input
+                name="founderRole"
+                required
+                maxLength={200}
+                value={fields.founderRole}
+                onChange={(e) => change("founderRole", e.target.value)}
+              />
+            </label>
+          </div>
+          <div className="form-section-title">
+            <span>02</span>
+            <h2>About your project</h2>
+          </div>
+          <div className="record-form">
+            <label>
               Company / project name
               <input
                 name="companyName"
@@ -187,14 +229,16 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
               />
             </label>
             <label>
-              X username
+              Official project X username
               <input
-                name="xHandle"
-                value={fields.xHandle}
-                onChange={(e) => change("xHandle", e.target.value)}
+                name="projectXHandle"
                 required
-                placeholder="@yourhandle"
+                value={fields.projectXHandle}
+                onChange={(e) => change("projectXHandle", e.target.value)}
+                placeholder="@yourproject"
                 maxLength={50}
+                autoCapitalize="none"
+                autoCorrect="off"
               />
             </label>
             <label>
@@ -233,9 +277,13 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
               Team size
               <select
                 name="teamSize"
+                required
                 value={fields.teamSize}
                 onChange={(e) => change("teamSize", e.target.value)}
               >
+                <option value="" disabled>
+                  Select an option
+                </option>
                 {TEAM_SIZES.map((v) => (
                   <option key={v}>{v}</option>
                 ))}
@@ -244,9 +292,14 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
             <label>
               Speakers representing your project
               <select
+                name="speakers"
+                required
                 value={speakers}
                 onChange={(e) => setSpeakers(e.target.value)}
               >
+                <option value="" disabled>
+                  Select an option
+                </option>
                 {["1", "2", "3", "Other"].map((v) => (
                   <option key={v}>{v}</option>
                 ))}
@@ -265,12 +318,7 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
                 />
               </label>
             )}
-          </div>
-          <div className="form-section-title">
-            <span>02</span>
-            <h2>What you’re building</h2>
-          </div>
-          <div className="record-form">
+
             <label className="span-2">
               Short product description
               <textarea
@@ -327,51 +375,51 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
               />
             </label>
           </div>
-          <button
-            type="button"
-            className="optional-toggle"
-            aria-expanded={expanded}
-            onClick={() => setExpanded((v) => !v)}
-          >
-            {expanded ? "−" : "+"} Add optional details
-          </button>
-          {expanded && (
-            <div className="record-form">
-              {[
-                ["founderRole", "Your role"],
-                ["contact", "Telegram or email contact"],
-                ["teamCountries", "Other team countries · comma separated"],
-                ["ecosystem", "Blockchain ecosystem"],
-                ["seeking", "Skills or partnerships being sought"],
-              ].map(([key, label]) => (
-                <label key={key}>
-                  {label}
-                  <input
-                    maxLength={200}
-                    value={fields[key]}
-                    onChange={(e) => change(key, e.target.value)}
-                  />
-                </label>
-              ))}
-              <label className="check-label">
+          <div className="record-form">
+            {[
+              ["teamCountries", "Team countries · comma separated"],
+              ["ecosystem", "Blockchain ecosystem"],
+              ["seeking", "Skills or partnerships being sought"],
+            ].map(([key, label]) => (
+              <label key={key}>
+                {label}
                 <input
-                  type="checkbox"
-                  checked={hiring}
-                  onChange={(e) => setHiring(e.target.checked)}
-                />{" "}
-                We are actively hiring
-              </label>
-              <label className="span-2">
-                Additional comments
-                <textarea
-                  name="comments"
-                  value={fields.comments}
-                  onChange={(e) => change("comments", e.target.value)}
-                  maxLength={5000}
+                  name={key}
+                  required
+                  placeholder="Enter None if not applicable"
+                  maxLength={200}
+                  value={fields[key]}
+                  onChange={(e) => change(key, e.target.value)}
                 />
               </label>
-            </div>
-          )}
+            ))}
+            <label>
+              Are you actively hiring?
+              <select
+                name="hiring"
+                required
+                value={hiring}
+                onChange={(e) => setHiring(e.target.value)}
+              >
+                <option value="" disabled>
+                  Select an option
+                </option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
+            </label>
+            <label className="span-2">
+              Additional comments
+              <textarea
+                name="comments"
+                required
+                placeholder="Enter None if no additional comments"
+                value={fields.comments}
+                onChange={(e) => change("comments", e.target.value)}
+                maxLength={5000}
+              />
+            </label>
+          </div>
           <label className="honeypot" aria-hidden="true">
             Leave empty
             <input
@@ -428,6 +476,7 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
             Submitting an application does not guarantee a speaking slot.
           </small>
         </form>
+        <FounderContact />
       </main>
       <PublicFooter />
     </div>

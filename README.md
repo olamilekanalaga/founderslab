@@ -43,6 +43,14 @@ See [architecture and frontend/backend boundaries](docs/ARCHITECTURE.md), the [p
 
 Removed screens and unused forms are not kept in the frontend. Historical database models/migrations remain so existing records and references are preserved. Test fixtures are server-side testing infrastructure, never a browser demo or production seed.
 
+## Founder and project identities
+
+The homepage focuses on introducing a product, sharing a founder journey and reaching an interested audience. It uses the supplied founder logo; the redundant large date-card section is removed while the hero preview and full booking calendar remain. The application separates **About you** from **About your project**. Personal X belongs to Founder; official Project X belongs to Company and is automatically transferred from the application during approval. Admin can view/edit both independently.
+
+For new applications, only the private contact email is optional; the box says **Optional**. Required programme answers use browser/field-error focus, and usernames/countries normalize capitalization and extra spaces. Existing research fields remain; use **None** where business details do not apply. Promotional consent remains a separate voluntary choice.
+
+Migration `202611220004_project_x_identity` adds nullable Company/Application columns without altering old data. Legacy applications and companies without Project X remain valid. See [ownership and migration details](docs/identity/README.md) and [test results](docs/identity/VALIDATION.md).
+
 ## Public workflow
 
 `/` displays the public programme homepage; its calls to action open `/book`. A founder chooses an available Saturday, completes `/apply`, and receives a private, limited-scope `/confirmation#token=…` link. There are no founder accounts or public signup. Every submission is stored in PostgreSQL. Missing database configuration produces an unavailable state, never a fictional fallback. Browser demo routes and mode switches have been removed.

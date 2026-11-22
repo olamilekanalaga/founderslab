@@ -16,3 +16,5 @@ Other current checks: [eight-week calendar](booking-eight-weeks-mobile.png), [re
 `npm run screenshots` captures public/sign-in routes from a running backend-backed server. `npm run test:integration` captures protected workflows using its isolated database. Mobile viewport: 393 × 852; desktop dimensions vary by the relevant check.
 
 V4 homepage screenshots use real local backend availability, not mocked test responses. The older `monthly-winner-mobile.png` capture is retained historical QA evidence and no longer describes an active workflow. No screenshot proves production verification.
+
+Latest audience/identity update: [homepage desktop](identity-homepage-desktop.png), [homepage mobile](identity-homepage-mobile.png), [application desktop](identity-application-desktop.png), [application mobile](identity-application-mobile.png). These include the supplied logo, removed large date-card section, separate personal/project usernames and optional email box. Captured from the local production build, not live-production verification.

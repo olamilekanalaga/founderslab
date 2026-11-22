@@ -10,7 +10,10 @@ import { publicSlotOpen } from "@/lib/dates/booking";
 import { db, hash, token, loadState } from "@/server/db";
 import { body, json, failure } from "@/server/http";
 import { requireOrigin, rateLimit } from "@/server/auth";
-import { applicationSchema, normaliseKey } from "@/lib/validation";
+import {
+  publicApplicationSchema as applicationSchema,
+  normaliseKey,
+} from "@/lib/validation";
 import { approvedSeats, DomainError } from "@/lib/domain";
 import { defaultSettings } from "@/lib/catalog";
 
