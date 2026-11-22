@@ -1,65 +1,56 @@
-# Deploy Founders Lab
+# Deploy and operate Founders Lab
 
-Use the dedicated Founders Lab Vercel project connected to `olamilekanalaga/founderslab`, production branch `main`. Do not reuse a different application’s Vite/static build settings.
+Use the existing Vercel project connected to `olamilekanalaga/founderslab`, production branch `main`. Keep one project, one PostgreSQL database and one canonical website origin. The current Vercel website address works without buying a custom domain.
 
-## Vercel or another Next.js Node host
+## Build configuration
 
-1. Push this source to the new project's repository/branch. Import it as a **Next.js** project, Node.js 24, install `npm ci`, build `npm run build`. The checked-in `vercel.json` explicitly selects Next.js, `npm ci`, `npm run build` and the `.next` output so inherited static-site settings do not take precedence. Keep Root Directory at the repository root (the folder containing `package.json`); root-directory and Git/domain linkage must be checked in the Vercel project.
-2. Provision persistent PostgreSQL and set `DATABASE_URL` as a server-only secret, using the provider's required TLS configuration. Use a pooled application connection if required by the host; use a suitable migration connection for deployment jobs. No database is needed for the browser demo, but public submissions/admin require one.
-3. Set `APP_ORIGIN` to the exact HTTPS origin (for example `https://founders-lab.example.com`). It is used to check public and authenticated write requests. A preview hostname needs its own matching origin and isolated database. Do not let preview deployments mutate production data.
-4. From a secure release job/terminal with the production database environment, run:
+The repository root contains `package.json` and `vercel.json`. Use Next.js and Node.js 24. The checked-in configuration installs with `npm ci`, builds with `npm run build:vercel` and outputs `.next`.
 
-```sh
-npm ci
-npm run db:generate
-npm run db:migrate
-npm run db:seed
-npm run db:admin
-```
+In Vercel Production, the build generates Prisma, applies checked-in SQL migrations using the direct database connection, provisions defaults, ensures the attendance-gated booking window and provisions the configured Admin if absent. Existing passwords are not reset. Preparation failures fail the deployment. Public requests never run bootstrap account creation.
 
-Set `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_NAME` and a strong `BOOTSTRAP_ADMIN_PASSWORD` for the final command only. Remove bootstrap secrets afterwards. `db:seed` without `--demo` adds defaults without fictional founders. **Never run `--demo` against a real programme database.** Do not run migrations or bootstrap commands on every web request.
+## Production configuration
 
-5. Deploy and verify `/demo`, `/apply`, `/book`, private sign-in, approvals, one shared recording, reports and admin-only access restrictions on the actual HTTPS URL. Confirm the production Secure cookie is set, anonymous `/api/workspace` returns 401, and no applicant/contact/commercial data appears in public responses.
-6. Configure database backups, host monitoring, recovery procedures and the programme's actual privacy/award terms before collecting real applicant data. Set the public programme rules and retention policy in Settings.
+Set values in the existing project's Production environment, never in public-prefixed variables or Git:
 
-The application has no public signup or administrator invitation acceptance. Keep BOOTSTRAP_ADMIN_EMAIL configured as the sole administrator allowlist. Award records document human decisions and separately executed transfers; no award transfers are sent. No API subscriptions are needed.
+| Variable | Purpose |
+|---|---|
+| `DATABASE_URL` | PostgreSQL application connection; Neon pooled connection is supported. |
+| `DATABASE_URL_UNPOOLED` | Direct connection for migrations when the application uses Neon's pooler. |
+| `APP_ORIGIN` | Exact canonical HTTPS website origin, initially `https://founderslab-orcin.vercel.app`. |
+| `BOOTSTRAP_ADMIN_EMAIL` | Sole Admin allowlist. **Keep this configured after provisioning.** |
+| `BOOTSTRAP_ADMIN_PASSWORD` | Initial provisioning password, 12–200 characters. No default exists. |
+| `BOOTSTRAP_ADMIN_NAME` | Optional Admin display name. |
+| `RESEND_API_KEY` | Transactional email provider credential for Space Manager invitations/sign-in. |
+| `MANAGER_EMAIL_FROM` | Sender address on a domain verified in Resend. |
 
-## Persistent Node server
+`DATABASE_DATABASE_URL` / `STORAGE_DATABASE_URL` and corresponding direct-connection aliases are also supported. Prefer the standard integration variables when available.
 
-The same environment and database setup apply:
+The bootstrap password is used only when creating the Admin. After confirming real sign-in, it can be removed from Vercel; do not remove the allowlist email. Existing credentials remain hashed in PostgreSQL. There is no public signup, founder account or administrator invitation acceptance.
 
-```sh
-npm ci
-npm run build
-npm start
-```
+Use an existing domain you own for the email sender, or acquire one if needed. A custom website domain and a verified email-sending domain are separate configuration tasks; they may use the same owned domain. No provider subscription or domain purchase is performed by this repository. Provider acceptance of an email is recorded separately from actual inbox delivery.
 
-Place the Node process behind HTTPS, set the exact `APP_ORIGIN`, and use a process supervisor. Port defaults to 3000. The filesystem is not the production database; PostgreSQL must persist independently.
+## Live launch checks
 
-A production deployment URL is only verified after the deployed flows have been tested. This repository currently provides local verification and deployment instructions, not a claimed live deployment.
+1. `/book` shows eight Saturdays in two four-week cycles, at 7 PM Europe/London with GMT/BST conversion and slots left.
+2. A public application creates a pending request and a limited private confirmation link, without login.
+3. Anonymous private pages redirect to `/signin`; `/api/workspace` and manager/admin APIs reject unauthorised requests. `/demo`, `/invite` and public signup are unavailable.
+4. The real Admin can sign in, approve a booking, assign Spaces, review reports, select a monthly winner and sign out.
+5. A real manager email arrives, the single-use link works, assigned Space data saves, and revocation immediately blocks the session and outstanding links.
+6. Saved shared links appear on the associated founder/company profiles. Drafts do not complete a cycle. Four distinct explicit attendance submissions advance the public window by four weeks while retaining history.
+7. Configure database backups and confirm the programme's actual privacy terms and recovery process before relying on the service operationally.
 
-### Space Data update
+Do not submit invented production attendance just to move the calendar. Use isolated local tests for cycle progression. Permanent deletion must be intentional: the Admin confirmation removes owned records; shared Spaces remain.
 
-Before serving this revision against an existing PostgreSQL database, run `npm run db:migrate` with the production database environment. Migration `202611210002_space_data` adds the Space Data and team attendance tables without changing existing bookings or recordings. The no-login demo needs no database migration and starts with unknown actual attendance metrics.
+Automated tests use a local production build, an isolated PostgreSQL database and a mock email provider. They do not prove deployed authentication or real inbox delivery. The workspace used for development has been unable to reach the live site through its network proxy, so owner sign-in and real email checks remain owner-side validation steps. See SECURITY-REVIEW.md.
 
-### Shared weekly X post
+## Optional custom website domain
 
-Run `npm run db:migrate` against database-backed installations before serving this revision. Migration `202611210003_shared_weekly_post` adds `Session.postUrl` with an empty default, preserving existing sessions and attendance rows. X post and Space links are edited once per session and inherited by profiles. The former Space Data route redirects to founders; no database migration is needed for browser-local demo usage.
+Add the domain to this same Vercel project's Domains settings and apply Vercel's DNS instructions. Set it as the canonical address, redirect old aliases, change `APP_ORIGIN` to that exact HTTPS origin, and redeploy. Verify the public application and real email links again. Preserve PostgreSQL and `BOOTSTRAP_ADMIN_EMAIL`; no new application or account migration is needed.
 
-## Automatic production database preparation
+## Other environments
 
-The checked-in Vercel build command is now `npm run build:vercel`. In a linked production build it generates Prisma, validates the connected PostgreSQL variables, applies checked-in SQL migrations transactionally using the unpooled URL, and seeds only roles/permissions/taxonomy/programme defaults. It never inserts fictional founders, sessions or campaigns. Other environments skip database preparation. A preparation failure fails the deployment, leaving the previous deployment serving traffic.
+Preview/local environments still require PostgreSQL; there is no browser demo. Use an isolated database and a matching origin. Do not let preview deployments mutate production records. Vercel automatic database preparation runs only in Production; prepare isolated environments using the documented migration/default-seed commands.
 
-Both ordinary Neon variables (`DATABASE_URL`, `DATABASE_URL_UNPOOLED`) and the `DATABASE_`/`STORAGE_` prefixed variants are supported. This accommodates prefixes selected in Vercel's connection form without exposing credentials. Prefer the standard unprefixed integration variables. Migrations require a direct URL when the application URL uses Neon's pooler.
+For a persistent Node host, use the same server environment variables and database, run `npm run db:migrate`, `npm run db:seed`, initial `npm run db:admin`, `npx tsx scripts/publish-saturdays.ts`, then `npm run build` and `npm start`. Serve it behind HTTPS and use a process supervisor.
 
-For initial Admin provisioning, set `BOOTSTRAP_ADMIN_EMAIL` and `BOOTSTRAP_ADMIN_PASSWORD` (at least 12 characters) as sensitive **Production** environment variables, optionally `BOOTSTRAP_ADMIN_NAME`, then redeploy. The release step creates the account without printing the password, and never changes an existing account's password. Remove bootstrap credential variables afterwards. No default or shared password is created when these values are absent.
-
-In Vercel Production, `/demo` is unavailable, public forms ignore `mode=demo`, and the demo switch/link is hidden. Local development and Preview retain the fictional demonstration. `/api/health` returns only a readiness flag, never founder data, credentials or account details. A healthy response verifies application tables/defaults are readable; it does not verify Admin credentials or booking journeys.
-
-The production preparation step also runs `scripts/publish-saturdays.ts`, publishing the host-approved 12-week schedule at Saturday 19:00 UTC, five places. Existing sessions/cancellations and bookings are preserved. This is the real approved programme schedule, separate from `--demo` fixtures.
-
-## Current programme release
-
-The website now has no browser demo. `/book`, `/apply` and limited confirmations use PostgreSQL; `/demo` returns 404 in every environment. The public calendar shows eight Saturdays in two four-week cycles. It advances only after explicit attendance submission for all four distinct Spaces in the oldest cycle, not on a date-based rolling timer. Existing sessions and bookings remain in private history.
-
-Migration `202611220002_programme_cycles` adds ProgrammeSchedule/ProgrammeWeek and submission metadata on SpaceData. It does not delete sessions or booking requests. The existing production preparation applies it and initializes the current window; do not manually delete historical records. Resend configuration is still required for actual manager emails. Admin access still requires the existing BOOTSTRAP_ADMIN_EMAIL allowlist.
+Applied migrations are immutable. Keep the full migration history, including tables used by existing historical records. See prisma/README.md.

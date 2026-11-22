@@ -2,18 +2,7 @@
 import { useState } from "react";
 import { Modal } from "./ui";
 import { useWorkspace } from "./WorkspaceContext";
-import {
-  COUNTRIES,
-  SECTORS,
-  STAGES,
-  TEAM_SIZES,
-  NEEDS,
-  RELATIONS,
-  OPPORTUNITY_TYPES,
-  PIPELINE,
-  CONFIDENCE,
-  VERIFICATION,
-} from "@/lib/catalog";
+import { COUNTRIES, SECTORS, STAGES, TEAM_SIZES } from "@/lib/catalog";
 interface Option {
   value: string;
   label: string;
@@ -27,18 +16,7 @@ interface Field {
   wide?: boolean;
 }
 export type Resource =
-  | "founder"
-  | "company"
-  | "session"
-  | "need"
-  | "relationship"
-  | "opportunity"
-  | "campaign"
-  | "assessment"
-  | "award"
-  | "taxonomy"
-  | "settings"
-  | "invitation";
+  "founder" | "company" | "session" | "taxonomy" | "settings";
 const array = (v: unknown) =>
   Array.isArray(v)
     ? v.map(String)
@@ -57,10 +35,8 @@ export default function RecordEditor({
   record?: Record<string, unknown>;
   close: () => void;
 }) {
-  const { state, viewer, commit, busy } = useWorkspace();
+  const { state, commit, busy } = useWorkspace();
   const now = new Date().toISOString();
-  const company = state.companies[0],
-    founder = state.founders[0];
   const defaults: Record<Resource, Record<string, unknown>> = {
     founder: {
       name: "",
@@ -111,69 +87,8 @@ export default function RecordEditor({
       postUrl: "",
       notes: "",
     },
-    need: {
-      companyId: company?.id || "",
-      kind: "Distribution",
-      description: "",
-      evidence: "",
-      confidence: "Medium",
-      verification: "Self-reported",
-    },
-    relationship: {
-      companyAId: company?.id || "",
-      companyBId: state.companies[1]?.id || "",
-      type: "Potential integration",
-      reason: "",
-      evidence: "",
-      confidence: "Medium",
-      verification: "Unverified",
-      reviewedAt: now,
-    },
-    opportunity: {
-      companyId: company?.id || "",
-      founderId:
-        state.memberships.find((m) => m.companyId === company?.id)?.founderId ||
-        "",
-      needId: state.needs.find((n) => n.companyId === company?.id)?.id || "",
-      category: "Consulting",
-      solution: "",
-      skills: [],
-      decisionMaker: founder?.name || "",
-      budget: "Unknown",
-      evidence: "",
-      owner: viewer.name,
-      nextAction: "",
-      followUpDate: now,
-      status: "Discovered",
-      outcome: "",
-    },
-    campaign: {
-      name: "",
-      period: now.slice(0, 7),
-      target: state.settings.campaignTarget,
-      awardAmount: state.settings.awardAmount,
-      rules: state.settings.terms,
-      criteria:
-        "Customer problem, evidence of progress, learning and programme contribution. Record reviewer conflicts.",
-      status: "Open",
-    },
-    assessment: {
-      campaignId: state.campaigns.at(-1)?.id || "",
-      founderId: founder?.id || "",
-      eligible: false,
-      assessment: "",
-    },
-    award: {
-      campaignId: state.campaigns.at(-1)?.id || "",
-      founderId: "",
-      rationale: "",
-      decisionDate: now,
-      status: "Selected",
-      transactionReference: "",
-    },
     taxonomy: { group: "Sector", name: "", active: true },
     settings: { ...state.settings },
-    invitation: { name: "", email: "", roleId: "admin" },
   };
   const initial = { ...defaults[resource], ...record };
   if (record && resource === "founder")
@@ -191,8 +106,7 @@ export default function RecordEditor({
   const [values, setValues] = useState(initial),
     [error, setError] = useState("");
   const co = state.companies.map((c) => ({ value: c.id, label: c.name })),
-    fo = state.founders.map((f) => ({ value: f.id, label: f.name })),
-    campaigns = state.campaigns.map((c) => ({ value: c.id, label: c.name }));
+    fo = state.founders.map((f) => ({ value: f.id, label: f.name }));
   const labelOptions = (group: string, fallback: string[]) => {
     const list = state.labels
       .filter((l) => l.group === group && l.active)
@@ -276,151 +190,6 @@ export default function RecordEditor({
       f("recordingUrl", "Shared recording URL", "url", undefined, false, true),
       f("notes", "Internal notes", "textarea", undefined, false, true),
     ],
-    need: [
-      f("companyId", "Company", "select", co),
-      f(
-        "kind",
-        "Business need",
-        "select",
-        labelOptions("Business needs", NEEDS),
-      ),
-      f("description", "Identified need", "textarea", undefined, true, true),
-      f("evidence", "Source evidence", "textarea", undefined, true, true),
-      f("confidence", "Confidence", "select", CONFIDENCE),
-      f("verification", "Verification", "select", VERIFICATION),
-    ],
-    relationship: [
-      f("companyAId", "Company A", "select", co),
-      f("companyBId", "Company B", "select", co),
-      f(
-        "type",
-        "Relationship type",
-        "select",
-        labelOptions("Company relationship", RELATIONS),
-      ),
-      f("confidence", "Confidence", "select", CONFIDENCE),
-      f("reason", "Reason", "textarea", undefined, true, true),
-      f("evidence", "Evidence", "textarea", undefined, true, true),
-      f("verification", "Verification", "select", VERIFICATION),
-      f("reviewedAt", "Last reviewed · UTC", "datetime-local"),
-    ],
-    opportunity: [
-      f("companyId", "Company", "select", co),
-      f(
-        "founderId",
-        "Related founder",
-        "select",
-        fo.filter((f) =>
-          state.memberships.some(
-            (m) => m.companyId === values.companyId && m.founderId === f.value,
-          ),
-        ),
-      ),
-      f(
-        "needId",
-        "Documented business need",
-        "select",
-        state.needs
-          .filter((n) => n.companyId === values.companyId)
-          .map((n) => ({
-            value: n.id,
-            label: `${n.kind}: ${n.description.slice(0, 65)}`,
-          })),
-        true,
-        true,
-      ),
-      f(
-        "category",
-        "Opportunity type",
-        "select",
-        labelOptions("Opportunity type", OPPORTUNITY_TYPES),
-      ),
-      f("status", "Pipeline status", "select", PIPELINE),
-      f("solution", "Potential solution", "textarea", undefined, true, true),
-      f(
-        "skills",
-        "Relevant skills · comma separated",
-        "text",
-        undefined,
-        false,
-        true,
-      ),
-      f("decisionMaker", "Decision-maker"),
-      f("budget", "Budget or unknown"),
-      f("evidence", "Evidence", "textarea", undefined, true, true),
-      f("owner", "Opportunity owner"),
-      f("followUpDate", "Follow-up date · UTC", "datetime-local"),
-      f("nextAction", "Next action", "textarea", undefined, true, true),
-      f("outcome", "Outcome", "textarea", undefined, false, true),
-    ],
-    campaign: [
-      f("name", "Campaign name"),
-      f("period", "Campaign month", "month"),
-      f("target", "Founder target", "number"),
-      f("awardAmount", "Award amount"),
-      f("status", "Campaign status", "select", ["Open", "Reviewing", "Closed"]),
-      f("rules", "Published rules", "textarea", undefined, true, true),
-      f("criteria", "Selection criteria", "textarea", undefined, true, true),
-    ],
-    assessment: [
-      f("campaignId", "Campaign", "select", campaigns),
-      f("founderId", "Founder", "select", fo),
-      f(
-        "eligible",
-        "Eligible under published rules",
-        "checkbox",
-        undefined,
-        false,
-        true,
-      ),
-      f(
-        "assessment",
-        "Reviewer assessment and any conflicts",
-        "textarea",
-        undefined,
-        true,
-        true,
-      ),
-    ],
-    award: [
-      f("campaignId", "Campaign", "select", campaigns),
-      f(
-        "founderId",
-        "Eligible founder",
-        "select",
-        fo.filter((f) =>
-          state.campaignParticipants.some(
-            (p) =>
-              p.campaignId === values.campaignId &&
-              p.founderId === f.value &&
-              p.eligible,
-          ),
-        ),
-      ),
-      f(
-        "rationale",
-        "Human selection rationale and conflicts",
-        "textarea",
-        undefined,
-        true,
-        true,
-      ),
-      f("decisionDate", "Decision date · UTC", "datetime-local"),
-      f("status", "Award status", "select", [
-        "Selected",
-        "Transfer pending",
-        "Transferred",
-        "Cancelled",
-      ]),
-      f(
-        "transactionReference",
-        "Transfer reference · only if independently transferred",
-        "text",
-        undefined,
-        false,
-        true,
-      ),
-    ],
     taxonomy: [
       f("group", "Classification group", "select", [
         "Sector",
@@ -459,33 +228,22 @@ export default function RecordEditor({
         true,
       ),
     ],
-    invitation: [f("name", "Admin name"), f("email", "Email address", "email")],
   };
   const verbs: Record<Resource, string> = {
     founder: "founder.save",
     company: "company.save",
     session: "session.save",
-    need: "need.save",
-    relationship: "relationship.save",
-    opportunity: "opportunity.save",
-    campaign: "campaign.save",
-    assessment: "campaign.assess",
-    award: "award.save",
     taxonomy: "taxonomy.save",
     settings: "settings.save",
-    invitation: "invite.create",
   };
   const change = (name: string, value: unknown) =>
     setValues((v) => ({
       ...v,
       [name]: value,
-      ...(resource === "opportunity" && name === "companyId"
-        ? { founderId: "", needId: "" }
-        : {}),
     }));
   return (
     <Modal
-      title={`${record ? "Edit" : "Add"} ${resource === "assessment" ? "reviewer assessment" : resource === "settings" ? "programme settings" : resource}`}
+      title={`${record ? "Edit" : "Add"} ${resource === "settings" ? "programme settings" : resource}`}
       close={close}
       wide
     >
@@ -522,12 +280,6 @@ export default function RecordEditor({
           <p className="form-note span-2">
             Preserve an existing label’s meaning. Archive it and add a new label
             to change the name or group.
-          </p>
-        )}
-        {resource === "award" && (
-          <p className="form-note span-2">
-            This records a human decision. No cryptocurrency payment is
-            initiated.
           </p>
         )}
         {sections[resource].map((field) => {

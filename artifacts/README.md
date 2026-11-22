@@ -1,22 +1,15 @@
-# Current screens
+# Current QA screenshots
 
-Local production-build captures using fictional data. Desktop: 1536×1024; mobile: 393×852. Full-page captures.
+These are local production-build captures, not a record of real production users or live email delivery. Private screens use isolated fictional test fixtures. Retired screen captures have been removed.
 
 | Screen | Mobile | Desktop |
 |---|---|---|
-| Overview | [Mobile](overview-mobile.png) | [Desktop](overview-desktop.png) |
-| Founders | [Mobile](founders-mobile.png) | [Desktop](founders-desktop.png) |
-| Founder profile | [Mobile](founder-mobile.png) | [Desktop](founder-desktop.png) |
-| Companies | [Mobile](companies-mobile.png) | [Desktop](companies-desktop.png) |
-| Spaces | [Mobile](spaces-mobile.png) | [Desktop](spaces-desktop.png) |
-| Reports | [Mobile](reports-mobile.png) | [Desktop](reports-desktop.png) |
-| Campaigns | [Mobile](campaigns-mobile.png) | [Desktop](campaigns-desktop.png) |
-| Settings | [Mobile](settings-mobile.png) | [Desktop](settings-desktop.png) |
-| Application | [Mobile](application-mobile.png) | [Desktop](application-desktop.png) |
 | Booking | [Mobile](booking-mobile.png) | [Desktop](booking-desktop.png) |
+| Application | [Mobile](application-mobile.png) | [Desktop](application-desktop.png) |
+| Admin sign-in | [Mobile](signin-mobile.png) | [Desktop](signin-desktop.png) |
+| Manager sign-in | [Mobile](manager-signin-mobile.png) | [Desktop](manager-signin-desktop.png) |
+| Assigned Space editing | [Mobile](space-manager-mobile.png) | [Desktop](space-manager-desktop.png) |
 
-Journey captures: [full/open Saturday calendar](booking-calendar-mobile.png), [shared weekly founder data](founder-week-mobile.png), [shared recording](shared-recording-mobile.png), [private approved founder](private-founder-mobile.png).
+Other current checks: [eight-week calendar](booking-eight-weeks-mobile.png), [monthly winner](monthly-winner-mobile.png), [manager settings](space-manager-settings-mobile.png), [private founder profile](private-founder-mobile.png).
 
-Older Research/Classification/Market Map/Opportunities/Space Data image files are historical reference captures, not current routes. These screens have been retired. Run `npm run screenshots` against a running production build to refresh the current gallery; the runner checks runtime errors and horizontal overflow.
-
-Founder weekly Space: [mobile](founder-week-mobile.png), [desktop](founder-week-desktop.png). All profile examples use fictional records.
+`npm run screenshots` captures public/sign-in routes from a running backend-backed server. `npm run test:integration` captures protected workflows using its isolated database. Mobile viewport: 393 × 852; desktop dimensions vary by the relevant check.

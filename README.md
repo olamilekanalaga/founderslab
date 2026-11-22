@@ -2,6 +2,32 @@
 
 A private founder-programme workspace with public booking, hosted by **⭕️La_Crrypt💰₿**. The application uses one domain, a light interface, Next.js, TypeScript, Prisma and PostgreSQL.
 
+## What you do next
+
+The application is implemented on the existing Vercel project. A custom website domain is optional; the current `founderslab-orcin.vercel.app` address can be used.
+
+1. Sign in at `/signin` using your pre-provisioned Admin account and confirm you can see Overview, approvals and Reports.
+2. Configure or verify transactional email in Vercel: `RESEND_API_KEY`, `MANAGER_EMAIL_FROM` and the canonical HTTPS `APP_ORIGIN`. The sending domain must be verified in Resend. You can use an existing domain you own; you do not need to buy a second domain.
+3. In Settings → Space Managers, invite your friend, assign their Spaces, and test one real email link, save and revocation. Real inbox delivery has not been verified by the automated tests.
+4. Check one public application → approval → actual attendance submission → Overview/Reports journey on the deployed site.
+5. If you later add a custom domain, connect it to this same Vercel project, update `APP_ORIGIN`, redirect the old website address to the canonical one, and redeploy. Keep the same database and Admin allowlist.
+
+Keep `BOOTSTRAP_ADMIN_EMAIL` configured. Do not share passwords or API keys in chat. No new application, server or Supabase project is required.
+
+## Repository layout
+
+```text
+app/          Public, Admin and manager routes; server API endpoints
+components/   Active light-theme screens, forms and shared UI
+lib/          Authentication, permissions, validation, data and programme logic
+prisma/       Relational schema and immutable SQL migrations
+scripts/      Provisioning, migrations, checks and screenshot commands
+tests/        Unit, browser and isolated PostgreSQL integration tests
+artifacts/    Current QA screenshots, not live programme records
+```
+
+Removed screens and unused forms are not kept in the frontend. Historical database models/migrations remain so existing records and references are preserved. Test fixtures are server-side testing infrastructure, never a browser demo or production seed.
+
 ## Public workflow
 
 `/` opens `/book`. A founder chooses an available Saturday, completes `/apply`, and receives a private, limited-scope `/confirmation#token=…` link. There are no founder accounts or public signup. Every submission is stored in PostgreSQL. Missing database configuration produces an unavailable state, never a fictional fallback. Browser demo routes and mode switches have been removed.

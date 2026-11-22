@@ -242,7 +242,7 @@ export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
                 ? "Default capacity: five founder projects, not five speakers."
                 : tab === "bookings"
                   ? "Requests need approval; a pending request does not reserve a seat."
-                  : "Founder-facing forms stay short. Research happens after approval."}
+                  : "Review founder applications and booking requests."}
             </span>
           </div>
           {tab === "sessions" ? (

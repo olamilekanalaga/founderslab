@@ -1,10 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {
-  databaseUrl,
-  migrationUrl,
-  publicDemoAllowed,
-} from "../lib/server-env";
+import { databaseUrl, migrationUrl } from "../lib/server-env";
 test("Neon prefixed variables resolve without replacing a canonical connection", () => {
   assert.equal(
     databaseUrl({ DATABASE_URL: "primary", DATABASE_DATABASE_URL: "prefixed" }),
@@ -24,7 +20,4 @@ test("Neon prefixed variables resolve without replacing a canonical connection",
       }),
     /UNPOOLED/,
   );
-});
-test("browser demo access is disabled in every environment", () => {
-  assert.equal(publicDemoAllowed(), false);
 });

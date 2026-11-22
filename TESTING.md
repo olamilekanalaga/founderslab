@@ -3,7 +3,7 @@
 Current checks use Node.js 24, PostgreSQL and a Next.js production build.
 
 - TypeScript, ESLint and production compilation.
-- 23 unit/domain checks: validation, capacity, shared records, reports, permissions, London GMT/BST offsets, Nigeria time conversion and duplicate-free schedule planning.
+- 22 unit/domain checks: validation, capacity, shared records, reports, permissions, London GMT/BST offsets, Nigeria time conversion and duplicate-free schedule planning.
 - 16 isolated PostgreSQL/HTTP groups: public application, duplicate rejection, approval, booking capacity, profile inheritance, Admin allowlist, protected routes, credentials, CSRF/cookies, manager invitations and resource scope, expiry/revocation, reporting, mobile browser saving and logout.
 - Attendance-cycle checks: eight published weeks, drafts excluded, repeated submission of one week counted once, advancement only after four distinct oldest-cycle submissions, eight active weeks after rollover, archived sessions retained, existing booking IDs unchanged and out-of-season public booking rejected.
 - Three backend-backed browser checks: an eight-date light calendar with slots left, anonymous/storage-forged access denial, no public signup/demo controls, and Axe WCAG A/AA on the public calendar. Manager mobile forms also receive Axe checks in integration tests.

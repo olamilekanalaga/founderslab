@@ -30,6 +30,3 @@ export function migrationUrl(env: Env = process.env) {
   }
   return application;
 }
-export function publicDemoAllowed() {
-  return false;
-}
