@@ -20,7 +20,11 @@ import { ProgrammeAvailability } from "./ProgrammeAvailability";
 const questions = [
   [
     "Who is Founders Lab for?",
-    "Web3 founders who want to share what they’re building, discuss their founder journey and connect with other builders.",
+    "Founders Lab is for Web3 founders who want to introduce their products, share their journey and reach an audience interested in discovering what they’re building.",
+  ],
+  [
+    "Will my information and Space appearance be public?",
+    "Your application details remain private.\n\nYour X Space appearance is public and recorded. After each session, we also publish a free weekly recap featuring the founders, their products and what they shared.\n\nThis gives your project additional exposure beyond the live Space, at no cost to you.",
   ],
   [
     "Does participation cost anything?",
@@ -37,10 +41,6 @@ const questions = [
   [
     "Do I need an account?",
     "No founder account is required. Choose an available Saturday and send your application. Your private confirmation link is your way to check the request.",
-  ],
-  [
-    "Will my information be public?",
-    "Your application is private. Promotional consent is optional and separate. Sessions may have public X recording links; read the programme terms before participating.",
   ],
 ];
 export default function HomePage() {
@@ -255,7 +255,9 @@ export default function HomePage() {
                     {question}
                     <Plus size={19} aria-hidden="true" />
                   </summary>
-                  <p>{answer}</p>
+                  {answer.split("\n\n").map((paragraph) => (
+                    <p key={paragraph}>{paragraph}</p>
+                  ))}
                 </details>
               ))}
             </div>
