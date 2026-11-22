@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import PrivateWorkspace from "@/components/PrivateWorkspace";
+import PrivateWorkspace from "@/components/layout/PrivateWorkspace";
 export const dynamic = "force-dynamic";
 export default async function Page({
   params,

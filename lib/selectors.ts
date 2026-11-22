@@ -1,4 +1,4 @@
-import type { DataState } from "./types";
+import type { DataState } from "@/lib/types";
 export interface Filters {
   country: string;
   sector: string;

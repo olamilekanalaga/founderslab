@@ -1,5 +1,5 @@
 import { ZodError } from "zod";
-import { DomainError } from "./domain";
+import { DomainError } from "@/lib/domain";
 export const json = (body: unknown, status = 200) =>
   Response.json(body, {
     status,

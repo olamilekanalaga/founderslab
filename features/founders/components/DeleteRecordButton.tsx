@@ -2,8 +2,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
-import { useWorkspace } from "./WorkspaceContext";
-import { Modal } from "./ui";
+import { useWorkspace } from "@/components/layout/WorkspaceContext";
+import { Modal } from "@/components/ui";
 export default function DeleteRecordButton({
   kind,
   id,

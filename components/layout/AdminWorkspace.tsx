@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import BrandMark from "./BrandMark";
+import BrandMark from "@/components/shared/BrandMark";
 import { useRouter } from "next/navigation";
 import {
   LayoutDashboard,
@@ -22,15 +22,18 @@ import {
 import type { Section, DataState, Viewer } from "@/lib/types";
 import { ROLES } from "@/lib/catalog";
 import { SECTION_PERMISSIONS } from "@/lib/sections";
-import { WorkspaceProvider, useWorkspace } from "./WorkspaceContext";
-import { Modal, Empty } from "./ui";
-import RecordEditor, { type Resource } from "./RecordEditor";
-import Overview from "./Overview";
-import Directory from "./Directory";
-import Spaces from "./Spaces";
-import Reports from "./Reports";
-import Campaigns from "./Campaigns";
-import TeamSettings from "./Settings";
+import {
+  WorkspaceProvider,
+  useWorkspace,
+} from "@/components/layout/WorkspaceContext";
+import { Modal, Empty } from "@/components/ui";
+import RecordEditor, { type Resource } from "@/components/shared/RecordEditor";
+import Overview from "@/features/programme/components/Overview";
+import Directory from "@/features/directory/components/Directory";
+import Spaces from "@/features/spaces/components/Spaces";
+import Reports from "@/features/reports/components/Reports";
+import Campaigns from "@/features/campaigns/components/MonthlyWinner";
+import TeamSettings from "@/features/settings/components/Settings";
 const navigation = [
   { id: "dashboard", label: "Overview", icon: LayoutDashboard },
   { id: "founders", label: "Founders", icon: Users },

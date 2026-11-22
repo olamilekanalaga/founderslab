@@ -1,7 +1,7 @@
-import { publicSlotOpen } from "./booking";
-import type { Command, DataState, Viewer } from "./types";
-import { actionPermission, RESEARCH_SECTIONS, ROLES } from "./catalog";
-import { schemas, applicationSchema, normaliseKey } from "./validation";
+import { publicSlotOpen } from "@/lib/booking";
+import type { Command, DataState, Viewer } from "@/lib/types";
+import { actionPermission, RESEARCH_SECTIONS, ROLES } from "@/lib/catalog";
+import { schemas, applicationSchema, normaliseKey } from "@/lib/validation";
 export class DomainError extends Error {
   constructor(
     message: string,

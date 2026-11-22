@@ -3,8 +3,8 @@ try {
   process.loadEnvFile(".env");
 } catch {}
 const { z } = await import("zod");
-const { db, ensureRoles } = await import("../lib/db");
-const { passwordHash } = await import("../lib/auth");
+const { db, ensureRoles } = await import("@/lib/db");
+const { passwordHash } = await import("@/lib/auth");
 const email = z.email().parse(process.env.BOOTSTRAP_ADMIN_EMAIL).toLowerCase();
 const password = z
   .string()

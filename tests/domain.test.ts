@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { makeSeed } from "../lib/seed";
+import { makeSeed } from "@/lib/seed";
 import {
   applyCommand,
   createLocalApplication,
@@ -9,11 +9,11 @@ import {
   founderSessions,
   companySessions,
   scopeState,
-} from "../lib/domain";
-import { reportData, blankFilters } from "../lib/selectors";
-import { csvContent, reportRows } from "../lib/export";
-import { applicationSchema, schemas } from "../lib/validation";
-import { RESEARCH_SECTIONS } from "../lib/catalog";
+} from "@/lib/domain";
+import { reportData, blankFilters } from "@/lib/selectors";
+import { csvContent, reportRows } from "@/lib/export";
+import { applicationSchema, schemas } from "@/lib/validation";
+import { RESEARCH_SECTIONS } from "@/lib/catalog";
 const admin = demoViewer();
 const application = {
   founderName: "Test Founder",
@@ -451,7 +451,7 @@ test("business descriptions accept short answers while empty fields remain requi
 });
 
 test("Space Data preserves unknowns, replaces attendance and aggregates actual totals", async () => {
-  const { spaceTotals, durationLabel } = await import("../lib/space-data");
+  const { spaceTotals, durationLabel } = await import("@/lib/space-data");
   let s = makeSeed();
   assert.equal(spaceTotals(s).people, null);
   const payload = {
@@ -506,7 +506,7 @@ test("Space Data preserves unknowns, replaces attendance and aggregates actual t
 });
 
 test("Space growth follows event dates, combines same-day totals and omits missing data", async () => {
-  const { spaceGrowth } = await import("../lib/space-data");
+  const { spaceGrowth } = await import("@/lib/space-data");
   let s = makeSeed();
   const save = (
     sessionId: string,
@@ -540,8 +540,8 @@ test("Space growth follows event dates, combines same-day totals and omits missi
 });
 
 test("calendar-first applications attach a pending Saturday booking atomically", async () => {
-  const { createLocalBookingApplication } = await import("../lib/domain");
-  const { isSaturday, publicSlotOpen } = await import("../lib/booking");
+  const { createLocalBookingApplication } = await import("@/lib/domain");
+  const { isSaturday, publicSlotOpen } = await import("@/lib/booking");
   const seed = makeSeed(),
     now = "2026-11-21T12:00:00.000Z";
   const session = seed.sessions.find((s) => s.id === "up1")!;
@@ -586,7 +586,7 @@ test("founder record reports contain short descriptions without research stories
 });
 
 test("weekly profiles share one Space record but preserve per-company figures and deduplicate cofounders", async () => {
-  const { profileSpaceWeeks, spaceTotals } = await import("../lib/space-data");
+  const { profileSpaceWeeks, spaceTotals } = await import("@/lib/space-data");
   let s = makeSeed();
   const a = s.participants.find((p) => p.sessionId === "s1")!;
   const b = s.participants.find(
@@ -684,7 +684,7 @@ test("weekly profiles share one Space record but preserve per-company figures an
 });
 
 test("Saturday eligibility follows London rather than the original session timezone", async () => {
-  const { isSaturday, sessionDay } = await import("../lib/booking");
+  const { isSaturday, sessionDay } = await import("@/lib/booking");
   const lateFriday = {
     startsAt: "2026-12-04T23:30:00.000Z",
     timezone: "Africa/Lagos",
@@ -700,8 +700,8 @@ test("Saturday eligibility follows London rather than the original session timez
 });
 
 test("approved Saturday schedule opens winter 7 PM London dates with five places", async () => {
-  const { saturdaySessions } = await import("../lib/saturday-schedule");
-  const { publicSlotOpen } = await import("../lib/booking");
+  const { saturdaySessions } = await import("@/lib/saturday-schedule");
+  const { publicSlotOpen } = await import("@/lib/booking");
   const weeks = saturdaySessions(new Date("2026-11-22T10:00:00Z"));
   assert.equal(weeks.length, 12);
   assert.ok(
@@ -746,8 +746,8 @@ test("approved Saturday schedule opens winter 7 PM London dates with five places
 
 test("London 7 PM recurrence crosses both DST boundaries and converts correctly for Nigeria", async () => {
   const { saturdaySessions, londonSaturdayStart, londonDay } =
-    await import("../lib/saturday-schedule");
-  const { isSaturday } = await import("../lib/booking");
+    await import("@/lib/saturday-schedule");
+  const { isSaturday } = await import("@/lib/booking");
   assert.equal(
     londonSaturdayStart("2027-03-27").toISOString(),
     "2027-03-27T19:00:00.000Z",
@@ -811,7 +811,7 @@ test("London 7 PM recurrence crosses both DST boundaries and converts correctly 
 
 test("Saturday reconciliation updates legacy times in place without duplicate dates or booking resets", async () => {
   const { saturdaySessions, saturdaySchedulePlan } =
-    await import("../lib/saturday-schedule");
+    await import("@/lib/saturday-schedule");
   const candidates = saturdaySessions(new Date("2027-07-01T00:00:00Z"));
   const original = {
     ...candidates[0],

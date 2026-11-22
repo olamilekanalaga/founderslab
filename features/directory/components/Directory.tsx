@@ -2,24 +2,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import {
-  Search,
-  Plus,
-  ArrowUpRight,
-  MapPin,
-  ArrowLeft,
-  Pencil,
-  Building2,
-  LayoutGrid,
-  List,
-} from "lucide-react";
-import { useWorkspace } from "./WorkspaceContext";
-import { Avatar, Status, Empty, SectionHeading, ExternalLink } from "./ui";
-import { profileSpaceWeeks } from "@/lib/space-data";
-import DeleteRecordButton from "./DeleteRecordButton";
-import FounderSpaces from "./FounderSpaces";
-import { niceDate } from "@/lib/selectors";
-import type { Resource } from "./RecordEditor";
+import { Search, Plus, ArrowUpRight, LayoutGrid, List } from "lucide-react";
+import { useWorkspace } from "@/components/layout/WorkspaceContext";
+import { Avatar, Status, Empty, SectionHeading } from "@/components/ui";
+
+import type { Resource } from "@/components/shared/RecordEditor";
+import FounderProfile from "@/features/founders/components/FounderProfile";
+import CompanyProfile from "@/features/companies/components/CompanyProfile";
 type Editor = (resource: Resource, record?: Record<string, unknown>) => void;
 export default function Directory({
   kind,
@@ -353,176 +342,6 @@ export default function Directory({
           </div>
         </section>
       )}
-    </>
-  );
-}
-function FounderProfile({ id, edit }: { id: string; edit: Editor }) {
-  const { state: s, path, viewer } = useWorkspace();
-  const founder = s.founders.find((f) => f.id === id);
-  if (!founder) return <Empty>Founder not found.</Empty>;
-  const companies = s.memberships
-    .filter((m) => m.founderId === id)
-    .map((m) => s.companies.find((c) => c.id === m.companyId))
-    .filter((c) => !!c);
-  const sessions = profileSpaceWeeks(s, { founderId: id });
-  return (
-    <>
-      <Link className="back-link" href={path("founders")}>
-        <ArrowLeft size={16} />
-        Founder directory
-      </Link>
-      <div className="profile-banner">
-        <Avatar name={founder.name} />
-        <div>
-          <h1>{founder.name}</h1>
-          <p>
-            @{founder.xHandle} · {founder.country}
-          </p>
-        </div>
-        {viewer.permissions.includes("directory.write") && (
-          <button
-            className="button"
-            onClick={() =>
-              edit("founder", founder as unknown as Record<string, unknown>)
-            }
-          >
-            <Pencil size={15} />
-            Edit founder
-          </button>
-        )}
-        <DeleteRecordButton
-          kind="founder"
-          id={founder.id}
-          name={founder.name}
-          backTo={path("founders")}
-        />
-      </div>
-      <FounderSpaces founderId={id} />
-      <section className="panel padded">
-        <h2>Founder details</h2>
-        <dl className="facts">
-          <div>
-            <dt>Country</dt>
-            <dd>{founder.country}</dd>
-          </div>
-          <div>
-            <dt>Contact</dt>
-            <dd>{founder.contact || "Not recorded"}</dd>
-          </div>
-          <div>
-            <dt>Space appearances</dt>
-            <dd>{sessions.length}</dd>
-          </div>
-          <div>
-            <dt>Added</dt>
-            <dd>{niceDate(founder.createdAt)}</dd>
-          </div>
-        </dl>
-      </section>
-      <section className="panel">
-        <SectionHeading title="Companies" />
-        {companies.map((company) => (
-          <div key={company.id}>
-            <Link className="entity-row" href={path("companies", company.id)}>
-              <span className="entity-symbol">
-                <Building2 size={19} />
-              </span>
-              <span>
-                <b>{company.name}</b>
-                <small>
-                  {company.country} · {company.teamSize} people
-                </small>
-                <span className="profile-short-description">
-                  {company.description}
-                </span>
-              </span>
-              <ArrowUpRight size={16} />
-            </Link>
-          </div>
-        ))}
-        {!companies.length && <Empty>No company added yet.</Empty>}
-      </section>
-    </>
-  );
-}
-function CompanyProfile({ id, edit }: { id: string; edit: Editor }) {
-  const { state: s, path, viewer } = useWorkspace();
-  const company = s.companies.find((c) => c.id === id);
-  if (!company) return <Empty>Company not found.</Empty>;
-  const founders = s.memberships
-    .filter((m) => m.companyId === id)
-    .map((m) => s.founders.find((f) => f.id === m.founderId))
-    .filter((f) => !!f);
-  return (
-    <>
-      <Link className="back-link" href={path("companies")}>
-        <ArrowLeft size={16} />
-        Company directory
-      </Link>
-      <div className="profile-banner">
-        <Avatar name={company.name} />
-        <div>
-          <h1>{company.name}</h1>
-          <p>
-            <MapPin size={14} />
-            {company.country}
-          </p>
-          <ExternalLink href={company.website}>Company website</ExternalLink>
-        </div>
-        {viewer.permissions.includes("directory.write") && (
-          <button
-            className="button"
-            onClick={() =>
-              edit("company", company as unknown as Record<string, unknown>)
-            }
-          >
-            <Pencil size={15} />
-            Edit company
-          </button>
-        )}
-      </div>
-      <section className="panel padded">
-        <h2>Short description</h2>
-        <p>{company.description || "Not recorded"}</p>
-        <dl className="facts">
-          <div>
-            <dt>Country</dt>
-            <dd>{company.country}</dd>
-          </div>
-          <div>
-            <dt>Team size</dt>
-            <dd>{company.teamSize}</dd>
-          </div>
-          <div>
-            <dt>Sector</dt>
-            <dd>{company.sector}</dd>
-          </div>
-          <div>
-            <dt>Stage</dt>
-            <dd>{company.stage}</dd>
-          </div>
-        </dl>
-      </section>
-      <section className="panel">
-        <SectionHeading title="Founders" />
-        {founders.map((founder) => (
-          <Link
-            className="entity-row"
-            key={founder.id}
-            href={path("founders", founder.id)}
-          >
-            <Avatar name={founder.name} />
-            <span>
-              <b>{founder.name}</b>
-              <small>
-                @{founder.xHandle} · {founder.country}
-              </small>
-            </span>
-            <ArrowUpRight size={16} />
-          </Link>
-        ))}
-      </section>
-      <FounderSpaces companyId={id} />
     </>
   );
 }

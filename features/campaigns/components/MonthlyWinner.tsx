@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Award } from "lucide-react";
-import { useWorkspace } from "./WorkspaceContext";
+import { useWorkspace } from "@/components/layout/WorkspaceContext";
 import { londonDay } from "@/lib/saturday-schedule";
 export default function Campaigns() {
   const { state: s, viewer, mutate, busy } = useWorkspace();

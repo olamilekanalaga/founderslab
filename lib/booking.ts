@@ -1,4 +1,4 @@
-import { LONDON_TIME_ZONE } from "./saturday-schedule";
+import { LONDON_TIME_ZONE } from "@/lib/saturday-schedule";
 export const BOOKING_TIME_ZONE = LONDON_TIME_ZONE;
 export const BOOKING_TIME_LABEL = "United Kingdom · London (GMT / BST)";
 export interface PublicSession {

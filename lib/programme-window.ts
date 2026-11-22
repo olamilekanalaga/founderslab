@@ -3,8 +3,8 @@ import {
   saturdaySessions,
   londonDay,
   saturdaySchedulePlan,
-} from "./saturday-schedule";
-import { DomainError } from "./domain";
+} from "@/lib/saturday-schedule";
+import { DomainError } from "@/lib/domain";
 export const WINDOW_WEEKS = 8,
   CYCLE_WEEKS = 4;
 export async function lockProgramme(tx: Prisma.TransactionClient) {

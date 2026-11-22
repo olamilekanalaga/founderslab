@@ -1,5 +1,5 @@
-import type { DataState } from "./types";
-import { reportData, type Filters } from "./selectors";
+import type { DataState } from "@/lib/types";
+import { reportData, type Filters } from "@/lib/selectors";
 export function reportRows(s: DataState, filters: Filters, demo: boolean) {
   const r = reportData(s, filters);
   return [

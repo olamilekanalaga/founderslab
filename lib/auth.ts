@@ -1,9 +1,9 @@
-import { databaseUrl } from "./server-env";
+import { databaseUrl } from "@/lib/server-env";
 import { cookies } from "next/headers";
 import { scryptSync, timingSafeEqual, randomBytes } from "node:crypto";
-import { db, hash, token } from "./db";
-import { DomainError } from "./domain";
-import type { Viewer } from "./types";
+import { db, hash, token } from "@/lib/db";
+import { DomainError } from "@/lib/domain";
+import type { Viewer } from "@/lib/types";
 export function passwordHash(password: string) {
   const salt = randomBytes(16).toString("hex");
   return `${salt}:${scryptSync(password, salt, 64).toString("hex")}`;

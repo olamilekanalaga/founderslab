@@ -2,8 +2,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, ArrowUpRight, Mic2 } from "lucide-react";
-import { useWorkspace } from "./WorkspaceContext";
-import { Avatar, Status, Empty, ExternalLink } from "./ui";
+import { useWorkspace } from "@/components/layout/WorkspaceContext";
+import { Avatar, Status, Empty, ExternalLink } from "@/components/ui";
 import { approvedSeats } from "@/lib/domain";
 import { dateTime } from "@/lib/selectors";
 import type { DataState } from "@/lib/types";

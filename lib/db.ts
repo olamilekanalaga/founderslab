@@ -2,14 +2,14 @@ import {
   lockProgramme,
   ensureProgrammeWindow,
   requireProgrammeBooking,
-} from "./programme-window";
-import { databaseUrl } from "./server-env";
+} from "@/lib/programme-window";
+import { databaseUrl } from "@/lib/server-env";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient, Prisma } from "@prisma/client";
-import type { DataState, Viewer, Command } from "./types";
-import { defaultSettings, ROLES, PERMISSIONS } from "./catalog";
-import { applyCommand, DomainError, scopeState } from "./domain";
-import { normaliseKey } from "./validation";
+import type { DataState, Viewer, Command } from "@/lib/types";
+import { defaultSettings, ROLES, PERMISSIONS } from "@/lib/catalog";
+import { applyCommand, DomainError, scopeState } from "@/lib/domain";
+import { normaliseKey } from "@/lib/validation";
 import { createHash, randomBytes } from "node:crypto";
 const globalDb = globalThis as unknown as { foundersDb?: PrismaClient };
 export function db() {

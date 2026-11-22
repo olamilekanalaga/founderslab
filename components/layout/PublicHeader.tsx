@@ -4,7 +4,7 @@ const subscribe = () => () => {};
 const clientSnapshot = () => true;
 const serverSnapshot = () => false;
 import Link from "next/link";
-import BrandMark from "./BrandMark";
+import BrandMark from "@/components/shared/BrandMark";
 export default function PublicHeader() {
   const ready = useSyncExternalStore(subscribe, clientSnapshot, serverSnapshot);
   return (

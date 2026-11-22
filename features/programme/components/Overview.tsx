@@ -10,7 +10,7 @@ import {
   Plus,
   ArrowUpRight,
 } from "lucide-react";
-import { useWorkspace } from "./WorkspaceContext";
+import { useWorkspace } from "@/components/layout/WorkspaceContext";
 import { groupBy, growthData, dateTime } from "@/lib/selectors";
 import {
   spaceTotals,
@@ -18,8 +18,8 @@ import {
   spaceGrowth,
   type SpaceMetric,
 } from "@/lib/space-data";
-import { SectionHeading, Empty, Status } from "./ui";
-const Chart = dynamic(() => import("./Charts"), { ssr: false });
+import { SectionHeading, Empty, Status } from "@/components/ui";
+const Chart = dynamic(() => import("@/components/ui/Charts"), { ssr: false });
 export default function Overview({ addFounder }: { addFounder: () => void }) {
   const { state: s, path, viewer } = useWorkspace();
   const pending = s.applications.filter((a) => a.status === "Pending");

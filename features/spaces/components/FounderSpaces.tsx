@@ -2,11 +2,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
-import { useWorkspace } from "./WorkspaceContext";
+import { useWorkspace } from "@/components/layout/WorkspaceContext";
 import { profileSpaceWeeks, durationLabel } from "@/lib/space-data";
 import { dateTime } from "@/lib/selectors";
-import { Empty, ExternalLink } from "./ui";
-import WeeklySpaceEditor from "./WeeklySpaceEditor";
+import { Empty, ExternalLink } from "@/components/ui";
+import WeeklySpaceEditor from "@/features/spaces/components/WeeklySpaceEditor";
 export default function FounderSpaces({
   founderId,
   companyId,

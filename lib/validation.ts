@@ -7,7 +7,7 @@ import {
   VERIFICATION,
   PIPELINE,
   PERMISSIONS,
-} from "./catalog";
+} from "@/lib/catalog";
 const text = z.string().trim().max(5000);
 const short = z.string().trim().max(200);
 const required = short.min(1, "This field is required");

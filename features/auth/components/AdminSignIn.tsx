@@ -2,7 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import BrandMark from "./BrandMark";
+import BrandMark from "@/components/shared/BrandMark";
 import { ArrowRight, ShieldCheck } from "lucide-react";
 export default function AuthScreen({ configured }: { configured: boolean }) {
   const router = useRouter();

@@ -1,11 +1,11 @@
 "use client";
-import SpaceManagersSettings from "./SpaceManagersSettings";
+import SpaceManagersSettings from "@/features/space-managers/components/SpaceManagersSettings";
 import { useState } from "react";
 import { ShieldCheck, Plus, Pencil } from "lucide-react";
-import { useWorkspace } from "./WorkspaceContext";
+import { useWorkspace } from "@/components/layout/WorkspaceContext";
 import { ROLES, PERMISSIONS } from "@/lib/catalog";
-import { SectionHeading, Status, Avatar, Modal } from "./ui";
-import type { Resource } from "./RecordEditor";
+import { SectionHeading, Status, Avatar, Modal } from "@/components/ui";
+import type { Resource } from "@/components/shared/RecordEditor";
 export default function Settings({
   edit,
 }: {

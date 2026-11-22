@@ -1,5 +1,5 @@
 import { databaseUrl } from "@/lib/server-env";
-import { BookingPage } from "@/components/PublicPages";
+import { BookingPage } from "@/features/bookings/components/BookingPage";
 import { Suspense } from "react";
 export const dynamic = "force-dynamic";
 export default function Page() {

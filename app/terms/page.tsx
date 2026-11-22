@@ -1,4 +1,4 @@
-import { Terms } from "@/components/PublicPages";
+import { Terms } from "@/features/programme/components/Terms";
 export default function Page() {
   return <Terms />;
 }

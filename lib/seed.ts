@@ -1,5 +1,5 @@
-import { saturdaySessions } from "./saturday-schedule";
-import type { DataState } from "./types";
+import { saturdaySessions } from "@/lib/saturday-schedule";
+import type { DataState } from "@/lib/types";
 import {
   defaultSettings,
   SECTORS,
@@ -12,7 +12,7 @@ import {
   PIPELINE,
   RESEARCH_SECTIONS,
   ROLES,
-} from "./catalog";
+} from "@/lib/catalog";
 const at = (month: number, day: number, hour = 16) =>
   new Date(Date.UTC(2026, month - 1, day, hour)).toISOString();
 const names = [

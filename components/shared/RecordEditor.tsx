@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
-import { Modal } from "./ui";
-import { useWorkspace } from "./WorkspaceContext";
+import { Modal } from "@/components/ui";
+import { useWorkspace } from "@/components/layout/WorkspaceContext";
 import { COUNTRIES, SECTORS, STAGES, TEAM_SIZES } from "@/lib/catalog";
 interface Option {
   value: string;

@@ -3,8 +3,8 @@ export {};
 try {
   process.loadEnvFile(".env");
 } catch {}
-const { db } = await import("../lib/db");
-const { ensureProgrammeWindow } = await import("../lib/programme-window");
+const { db } = await import("@/lib/db");
+const { ensureProgrammeWindow } = await import("@/lib/programme-window");
 const schedule = await db().$transaction((tx) => ensureProgrammeWindow(tx), {
   timeout: 30000,
 });

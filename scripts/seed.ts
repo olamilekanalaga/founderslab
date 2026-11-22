@@ -2,8 +2,8 @@ export {};
 try {
   process.loadEnvFile(".env");
 } catch {}
-const { db, ensureRoles, loadState, persistDiff } = await import("../lib/db");
-const { makeSeed } = await import("../lib/seed");
+const { db, ensureRoles, loadState, persistDiff } = await import("@/lib/db");
+const { makeSeed } = await import("@/lib/seed");
 await ensureRoles();
 const seed = makeSeed();
 for (const label of seed.labels)

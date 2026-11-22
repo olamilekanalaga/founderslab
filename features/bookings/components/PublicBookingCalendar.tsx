@@ -7,7 +7,7 @@ import {
   publicSlotOpen,
   type PublicSession,
 } from "@/lib/booking";
-import SessionTime from "./SessionTime";
+import SessionTime from "@/components/shared/SessionTime";
 export default function PublicBookingCalendar({
   sessions,
 }: {

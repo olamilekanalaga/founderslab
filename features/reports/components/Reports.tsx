@@ -2,11 +2,11 @@
 import { useState } from "react";
 import { Download, FileText, BarChart3 } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useWorkspace } from "./WorkspaceContext";
+import { useWorkspace } from "@/components/layout/WorkspaceContext";
 import { reportData, blankFilters, type Filters } from "@/lib/selectors";
 import { reportRows, downloadCsv, downloadPdf } from "@/lib/export";
-import { SectionHeading } from "./ui";
-const Chart = dynamic(() => import("./Charts"), { ssr: false });
+import { SectionHeading } from "@/components/ui";
+const Chart = dynamic(() => import("@/components/ui/Charts"), { ssr: false });
 export default function Reports() {
   const { state: s, setMessage } = useWorkspace(),
     [filters, setFilters] = useState<Filters>(blankFilters),

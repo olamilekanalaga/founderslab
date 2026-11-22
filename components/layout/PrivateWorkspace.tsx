@@ -4,7 +4,7 @@ import { loadState } from "@/lib/db";
 import { scopeState } from "@/lib/domain";
 import { SECTIONS, type Section } from "@/lib/types";
 import { SECTION_PERMISSIONS } from "@/lib/sections";
-import Workspace from "./Workspace";
+import Workspace from "@/components/layout/AdminWorkspace";
 import Link from "next/link";
 export default async function PrivateWorkspace({
   section,

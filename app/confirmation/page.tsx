@@ -1,4 +1,4 @@
-import { Confirmation } from "@/components/PublicPages";
+import { Confirmation } from "@/features/bookings/components/Confirmation";
 export default function Page() {
   return <Confirmation />;
 }

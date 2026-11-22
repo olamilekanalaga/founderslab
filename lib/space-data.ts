@@ -1,4 +1,4 @@
-import type { DataState } from "./types";
+import type { DataState } from "@/lib/types";
 export function spaceTotals(state: DataState, sessionId?: string) {
   const records = (state.spaceData || []).filter(
     (r) => !sessionId || r.sessionId === sessionId,
