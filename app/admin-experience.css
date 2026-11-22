@@ -8,6 +8,7 @@
   --accent: #6e47ce;
   --forest: #6e47ce;
   --light: #f0ebfa;
+  --admin-sidebar: 232px;
   font-family: var(--font-public), "Segoe UI", sans-serif;
   font-size: 14px;
   color: var(--ink);
@@ -33,7 +34,7 @@
   margin: 0;
 }
 .admin-experience .sidebar {
-  width: 248px;
+  width: var(--admin-sidebar);
   padding: 28px 18px 18px;
   border-right: 1px solid var(--border);
   background: #fff;
@@ -178,7 +179,9 @@
   padding-inline: 10px;
 }
 .admin-experience .main-column {
-  margin-left: 248px;
+  margin-left: var(--admin-sidebar);
+  width: calc(100% - var(--admin-sidebar));
+  flex: 0 0 calc(100% - var(--admin-sidebar));
   min-width: 0;
   background: var(--bg);
 }
@@ -1575,12 +1578,15 @@
   }
 }
 @media (max-width: 1250px) {
+  .admin-experience {
+    --admin-sidebar: 208px;
+  }
   .admin-experience .sidebar {
-    width: 220px;
+    width: var(--admin-sidebar);
     padding-inline: 14px;
   }
   .admin-experience .main-column {
-    margin-left: 220px;
+    margin-left: var(--admin-sidebar);
   }
   .admin-experience .topbar {
     padding-inline: 26px;
@@ -1667,6 +1673,9 @@
   }
 }
 @media (max-width: 800px) {
+  .admin-experience {
+    --admin-sidebar: 0px;
+  }
   .admin-experience .sidebar {
     display: none;
   }
@@ -2193,6 +2202,161 @@
     gap: 14px;
     flex-wrap: wrap;
     font-size: 11px;
+  }
+}
+/* Laptop-height desktops keep the overview and all four work metrics above the fold. */
+@media (min-width: 1051px) and (max-height: 850px) {
+  .admin-experience .sidebar {
+    padding: 20px 14px 14px;
+  }
+  .admin-experience .sidebar .brand {
+    margin: 0 8px 18px;
+    min-height: 42px;
+  }
+  .admin-experience .sidebar-workspace {
+    display: none;
+  }
+  .admin-experience .sidebar nav {
+    gap: 3px;
+  }
+  .admin-experience .sidebar-bottom {
+    padding-top: 18px;
+  }
+  .admin-experience .sidebar-public {
+    margin-bottom: 6px;
+  }
+  .admin-experience .sidebar-user {
+    padding: 12px 3px 9px;
+  }
+  .admin-experience .topbar {
+    height: 60px;
+    min-height: 60px;
+    padding-inline: 28px;
+  }
+  .admin-experience .workspace-main {
+    padding: 22px 28px 26px;
+    gap: 18px;
+    min-height: calc(100dvh - 120px);
+  }
+  .admin-experience .page-heading {
+    margin: 0;
+    gap: 18px;
+  }
+  .admin-experience .page-heading h1 {
+    font-size: 28px;
+    letter-spacing: -0.8px;
+  }
+  .admin-experience .page-heading p {
+    font-size: 13px;
+    margin-top: 6px;
+    line-height: 1.6;
+  }
+  .admin-experience .page-heading .page-eyebrow {
+    margin-bottom: 6px;
+    font-size: 10px;
+  }
+  .admin-experience .admin-overview-lead {
+    gap: 18px;
+  }
+  .admin-experience .next-space {
+    padding: 18px 20px;
+  }
+  .admin-experience .next-space-heading {
+    margin-bottom: 14px;
+  }
+  .admin-experience .next-space-body {
+    gap: 16px;
+    margin-bottom: 15px;
+  }
+  .admin-experience .next-space-date {
+    width: 62px;
+    height: 70px;
+  }
+  .admin-experience .next-space-date strong {
+    font-size: 30px;
+  }
+  .admin-experience .next-space-body h2 {
+    font-size: 20px;
+    line-height: 1.35;
+  }
+  .admin-experience .next-space-body p {
+    margin-top: 6px;
+    font-size: 12px;
+  }
+  .admin-experience .next-space-body small {
+    margin-top: 3px;
+    font-size: 11px;
+  }
+  .admin-experience .seat-capacity {
+    padding-top: 13px;
+  }
+  .admin-experience .seat-marks {
+    margin: 8px 0;
+  }
+  .admin-experience .seat-capacity > p {
+    font-size: 11px;
+    line-height: 1.5;
+  }
+  .admin-experience .next-space-actions {
+    margin-top: 13px;
+    gap: 16px;
+  }
+  .admin-experience .review-queue .section-heading {
+    padding: 17px 20px 8px;
+  }
+  .admin-experience .queue-clear {
+    min-height: 0;
+    padding: 10px 22px 16px;
+  }
+  .admin-experience .queue-clear > span {
+    height: 40px;
+    width: 40px;
+    margin-bottom: 9px;
+  }
+  .admin-experience .queue-clear h3 {
+    font-size: 17px;
+  }
+  .admin-experience .queue-clear p {
+    font-size: 12px;
+    margin-top: 6px;
+    line-height: 1.65;
+  }
+  .admin-experience .queue-clear .text-link {
+    margin-top: 6px;
+  }
+  .admin-experience .queue-links {
+    padding: 0 20px;
+  }
+  .admin-experience .queue-links a {
+    padding: 15px 0;
+  }
+  .admin-experience .queue-note {
+    padding: 9px 20px 16px;
+  }
+  .admin-experience .overview-metrics {
+    gap: 14px;
+  }
+  .admin-experience .overview-metrics .metric-card {
+    min-height: 106px;
+    padding: 16px 18px;
+  }
+  .admin-experience .overview-metrics .metric-card > strong {
+    font-size: 27px;
+    margin-top: 8px;
+  }
+  .admin-experience .overview-metrics .metric-card > small {
+    font-size: 11px;
+    margin-top: 4px;
+  }
+  .admin-experience .admin-overview-secondary {
+    gap: 18px;
+  }
+  .admin-experience .section-heading {
+    padding: 18px 20px 13px;
+  }
+  .admin-experience .upcoming-row {
+    padding: 14px 0;
+    margin-inline: 20px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

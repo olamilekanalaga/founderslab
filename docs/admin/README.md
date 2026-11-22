@@ -14,6 +14,10 @@ Final local checks: build/TypeScript, 38 source tests, 23 browser tests and 25 r
 
 These screenshots show the actual isolated local preview with eight published sessions and zero founder records; they do not represent production counts.
 
+The laptop layout also fits a native1366×768screen at100%zoom (1358×644browser content). The next-session and review panels align, all four work metrics fit above the fold, and account/navigation controls remain visible. Sidebar width and content offset share one responsive value; shorter desktop windows use compact panel spacing. Six laptop/desktop/phone alignment checks have zero Axe violations. The visible preview uses native window dimensions rather than a forced1440×1000test viewport.
+
+![Laptop overview at 100 percent zoom](laptop.png)
+
 ![Desktop admin overview](desktop.png)
 
 ![Phone admin overview](mobile.png)
