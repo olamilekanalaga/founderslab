@@ -40,9 +40,9 @@ Domain tests verify a single shared SpaceData record across two founder profiles
 
 The isolated PostgreSQL integration suite runs the exact production preparation script twice, confirms zero fictional founders and one bootstrap administrator, and then exercises production HTTP with only a prefixed database variable. It checks `/demo` is unavailable, anonymous workspace access is rejected, and the readiness endpoint succeeds. Existing real application submission, capacity, approval and shared weekly data checks run against that initialized schema. Local browser-demo tests retain the non-production environment.
 
-UTC checks cover late-Friday/late-Saturday boundaries independently of the original stored timezone, public time selection at 17:00 UTC, and a calendar with no published sessions. The empty calendar explains unavailability and has no enabled date buttons. Existing timestamps are not shifted.
+London timezone tests cover late-Friday/late-Saturday boundaries independently of the original stored timezone, both UK DST transitions, summer/winter UTC offsets, and Nigeria conversions. The empty calendar explains unavailability and has no enabled date buttons.
 
-Saturday publishing is tested against both the public eligibility function and isolated PostgreSQL. Production preparation runs repeatedly without duplicate dates; all 12 dates are Saturday 19:00 UTC with capacity five, and a cancelled date stays cancelled on a subsequent release. Calendar browser tests select 19:00 UTC.
+Saturday publishing is tested against both the public eligibility function and isolated PostgreSQL. Production preparation runs repeatedly without duplicate dates; all 12 dates are Saturday 7 PM Europe/London with capacity five for new sessions, and a cancelled date stays cancelled on a subsequent release. In-place legacy alignment preserves booking IDs. Browser tests verify Nigeria summer time and Japan’s next-day conversion.
 
 ## Restricted Space Manager regression
 

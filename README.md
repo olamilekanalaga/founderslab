@@ -43,7 +43,7 @@ Migration uses the checked-in PostgreSQL runner (`npm run db:migrate`), not Pris
 ## Founder booking flow
 
 1. Open the 12-week calendar at `/book`.
-2. Choose an available Saturday week card at 19:00 UTC.
+2. Choose an available Saturday week card at 7:00 PM London time (GMT/BST).
 3. Continue to the founder questions with that session attached.
 4. Submit the application and pending booking together.
 5. An administrator approves/declines the application, then approves/waitlists/declines the booking under Founder Spaces.
@@ -99,10 +99,10 @@ Vercel uses `npm run build:vercel` to prepare the connected production database 
 
 Production turns off the public Admin demo and browser-local demo forms. A supported prefixed Neon connection is resolved on the server; connection values never reach the browser. Readiness is available at `/api/health`. See DEPLOYMENT.md for direct versus pooled connections and initial setup.
 
-Booking date eligibility and time display use UTC/GMT throughout the public calendar, selected session, confirmation, weekly profiles and Admin session list. Existing timestamps are preserved; 18:00 Lagos displays as 17:00 UTC. New session editors default to UTC. Empty production databases have no fictional published sessions: the calendar explains that grey dates are unpublished/unavailable, and only real published Saturdays become selectable. UK daylight-saving time is not applied to this explicit UTC schedule.
+Booking date eligibility uses Europe/London. Public session details and confirmations show London time and a conversion to the visitor’s browser timezone, including the local date when it differs. The recurring programme stays at 7 PM London year-round: 19:00 UTC in winter and 18:00 UTC in summer. Private historical timestamps remain stored as UTC instants.
 
 ## Approved recurring Saturday programme
 
-Production preparation publishes a rolling 12-week window of real Saturday sessions at **19:00 UTC**, capacity **five project places**, as requested by the programme host. Booking stays open until the start time; requests still require Admin approval. The publisher uses deterministic date IDs and a transaction lock. It preserves existing sessions on each date, including cancellations and changed capacities, and never resets bookings or reopens full sessions. Every deployment extends the window as needed. The public booking page is titled Founders Lab and labels the time United Kingdom, London — UTC / GMT (fixed UTC).
+Production preparation publishes a rolling 12-week window of real Saturday sessions at **7:00 PM Europe/London**, capacity **five project places** for new sessions. The IANA timezone automatically applies GMT/BST. Booking stays open until the start time; requests still require Admin approval. The publisher uses deterministic London-date IDs and a transaction lock. It updates recurring and legacy fixed-UTC programme slots in place, preserving IDs, booking associations, capacities, cancellations and custom deadlines. A deadline that tracked the original start moves with the updated start. Existing dates prevent duplicate creation; unrelated custom events are not rescheduled. Every deployment extends the window as needed.
 
 The booking calendar follows the weekly-card layout in the website’s light theme: three columns, four rows, numbered Week 1–12, selected-week details and a View booking details action leading to the founder questions. Counts mean approved project bookings; a fully booked week has 5/5 and is disabled. The hosted publisher verifies newly created dates through the live public booking API before the release continues.

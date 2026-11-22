@@ -8,7 +8,11 @@ import {
   sessionDay,
   type PublicSession,
 } from "@/lib/booking";
-import { saturdaySessions } from "@/lib/saturday-schedule";
+import SessionTime from "./SessionTime";
+import {
+  saturdaySessions,
+  isLondonProgrammeTime,
+} from "@/lib/saturday-schedule";
 export default function PublicBookingCalendar({
   sessions,
   demo,
@@ -20,7 +24,7 @@ export default function PublicBookingCalendar({
     const matches = sessions.filter(
       (s) =>
         sessionDay(s) === date.startsAt.toISOString().slice(0, 10) &&
-        new Date(s.startsAt).getUTCHours() === 19,
+        isLondonProgrammeTime(s.startsAt),
     );
     const session =
       matches.find((s) => publicSlotOpen(s, s.availableSeats)) || matches[0];
@@ -40,7 +44,7 @@ export default function PublicBookingCalendar({
       day: "numeric",
       month: "short",
       year: "numeric",
-      timeZone: "UTC",
+      timeZone: "Europe/London",
     });
   return (
     <section
@@ -50,7 +54,7 @@ export default function PublicBookingCalendar({
       <div className="weekly-heading">
         <div>
           <h2>Upcoming Spaces</h2>
-          <p>Saturday · 7:00 PM UTC · Rolling 12-week window</p>
+          <p>Saturday · 7:00 PM London · Rolling 12-week window</p>
         </div>
         <span className={`weekly-status ${available ? "is-open" : ""}`}>
           {available
@@ -79,7 +83,7 @@ export default function PublicBookingCalendar({
             day: "numeric",
             month: "long",
             year: "numeric",
-            timeZone: "UTC",
+            timeZone: "Europe/London",
           });
           return (
             <button
@@ -110,7 +114,9 @@ export default function PublicBookingCalendar({
             {chosen.session.capacity - chosen.session.availableSeats} confirmed
             founder projects · {chosen.session.availableSeats} places available
           </p>
-          <p className="weekly-selection-time">Saturday at 7:00 PM UTC</p>
+          <p className="weekly-selection-time">
+            <SessionTime startsAt={chosen.session.startsAt} />
+          </p>
           <Link
             className="weekly-continue"
             href={`/apply?session=${encodeURIComponent(chosen.session.id)}${demo ? "&mode=demo" : ""}`}
@@ -136,7 +142,7 @@ export default function PublicBookingCalendar({
           </strong>
           <p>
             Sessions must be published before founders can book. Fully booked
-            weeks show 0/5 and are disabled.
+            weeks show 5/5 and are disabled.
           </p>
           <Link className="text-link" href="/signin">
             Host sign in

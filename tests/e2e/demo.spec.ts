@@ -472,7 +472,7 @@ test("public booking calendar enables only open Saturdays and disables full date
   });
 });
 
-test("empty real-style calendar explains unpublished dates and shows UTC", async ({
+test("empty real-style calendar explains unpublished dates and shows London", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 393, height: 852 });
@@ -492,6 +492,81 @@ test("empty real-style calendar explains unpublished dates and shows UTC", async
   await expect(page.getByRole("status")).toContainText(
     "No Saturday slots published yet",
   );
-  await expect(page.locator(".weekly-location")).toContainText("UTC / GMT");
+  await expect(page.locator(".weekly-location")).toContainText(
+    "London (GMT / BST)",
+  );
   await expect(page.locator(".weekly-date:enabled")).toHaveCount(0);
+});
+
+test("summer calendar stays at 7 PM London and converts Nigeria and next-day Japan times", async ({
+  browser,
+  baseURL,
+}) => {
+  for (const [timezoneId, expected] of [
+    ["Africa/Lagos", /7:00\s?pm/i],
+    ["Asia/Tokyo", /3:00\s?am/i],
+  ] as const) {
+    const context = await browser.newContext({
+      baseURL,
+      timezoneId,
+      viewport: { width: 393, height: 852 },
+    });
+    const page = await context.newPage();
+    try {
+      await page.clock.setFixedTime(new Date("2027-07-01T10:00:00Z"));
+      await page.goto("/demo");
+      await page
+        .getByRole("heading", { name: "Overview", exact: true })
+        .waitFor();
+      await page
+        .getByRole("button", { name: "Reset demo", exact: true })
+        .click();
+      await page
+        .getByRole("button", { name: "Reset fictional demo", exact: true })
+        .click();
+      await page.evaluate(() => {
+        const seed = JSON.parse(localStorage.getItem("founders-lab-demo-v1")!);
+        const template = seed.sessions.find(
+          (s: { id: string }) => s.id === "up3",
+        );
+        seed.sessions = seed.sessions.filter(
+          (s: { status: string }) => s.status !== "Scheduled",
+        );
+        seed.sessions.push({
+          ...template,
+          id: "summer-slot",
+          title: "Founders Lab — Saturday Space",
+          startsAt: "2027-07-03T18:00:00.000Z",
+          deadline: "2027-07-03T18:00:00.000Z",
+          timezone: "Europe/London",
+        });
+        localStorage.setItem("founders-lab-demo-v1", JSON.stringify(seed));
+      });
+      await page.goto("/book?mode=demo");
+      await expect(page.locator(".weekly-heading")).toContainText(
+        "7:00 PM London",
+      );
+      await page.locator(".weekly-date:enabled").first().click();
+      await expect(page.locator(".weekly-selection-time")).toContainText(
+        /7:00\s?pm/i,
+      );
+      await expect(page.locator(".visitor-session-time")).toContainText(
+        expected,
+      );
+      if (timezoneId === "Asia/Tokyo")
+        await expect(page.locator(".visitor-session-time")).toContainText(
+          "Sun, 4 Jul",
+        );
+      await expect(page.locator(".weekly-continue")).toHaveAttribute(
+        "href",
+        /summer-slot/,
+      );
+      await page.screenshot({
+        path: `artifacts/booking-london-summer-${timezoneId === "Africa/Lagos" ? "nigeria" : "japan"}-mobile.png`,
+        fullPage: true,
+      });
+    } finally {
+      await context.close();
+    }
+  }
 });

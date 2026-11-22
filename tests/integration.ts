@@ -7,6 +7,7 @@ import { once } from "node:events";
 import { Client } from "pg";
 import AxeBuilder from "@axe-core/playwright";
 import { chromium } from "@playwright/test";
+import { isLondonProgrammeTime } from "../lib/saturday-schedule";
 import type { DataState } from "../lib/types";
 try {
   process.loadEnvFile(".env");
@@ -132,7 +133,7 @@ try {
     slots.rows.every(
       (row) =>
         new Date(row.startsAt).getUTCDay() === 6 &&
-        new Date(row.startsAt).getUTCHours() === 19 &&
+        isLondonProgrammeTime(row.startsAt) &&
         row.capacity === 5,
     ),
   );
@@ -159,6 +160,43 @@ try {
     "Production release initializes tables/defaults and one admin idempotently without fictional founders",
   );
   run("scripts/seed.ts", ["--demo"]);
+  const scheduleDb = new Client({ connectionString: url.toString() });
+  await scheduleDb.connect();
+  const beforeBookingIds = (
+    await scheduleDb.query(
+      'SELECT id FROM "BookingRequest" WHERE "sessionId"=$1 ORDER BY id',
+      ["up1"],
+    )
+  ).rows.map((r) => r.id);
+  run("scripts/publish-saturdays.ts");
+  run("scripts/publish-saturdays.ts");
+  assert.equal(
+    (
+      await scheduleDb.query('SELECT timezone FROM "Session" WHERE id=$1', [
+        "up1",
+      ])
+    ).rows[0].timezone,
+    "Europe/London",
+  );
+  assert.deepEqual(
+    (
+      await scheduleDb.query(
+        'SELECT id FROM "BookingRequest" WHERE "sessionId"=$1 ORDER BY id',
+        ["up1"],
+      )
+    ).rows.map((r) => r.id),
+    beforeBookingIds,
+  );
+  assert.equal(
+    (
+      await scheduleDb.query(
+        'SELECT count(*)::int AS n FROM "Session" WHERE "startsAt"=$1',
+        ["2026-12-05T19:00:00Z"],
+      )
+    ).rows[0].n,
+    1,
+  );
+  await scheduleDb.end();
   run("scripts/admin.ts");
   server = spawn(
     process.execPath,

@@ -5523,3 +5523,4 @@ td > b,
 .manager-page ul { padding-left: 20px; line-height: 1.8; }
 
 .manager-page .button.primary:hover, .space-managers-settings .button.primary:hover { color: #fff; }
+.visitor-session-time { display: block; margin-top: 4px; font-size: 12px; color: #596277; }

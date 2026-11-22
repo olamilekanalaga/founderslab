@@ -13,6 +13,7 @@ import {
   Award,
 } from "lucide-react";
 import PublicHeader from "./PublicHeader";
+import SessionTime from "./SessionTime";
 import PublicBookingCalendar from "./PublicBookingCalendar";
 import { publicSlotOpen, type PublicSession } from "@/lib/booking";
 import {
@@ -24,7 +25,6 @@ import {
 } from "@/lib/catalog";
 import { formError } from "@/lib/form-errors";
 import { applicationSchema } from "@/lib/validation";
-import { dateTime } from "@/lib/selectors";
 import {
   hydrateDemo,
   getSnapshot,
@@ -224,7 +224,9 @@ export function Landing() {
               <article className="panel session-card" key={s.id}>
                 <CalendarDays size={23} />
                 <h3>{s.title}</h3>
-                <p>{dateTime(s.startsAt)} · UTC / GMT</p>
+                <p>
+                  <SessionTime startsAt={s.startsAt} />
+                </p>
                 <small>
                   {s.availableSeats} / {s.capacity} project seats available ·{" "}
                   {s.host}
@@ -426,9 +428,11 @@ export function ApplicationForm({
             <div>
               <span className="eyebrow">YOUR SELECTED SPACE</span>
               <strong>
-                {chosenSession
-                  ? dateTime(chosenSession.startsAt) + " · UTC / GMT"
-                  : "Loading selected Space…"}
+                {chosenSession ? (
+                  <SessionTime startsAt={chosenSession.startsAt} />
+                ) : (
+                  "Loading selected Space…"
+                )}
               </strong>
               <span>{chosenSession?.title}</span>
               {chosenSession && !selectionValid && (
@@ -958,7 +962,9 @@ export function Confirmation() {
             {data.bookings.map((b, i) => (
               <div className="confirmation-booking" key={i}>
                 <h3>{b.session.title}</h3>
-                <p>{dateTime(b.session.startsAt)} · UTC / GMT</p>
+                <p>
+                  <SessionTime startsAt={b.session.startsAt} />
+                </p>
                 <Status value={b.status} />
               </div>
             ))}
