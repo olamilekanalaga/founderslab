@@ -413,8 +413,7 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
             <ArrowRight size={17} />
           </button>
           <small>
-            Submitting an application does not guarantee a speaking slot or
-            award.
+            Submitting an application does not guarantee a speaking slot.
           </small>
         </form>
       </main>

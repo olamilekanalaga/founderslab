@@ -1,6 +1,7 @@
 "use client";
 import SpaceManagersSettings from "@/features/space-managers/components/SpaceManagersSettings";
 import { useState } from "react";
+import Link from "next/link";
 import { ShieldCheck, Plus, Pencil } from "lucide-react";
 import { useWorkspace } from "@/components/layout/WorkspaceContext";
 import { ROLES, PERMISSIONS } from "@/lib/catalog";
@@ -110,7 +111,7 @@ export default function Settings({
               <dd>{s.settings.campaignTarget}</dd>
             </div>
             <div>
-              <dt>Default award</dt>
+              <dt>Historical award setting (inactive)</dt>
               <dd>{s.settings.awardAmount}</dd>
             </div>
             <div>
@@ -118,6 +119,11 @@ export default function Settings({
               <dd>{s.settings.retentionDays} days</dd>
             </div>
           </dl>
+          <p>
+            <Link className="text-link" href="/campaigns">
+              View historical founder award archive
+            </Link>
+          </p>
           <p className="form-note">
             Policy settings do not delete records automatically. Review
             retention and privacy requests with the programme administrator.

@@ -126,9 +126,6 @@ export default function PublicBookingCalendar({
             Sessions must be published before founders can book. Fully booked
             weeks show Full and are disabled.
           </p>
-          <Link className="text-link" href="/signin">
-            Host sign in
-          </Link>
         </div>
       )}
     </section>
