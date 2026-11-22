@@ -11,7 +11,7 @@ test("public booking is light, backend-backed and limited to eight Saturdays", a
   );
   await expect(page.locator(".fl-date-group")).toHaveCount(2);
   await expect(page.getByText("Demo mode", { exact: true })).toHaveCount(0);
-  await expect(page.locator(".public-footer")).toContainText("Ola_Crrypt");
+  await expect(page.locator(".public-footer")).toContainText("⭕️La_Crrypt💰₿");
   await expect(page.locator(".weekly-date").first()).toContainText(
     /slots? left|Full/,
   );

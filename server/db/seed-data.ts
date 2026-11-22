@@ -352,7 +352,7 @@ export function makeSeed(): DataState {
         ][i % 5] + ` · ${i + 1}`,
       startsAt: at(10, day, 17),
       timezone: "UTC",
-      host: "Ola_Crrypt",
+      host: "⭕️La_Crrypt💰₿",
       capacity: 5,
       deadline: at(10, day - 1),
       status: "Completed",
@@ -393,7 +393,7 @@ export function makeSeed(): DataState {
         founderId,
         companyId,
         sessionId: id,
-        researcher: i % 2 ? "Maya · Research" : "Ola_Crrypt",
+        researcher: i % 2 ? "Maya · Research" : "⭕️La_Crrypt💰₿",
         recordedAt: at(10, day),
         evidence: `Fictional interview notes, session ${i + 1}. Recording is a placeholder.`,
         confidence: "Medium",
@@ -438,7 +438,7 @@ export function makeSeed(): DataState {
       ][i],
       startsAt: at(12, 5 + i * 7, 19),
       timezone: "UTC",
-      host: "Ola_Crrypt",
+      host: "⭕️La_Crrypt💰₿",
       capacity: 5,
       deadline: at(12, 4 + i * 7, 19),
       status: "Scheduled",
@@ -521,7 +521,7 @@ export function makeSeed(): DataState {
       budget: i % 4 ? "Unknown" : "Indicative $1,000–$3,000 · unconfirmed",
       evidence:
         "Fictional self-reported need; commercial interest is not a signed agreement.",
-      owner: i % 2 ? "Ola_Crrypt" : "Maya",
+      owner: i % 2 ? "⭕️La_Crrypt💰₿" : "Maya",
       nextAction:
         i % 3
           ? "Validate scope and timing with the founder"
@@ -580,14 +580,14 @@ export function makeSeed(): DataState {
           j < 10
             ? "Eligibility checked against the fictional programme rules."
             : "",
-        reviewer: j < 10 ? "Ola_Crrypt" : "",
+        reviewer: j < 10 ? "⭕️La_Crrypt💰₿" : "",
       });
   });
   s.awards.push({
     id: "award1",
     campaignId: "campaign1",
     founderId: "f1",
-    reviewer: "Ola_Crrypt",
+    reviewer: "⭕️La_Crrypt💰₿",
     rationale:
       "Fictional assessment: clear customer problem and documented product progress; no reviewer conflict recorded.",
     decisionDate: at(11, 2),
@@ -599,7 +599,7 @@ export function makeSeed(): DataState {
   Object.entries(ROLES).forEach(([id, role], i) =>
     s.users.push({
       id: `demo-user-${id}`,
-      name: i === 0 ? "Ola_Crrypt" : `${role.name} preview`,
+      name: i === 0 ? "⭕️La_Crrypt💰₿" : `${role.name} preview`,
       email: `${id}@example.invalid`,
       roleId: id,
       active: true,

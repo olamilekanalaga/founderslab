@@ -161,7 +161,7 @@ export default function PublicBookingCalendar({
           </span>
           <div>
             <strong>Your founder conversation</strong>
-            <small>Hosted by Ola_Crrypt</small>
+            <small>Hosted by ⭕️La_Crrypt💰₿</small>
           </div>
         </div>
         <div className="fl-summary-date" aria-live="polite">

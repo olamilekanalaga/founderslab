@@ -76,7 +76,7 @@ export async function downloadPdf(rows: string[][]) {
   y += 10;
   doc.setFontSize(10);
   doc.text(
-    "Hosted by Ola_Crrypt | " + new Date().toISOString().slice(0, 10),
+    "Hosted by ⭕️La_Crrypt💰₿ | " + new Date().toISOString().slice(0, 10),
     15,
     y,
   );

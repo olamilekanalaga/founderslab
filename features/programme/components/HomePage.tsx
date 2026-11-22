@@ -83,7 +83,7 @@ export default function HomePage() {
             <div>
               <Mic2 size={19} aria-hidden="true" />
               <span>
-                Hosted by <strong>Ola_Crrypt</strong>
+                Hosted by <strong>⭕️La_Crrypt💰₿</strong>
               </span>
             </div>
             <div>
@@ -144,7 +144,7 @@ export default function HomePage() {
                 in Web3.
               </p>
               <p>
-                Hosted by Ola_Crrypt, each weekly X Space brings a small group
+                Hosted by ⭕️La_Crrypt💰₿, each weekly X Space brings a small group
                 of founders into one conversation.
               </p>
               <Link className="fl-inline-action" href="/book">

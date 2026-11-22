@@ -29,14 +29,14 @@ export default function PublicHeader() {
       <Link
         className="brand"
         href="/"
-        aria-label="Founders Lab with Ola_Crrypt, Home"
+        aria-label="Founders Lab with ⭕️La_Crrypt💰₿, Home"
         onClick={() => setOpen(false)}
       >
         <span className="brand-mark" aria-hidden="true">
           <BrandMark />
         </span>
         <span>
-          Founders Lab<small>with Ola_Crrypt</small>
+          Founders Lab<small>with ⭕️La_Crrypt💰₿</small>
         </span>
       </Link>
       <button

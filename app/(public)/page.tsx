@@ -3,7 +3,7 @@ import HomePage from "@/features/programme/components/HomePage";
 export const metadata: Metadata = {
   title: "Founders Lab | Meet the founders building Web3",
   description:
-    "Meet the founders building Web3. Choose a Saturday, apply, and join free X Spaces conversations with Ola_Crrypt at 7 PM London time.",
+    "Meet the founders building Web3. Choose a Saturday, apply, and join free X Spaces conversations with ⭕️La_Crrypt💰₿ at 7 PM London time.",
   openGraph: {
     title: "Founders Lab | Meet the founders building Web3",
     description:

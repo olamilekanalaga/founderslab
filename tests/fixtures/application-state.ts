@@ -86,7 +86,7 @@ export function demoViewer(role = "admin"): Viewer {
   return {
     id: `demo-user-${role}`,
     name:
-      role === "admin" ? "Ola_Crrypt" : ROLES[role]?.name || "Unsupported role",
+      role === "admin" ? "⭕️La_Crrypt💰₿" : ROLES[role]?.name || "Unsupported role",
     email: `${role}@example.invalid`,
     roleId: role,
     permissions: ROLES[role]?.permissions || [],
