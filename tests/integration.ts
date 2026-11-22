@@ -4,6 +4,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { spawn, spawnSync } from "node:child_process";
 import { createServer } from "node:http";
 import { once } from "node:events";
+import { readFileSync, readdirSync } from "node:fs";
 import { Client } from "pg";
 import AxeBuilder from "@axe-core/playwright";
 import { chromium } from "@playwright/test";
@@ -117,6 +118,60 @@ function pass(name: string) {
   console.log(`PASS ${++passed}: ${name}`);
 }
 try {
+  // Exercise the additive migration on populated, pre-change tables in this disposable DB.
+  const legacyDb = new Client({ connectionString: url.toString() });
+  await legacyDb.connect();
+  await legacyDb.query(
+    'CREATE TABLE "_founders_migrations" (name text PRIMARY KEY, checksum text NOT NULL, applied_at timestamptz NOT NULL DEFAULT now())',
+  );
+  for (const name of readdirSync("prisma/migrations")
+    .sort()
+    .filter(
+      (name) =>
+        name !== "202611220004_project_x_identity" && !name.endsWith(".toml"),
+    )) {
+    const sql = readFileSync(`prisma/migrations/${name}/migration.sql`, "utf8");
+    await legacyDb.query(sql);
+    await legacyDb.query(
+      'INSERT INTO "_founders_migrations"(name, checksum) VALUES($1,$2)',
+      [name, createHash("sha256").update(sql).digest("hex")],
+    );
+  }
+  await legacyDb.query(
+    `INSERT INTO "Founder" (id,name,"xHandle",country,contact,"updatedAt") VALUES ('legacy-f','Legacy founder','legacy_personal','United Kingdom','private@example.invalid',now())`,
+  );
+  await legacyDb.query(
+    `INSERT INTO "Company" (id,name,description,website,country,"operatingCountries","teamSize",stage,sector,"economicFunctions",customers,"businessModels",ecosystems,chains,integrations,distribution,"updatedAt") VALUES ('legacy-c','Legacy company','Existing description','https://legacy.example.invalid','United Kingdom','{}','2–5','MVP','Payments','{}','{}','{}','{}','{}','{}','{}',now())`,
+  );
+  await legacyDb.query(
+    `INSERT INTO "Application" (id,reference,"dedupeKey","founderName","companyName","xHandle",website,country,description,speakers,"teamSize",stage,sector,focus,"teamCountries","privacyConsent","confirmationHash","confirmationExpires","updatedAt") VALUES ('legacy-a','LEGACY-REFERENCE','legacy-key','Legacy founder','Legacy company','legacy_personal','https://legacy.example.invalid','United Kingdom','Existing description',1,'2–5','MVP','Payments','Existing focus','{}',true,'legacy-confirmation-hash',now()+interval '1 day',now())`,
+  );
+  const originals: Record<string, Record<string, unknown>> = {};
+  for (const table of ["Founder", "Company", "Application"])
+    originals[table] = (
+      await legacyDb.query(`SELECT * FROM "${table}"`)
+    ).rows[0];
+  run("scripts/migrate.ts");
+  run("scripts/migrate.ts");
+  for (const table of ["Founder", "Company", "Application"]) {
+    const row = (await legacyDb.query(`SELECT * FROM "${table}"`)).rows[0];
+    if (table === "Company") {
+      assert.equal(row.xHandle, null);
+      delete row.xHandle;
+    }
+    if (table === "Application") {
+      assert.equal(row.projectXHandle, null);
+      delete row.projectXHandle;
+    }
+    assert.deepEqual(row, originals[table]);
+  }
+  await legacyDb.query(`DELETE FROM "Application" WHERE id='legacy-a'`);
+  await legacyDb.query(`DELETE FROM "Founder" WHERE id='legacy-f'`);
+  await legacyDb.query(`DELETE FROM "Company" WHERE id='legacy-c'`);
+  await legacyDb.end();
+  pass(
+    "Additive identity migration preserves existing founder/application usernames, contact data, confirmations and company records; new project identities remain NULL and migration is idempotent",
+  );
   run("scripts/prepare-vercel.ts");
   run("scripts/prepare-vercel.ts");
   const initialDb = new Client({ connectionString: url.toString() });
@@ -343,7 +398,8 @@ try {
   const application = {
     founderName: "Integration Fictional",
     companyName: "Isolated Example",
-    xHandle: "isolated_example",
+    xHandle: " @ ISOLATED_EXAMPLE ",
+    projectXHandle: "@Isolated_Project",
     website: "isolated.example.invalid",
     country: "Nigeria",
     description: "Pay",
@@ -352,9 +408,24 @@ try {
     stage: "MVP",
     sector: "Payments",
     focus: "AI",
+    founderRole: "Founder",
+    teamCountries: ["United Kingdom"],
+    ecosystem: "None",
+    hiring: false,
+    seeking: "None",
+    comments: "None",
     privacyConsent: true,
     promotionalConsent: false,
   };
+  assert.equal(
+    (
+      await request("/api/public/apply", {
+        ...application,
+        projectXHandle: undefined,
+      })
+    ).status,
+    400,
+  );
   const result = await request("/api/public/apply", application);
   assert.equal(result.status, 201, JSON.stringify(result.data));
   const capability = result.data.token;
@@ -396,6 +467,16 @@ try {
   });
   const linked = state.applications.find((a) => a.id === app.id)!;
   assert.ok(linked.founderId && linked.companyId);
+  assert.equal(linked.xHandle, "isolated_example");
+  assert.equal(linked.projectXHandle, "isolated_project");
+  assert.equal(
+    state.founders.find((f) => f.id === linked.founderId)!.xHandle,
+    "isolated_example",
+  );
+  assert.equal(
+    state.companies.find((c) => c.id === linked.companyId)!.xHandle,
+    "isolated_project",
+  );
   assert.equal(linked.website, "https://isolated.example.invalid");
   assert.equal(
     state.companies.find((c) => c.id === linked.companyId)?.website,
@@ -1334,6 +1415,37 @@ try {
       path: "artifacts/private-founder-mobile.png",
       fullPage: true,
     });
+    await page
+      .getByRole("button", { name: "Edit founder", exact: true })
+      .click();
+    await page
+      .getByLabel("Founder X", { exact: true })
+      .fill("@Corrected_Personal");
+    await page
+      .getByRole("button", { name: "Save record", exact: true })
+      .click();
+    await page.getByRole("dialog").waitFor({ state: "hidden" });
+    await page.goto(origin + "/companies/" + linked.companyId);
+    await page
+      .getByRole("button", { name: "Edit company", exact: true })
+      .click();
+    await page
+      .getByLabel("Project X", { exact: true })
+      .fill("@Corrected_Project");
+    await page
+      .getByRole("button", { name: "Save record", exact: true })
+      .click();
+    await page.getByRole("dialog").waitFor({ state: "hidden" });
+    const corrected = (await request("/api/workspace", undefined, admin)).data
+      .state as DataState;
+    assert.equal(
+      corrected.founders.find((f) => f.id === linked.founderId)!.xHandle,
+      "corrected_personal",
+    );
+    assert.equal(
+      corrected.companies.find((c) => c.id === linked.companyId)!.xHandle,
+      "corrected_project",
+    );
     await page.goto(origin + "/settings");
     await page
       .getByRole("button", { name: "Space Managers", exact: true })

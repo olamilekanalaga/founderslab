@@ -103,6 +103,7 @@ export function applyCommand(
       const { founderIds, labelIds, ...data } = v;
       put(s.companies, {
         ...data,
+        xHandle: p.xHandle === undefined ? (old?.xHandle ?? null) : v.xHandle,
         id,
         createdAt: old?.createdAt || now,
         updatedAt: now,
@@ -167,6 +168,7 @@ export function applyCommand(
             name: a.companyName,
             description: a.description,
             website: a.website,
+            xHandle: a.projectXHandle ?? null,
             country: a.country,
             operatingCountries: [a.country],
             teamSize: a.teamSize,

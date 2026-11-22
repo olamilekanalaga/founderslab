@@ -404,6 +404,16 @@ export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
             <p>{a.description}</p>
             <dl className="facts">
               <div>
+                <dt>Founder X</dt>
+                <dd>@{a.xHandle}</dd>
+              </div>
+              <div>
+                <dt>Project X</dt>
+                <dd>
+                  {a.projectXHandle ? `@${a.projectXHandle}` : "Not provided"}
+                </dd>
+              </div>
+              <div>
                 <dt>Country</dt>
                 <dd>{a.country}</dd>
               </div>
@@ -486,6 +496,12 @@ export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
                   href={path("founders", a.founderId || "")}
                 >
                   Open founder profile
+                </Link>
+                <Link
+                  className="text-link"
+                  href={path("companies", a.companyId || "")}
+                >
+                  Open company profile
                 </Link>
               </div>
             )}

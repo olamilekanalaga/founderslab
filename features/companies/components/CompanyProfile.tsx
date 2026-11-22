@@ -57,6 +57,18 @@ export default function CompanyProfile({
         <p>{company.description || "Not recorded"}</p>
         <dl className="facts">
           <div>
+            <dt>Project X</dt>
+            <dd>
+              {company.xHandle ? (
+                <ExternalLink href={`https://x.com/${company.xHandle}`}>
+                  @{company.xHandle}
+                </ExternalLink>
+              ) : (
+                "Not provided"
+              )}
+            </dd>
+          </div>
+          <div>
             <dt>Country</dt>
             <dd>{company.country}</dd>
           </div>
@@ -86,7 +98,7 @@ export default function CompanyProfile({
             <span>
               <b>{founder.name}</b>
               <small>
-                @{founder.xHandle} · {founder.country}
+                Founder X: @{founder.xHandle} · {founder.country}
               </small>
             </span>
             <ArrowUpRight size={16} />

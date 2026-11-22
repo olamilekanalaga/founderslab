@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import PublicHeader from "@/components/layout/PublicHeader";
 import PublicFooter from "@/components/layout/PublicFooter";
-import UpcomingSpaces from "./UpcomingSpaces";
 import HeroBookingPreview from "./HeroBookingPreview";
 import { ProgrammeAvailability } from "./ProgrammeAvailability";
 const questions = [
@@ -55,19 +54,22 @@ export default function HomePage() {
           >
             <div className="fl-hero-copy">
               <span className="fl-eyebrow">
-                <Mic2 size={15} aria-hidden="true" /> A weekly space for Web3
-                builders
+                <Mic2 size={15} aria-hidden="true" /> FOUNDERS LAB · WEEKLY WEB3
+                SPACES
               </span>
               <h1 id="programme-title">
-                Meet the founders <span>building Web3.</span>
+                Introduce your product. Share your journey.{" "}
+                <span>Reach your audience.</span>
               </h1>
               <p>
-                Join weekly X conversations with Web3 founders. Choose a
-                Saturday, apply, and share what you’re building.
+                Founders Lab is for Web3 founders who want to introduce their
+                products, share their journey and reach an audience interested
+                in discovering what they’re building.
               </p>
               <div className="fl-hero-actions">
                 <Link className="fl-action fl-action-primary" href="/book">
-                  Choose a Saturday <ArrowRight size={18} aria-hidden="true" />
+                  Book a Founder Space{" "}
+                  <ArrowRight size={18} aria-hidden="true" />
                 </Link>
                 <Link className="fl-action fl-action-text" href="#how-it-works">
                   How it works <ArrowRight size={17} aria-hidden="true" />
@@ -106,27 +108,6 @@ export default function HomePage() {
             </div>
           </div>
           <section
-            className="fl-upcoming fl-container"
-            aria-labelledby="upcoming-title"
-          >
-            <div className="fl-section-heading">
-              <div>
-                <h2 id="upcoming-title">
-                  Make room for your next conversation.
-                </h2>
-                <p>A Saturday, a few builders, and something worth sharing.</p>
-              </div>
-              <Link className="fl-inline-action" href="/book">
-                Choose a Saturday <ArrowRight size={17} aria-hidden="true" />
-              </Link>
-            </div>
-            <UpcomingSpaces />
-            <p className="fl-section-note">
-              Participation is subject to approval. Pending requests do not
-              reserve a seat.
-            </p>
-          </section>
-          <section
             id="about"
             className="fl-about fl-container"
             aria-labelledby="about-title"
@@ -134,18 +115,16 @@ export default function HomePage() {
             <div className="fl-about-intro">
               <span className="fl-eyebrow">Built around the conversation</span>
               <h2 id="about-title">
-                There’s a person
-                <br />
-                behind every product.
+                Reach people interested in what you’re building.
               </h2>
               <p>
-                Founders Lab makes room to meet them. Share the decisions,
-                challenges and ideas behind your work with other people building
-                in Web3.
+                Introduce your product to an audience that may include future
+                users, community members, collaborators or supporters. Share the
+                problem it solves and the journey behind it.
               </p>
               <p>
-                Hosted by ⭕️La_Crrypt💰₿, each weekly X Space brings a small group
-                of founders into one conversation.
+                Hosted by ⭕️La_Crrypt💰₿, each weekly X Space brings a small
+                group of founders into one conversation.
               </p>
               <Link className="fl-inline-action" href="/book">
                 Find your conversation{" "}
@@ -157,10 +136,10 @@ export default function HomePage() {
                 <span className="fl-benefit-symbol">
                   <Lightbulb size={30} aria-hidden="true" />
                 </span>
-                <h3>Bring what you’re building.</h3>
+                <h3>Show people what you’re building.</h3>
                 <p>
-                  Introduce your product, the problem you’re solving and the
-                  thinking behind it.
+                  Introduce your product, explain the problem it solves and
+                  share why it matters with an audience interested in Web3.
                 </p>
                 <span className="fl-benefit-phrase">
                   Your product.

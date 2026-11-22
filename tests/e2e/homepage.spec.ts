@@ -1,9 +1,10 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { saturdaySessions } from "@/lib/dates/saturday-schedule";
-import type { PublicSession } from "@/lib/dates/booking";
+import { publicSlotOpen, type PublicSession } from "@/lib/dates/booking";
 
-const headline = "Meet the founders building Web3.";
+const headline =
+  "Introduce your product. Share your journey. Reach your audience.";
 for (const [label, width, height] of [
   ["desktop", 1440, 1024],
   ["mobile", 393, 852],
@@ -26,20 +27,25 @@ for (const [label, width, height] of [
     const upcoming = sessions
       .filter((s) => Date.parse(s.startsAt) > Date.now())
       .slice(0, 3);
-    await expect(page.locator(".programme-session-card")).toHaveCount(
+    await expect(page.locator(".fl-preview-dates > button")).toHaveCount(
       upcoming.length,
     );
-    for (const session of upcoming) {
-      const card = page.locator(`[data-session-id="${session.id}"]`);
+    for (const [index, session] of upcoming.entries()) {
+      const card = page.locator(".fl-preview-dates > button").nth(index);
       await expect(card).toContainText(
-        session.availableSeats > 0
+        publicSlotOpen(session, session.availableSeats)
           ? `${session.availableSeats} ${session.availableSeats === 1 ? "slot" : "slots"} left`
-          : "Full",
-      );
-      await expect(card).toContainText(
-        `${session.capacity} project seats per Space`,
+          : session.availableSeats <= 0
+            ? "Full"
+            : "Closed",
       );
     }
+    await expect(page.locator(".fl-upcoming")).toHaveCount(0);
+    await expect(
+      page.getByRole("heading", {
+        name: "Make room for your next conversation.",
+      }),
+    ).toHaveCount(0);
     if (label === "mobile") {
       const toggle = page.getByRole("button", {
         name: "Open programme navigation",
@@ -57,7 +63,7 @@ for (const [label, width, height] of [
         page.getByRole("button", { name: "Open programme navigation" }),
       ).toHaveAttribute("aria-expanded", "false");
       await page.goto("/");
-      await expect(page.locator(".programme-session-card")).toHaveCount(
+      await expect(page.locator(".fl-preview-dates > button")).toHaveCount(
         upcoming.length,
       );
     }
@@ -80,8 +86,8 @@ for (const [label, width, height] of [
       fullPage: true,
     });
     await page
-      .locator(".fl-upcoming")
-      .getByRole("link", { name: "Choose a Saturday" })
+      .locator(".fl-hero-actions")
+      .getByRole("link", { name: "Book a Founder Space" })
       .click();
     await expect(page).toHaveURL(/\/book$/);
     await expect(page.locator(".weekly-date")).toHaveCount(8);
@@ -124,34 +130,34 @@ test("full, closed, empty and failed availability never invent bookable seats or
     route.fulfill({ json: { sessions } }),
   );
   await page.goto("/");
-  await expect(page.locator(".programme-session-card")).toHaveCount(3);
-  await expect(page.locator(".programme-session-card").nth(0)).toContainText(
+  await expect(page.locator(".fl-preview-dates > button")).toHaveCount(3);
+  await expect(page.locator(".fl-preview-dates > button").nth(0)).toContainText(
     "Full",
   );
   await expect(
-    page.locator(".programme-session-card").nth(0).getByRole("link"),
-  ).toHaveCount(0);
-  await expect(page.locator(".programme-session-card").nth(1)).toContainText(
+    page.locator(".fl-preview-dates > button").nth(0),
+  ).toBeDisabled();
+  await expect(page.locator(".fl-preview-dates > button").nth(1)).toContainText(
     "1 slot left",
   );
   await expect(
-    page.locator(".programme-session-card").nth(1).getByRole("link"),
-  ).toHaveAttribute("href", `/apply?session=${sessions[1].id}`);
-  await expect(page.locator(".programme-session-card").nth(2)).toContainText(
+    page.getByRole("link", { name: "Choose this Saturday" }),
+  ).toHaveAttribute("href", `/book?session=${sessions[1].id}`);
+  await expect(page.locator(".fl-preview-dates > button").nth(2)).toContainText(
     "Closed",
   );
   await expect(
-    page.locator(".programme-session-card").nth(2).getByRole("link"),
-  ).toHaveCount(0);
+    page.locator(".fl-preview-dates > button").nth(2),
+  ).toBeDisabled();
   await page.unroute("**/api/public/sessions");
   await page.route("**/api/public/sessions", (route) =>
     route.fulfill({ json: { sessions: [] } }),
   );
   await page.goto("/");
-  await expect(page.locator(".programme-availability-message")).toContainText(
+  await expect(page.locator(".fl-preview-message")).toContainText(
     "No upcoming Saturdays",
   );
-  await expect(page.locator(".programme-session-card")).toHaveCount(0);
+  await expect(page.locator(".fl-preview-dates > button")).toHaveCount(0);
   await page.goto("/book");
   await expect(page.locator(".calendar-empty-state")).toBeVisible();
   await expect(page.locator('a[href="/signin"]')).toHaveCount(0);
@@ -160,8 +166,8 @@ test("full, closed, empty and failed availability never invent bookable seats or
     route.fulfill({ status: 503, json: { error: "Unavailable" } }),
   );
   await page.goto("/");
-  await expect(page.locator(".programme-availability-message")).toContainText(
-    "Live availability is temporarily unavailable",
+  await expect(page.locator(".fl-preview-message")).toContainText(
+    "Dates are temporarily unavailable",
   );
-  await expect(page.locator(".programme-session-card")).toHaveCount(0);
+  await expect(page.locator(".fl-preview-dates > button")).toHaveCount(0);
 });

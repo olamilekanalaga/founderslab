@@ -106,6 +106,7 @@ model Founder {
 }
 
 model Company {
+  xHandle            String?
   id                 String                     @id @default(cuid())
   name               String
   description        String
@@ -151,6 +152,7 @@ model FounderCompanyMembership {
 }
 
 model Application {
+  projectXHandle      String?
   id                  String           @id @default(cuid())
   reference           String           @unique
   dedupeKey           String           @unique
