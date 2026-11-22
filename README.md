@@ -17,14 +17,19 @@ Keep `BOOTSTRAP_ADMIN_EMAIL` configured. Do not share passwords or API keys in c
 ## Repository layout
 
 ```text
-app/          Public, Admin and manager routes; server API endpoints
-components/   Active light-theme screens, forms and shared UI
-lib/          Authentication, permissions, validation, data and programme logic
-prisma/       Relational schema and immutable SQL migrations
-scripts/      Provisioning, migrations, checks and screenshot commands
-tests/        Unit, browser and isolated PostgreSQL integration tests
-artifacts/    Current QA screenshots, not live programme records
+app/          Routing: public and Admin groups, manager entry, thin API adapters
+features/     Focused screens and browser-safe feature calculations
+components/   Shared UI, layout, workspace shell and record editor
+server/       Authentication, security, Prisma, services and HTTP handlers
+lib/          Browser-safe types/catalog, validation, domain logic and dates
+prisma/       Original relational schema and immutable SQL migrations
+scripts/      Node provisioning, migrations and verification commands
+tests/        Unit, architecture, browser and isolated PostgreSQL integration tests
+docs/         Architecture, audit inventories and refactor validation evidence
+artifacts/    Existing QA screenshots, not live programme records
 ```
+
+See [architecture and frontend/backend boundaries](docs/ARCHITECTURE.md), the [pre-refactor audit](docs/architecture/AUDIT.md) and [validation results](docs/architecture/VALIDATION.md). The architecture refactor preserves existing URLs, API contracts, UI and security behaviour; it does not deploy or modify production data.
 
 Removed screens and unused forms are not kept in the frontend. Historical database models/migrations remain so existing records and references are preserved. Test fixtures are server-side testing infrastructure, never a browser demo or production seed.
 
@@ -83,8 +88,11 @@ npm run check:client-secrets
 npm run test:integration
 # Against a running backend-backed local server:
 npm run test:e2e
+npx tsx scripts/check-route-contracts.ts
 npm run screenshots
 ```
+
+The architecture tests guard client/server boundaries, runtime cycles, original security handler implementations and byte-identical database migrations. Route checks compare status codes, redirects and headings against the captured pre-refactor baseline.
 
 The integration runner creates its own random local PostgreSQL database and password, uses a mock transactional email provider, and removes the database afterward. It verifies applications, approvals, capacity, private access, manager permissions/revocation, shared records, eight-week cycle progression, booking preservation and logout. No real emails or cryptocurrency transfers are sent by tests.
 
