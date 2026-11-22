@@ -15,6 +15,7 @@ try {
     const context = await browser.newContext({ viewport: { width, height } });
     const page = await context.newPage();
     for (const [name, path] of [
+      ["v4-homepage", "/"],
       ["application", "/apply"],
       ["booking", "/book"],
       ["signin", "/signin"],

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { databaseUrl, migrationUrl } from "../lib/server-env";
+import { databaseUrl, migrationUrl } from "@/server/config/environment";
 test("Neon prefixed variables resolve without replacing a canonical connection", () => {
   assert.equal(
     databaseUrl({ DATABASE_URL: "primary", DATABASE_DATABASE_URL: "prefixed" }),

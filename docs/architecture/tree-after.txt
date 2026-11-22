@@ -1,0 +1,251 @@
+founderslab/
+├── .env.example
+├── .gitignore
+├── AGENTS.md
+├── DEPLOYMENT.md
+├── README.md
+├── SECURITY-REVIEW.md
+├── SPACE-MANAGERS.md
+├── TESTING.md
+├── app/
+│   ├── (admin)/
+│   │   └── [section]/
+│   │       ├── [id]/
+│   │       │   └── page.tsx
+│   │       └── page.tsx
+│   ├── (public)/
+│   │   ├── apply/
+│   │   │   └── page.tsx
+│   │   ├── book/
+│   │   │   └── page.tsx
+│   │   ├── confirmation/
+│   │   │   └── page.tsx
+│   │   ├── page.tsx
+│   │   └── terms/
+│   │       └── page.tsx
+│   ├── api/
+│   │   ├── auth/
+│   │   │   └── [action]/
+│   │   │       └── route.ts
+│   │   ├── health/
+│   │   │   └── route.ts
+│   │   ├── manager/
+│   │   │   └── [action]/
+│   │   │       └── route.ts
+│   │   ├── monthly-winner/
+│   │   │   └── route.ts
+│   │   ├── public/
+│   │   │   └── [action]/
+│   │   │       └── route.ts
+│   │   ├── records/
+│   │   │   └── route.ts
+│   │   ├── space-managers/
+│   │   │   └── route.ts
+│   │   └── workspace/
+│   │       └── route.ts
+│   ├── demo/
+│   │   └── [[...path]]/
+│   │       └── page.tsx
+│   ├── error.tsx
+│   ├── globals.css
+│   ├── icon.svg
+│   ├── invite/
+│   │   └── page.tsx
+│   ├── layout.tsx
+│   ├── manager/
+│   │   └── spaces/
+│   │       └── page.tsx
+│   ├── not-found.tsx
+│   └── signin/
+│       └── page.tsx
+├── artifacts/
+│   ├── README.md
+│   ├── application-desktop.png
+│   ├── application-mobile.png
+│   ├── booking-desktop.png
+│   ├── booking-eight-weeks-mobile.png
+│   ├── booking-mobile.png
+│   ├── manager-signin-desktop.png
+│   ├── manager-signin-mobile.png
+│   ├── monthly-winner-mobile.png
+│   ├── private-founder-mobile.png
+│   ├── signin-desktop.png
+│   ├── signin-mobile.png
+│   ├── space-manager-desktop.png
+│   ├── space-manager-mobile.png
+│   └── space-manager-settings-mobile.png
+├── components/
+│   ├── layout/
+│   │   ├── AdminWorkspace.tsx
+│   │   ├── PrivateWorkspace.tsx
+│   │   ├── PublicFooter.tsx
+│   │   ├── PublicHeader.tsx
+│   │   └── WorkspaceContext.tsx
+│   ├── shared/
+│   │   ├── BrandMark.tsx
+│   │   ├── RecordEditor.tsx
+│   │   └── SessionTime.tsx
+│   └── ui/
+│       ├── Charts.tsx
+│       └── index.tsx
+├── compose.yaml
+├── docs/
+│   ├── ARCHITECTURE.md
+│   └── architecture/
+│       ├── AUDIT.md
+│       ├── VALIDATION.md
+│       ├── after-inventory.json
+│       ├── before-inventory.json
+│       ├── file-changes.json
+│       ├── frontend-moves.json
+│       ├── routes-after.json
+│       ├── routes-before.json
+│       ├── security-invariants.json
+│       ├── tree-after.txt
+│       └── tree-before.txt
+├── eslint.config.mjs
+├── features/
+│   ├── auth/
+│   │   └── components/
+│   │       └── AdminSignIn.tsx
+│   ├── bookings/
+│   │   ├── components/
+│   │   │   ├── ApplicationForm.tsx
+│   │   │   ├── BookingEditor.tsx
+│   │   │   ├── BookingPage.tsx
+│   │   │   ├── Confirmation.tsx
+│   │   │   └── PublicBookingCalendar.tsx
+│   │   └── lib/
+│   │       ├── confirmation-store.ts
+│   │       └── public-api.ts
+│   ├── campaigns/
+│   │   └── components/
+│   │       └── MonthlyWinner.tsx
+│   ├── companies/
+│   │   └── components/
+│   │       └── CompanyProfile.tsx
+│   ├── directory/
+│   │   └── components/
+│   │       └── Directory.tsx
+│   ├── founders/
+│   │   └── components/
+│   │       ├── DeleteRecordButton.tsx
+│   │       └── FounderProfile.tsx
+│   ├── programme/
+│   │   └── components/
+│   │       ├── Overview.tsx
+│   │       └── Terms.tsx
+│   ├── reports/
+│   │   ├── components/
+│   │   │   └── Reports.tsx
+│   │   └── lib/
+│   │       ├── export.ts
+│   │       └── selectors.ts
+│   ├── settings/
+│   │   └── components/
+│   │       └── Settings.tsx
+│   ├── space-managers/
+│   │   └── components/
+│   │       ├── ManagerSpaces.tsx
+│   │       └── SpaceManagersSettings.tsx
+│   └── spaces/
+│       ├── components/
+│       │   ├── FounderSpaces.tsx
+│       │   ├── SessionCalendar.tsx
+│       │   ├── Spaces.tsx
+│       │   └── WeeklySpaceEditor.tsx
+│       └── lib/
+│           └── space-data.ts
+├── lib/
+│   ├── catalog.ts
+│   ├── dates/
+│   │   ├── booking.ts
+│   │   ├── format.ts
+│   │   └── saturday-schedule.ts
+│   ├── design.ts
+│   ├── domain/
+│   │   ├── commands.ts
+│   │   ├── errors.ts
+│   │   ├── index.ts
+│   │   └── queries.ts
+│   ├── sections.ts
+│   ├── types.ts
+│   └── validation/
+│       ├── application.ts
+│       ├── commands.ts
+│       ├── form-errors.ts
+│       ├── index.ts
+│       └── primitives.ts
+├── next-env.d.ts
+├── next.config.ts
+├── package-lock.json
+├── package.json
+├── playwright.config.ts
+├── postcss.config.mjs
+├── prisma/
+│   ├── README.md
+│   ├── migrations/
+│   │   ├── 202611200001_initial/
+│   │   │   └── migration.sql
+│   │   ├── 202611210002_space_data/
+│   │   │   └── migration.sql
+│   │   ├── 202611210003_shared_weekly_post/
+│   │   │   └── migration.sql
+│   │   ├── 202611220001_space_managers/
+│   │   │   └── migration.sql
+│   │   ├── 202611220002_programme_cycles/
+│   │   │   └── migration.sql
+│   │   └── 202611220003_session_name/
+│   │       └── migration.sql
+│   └── schema.prisma
+├── prisma.config.ts
+├── scripts/
+│   ├── admin.ts
+│   ├── check-client-secrets.ts
+│   ├── check-route-contracts.ts
+│   ├── migrate.ts
+│   ├── prepare-vercel.ts
+│   ├── publish-saturdays.ts
+│   ├── screenshots.ts
+│   └── seed.ts
+├── server/
+│   ├── auth/
+│   │   ├── index.ts
+│   │   ├── passwords.ts
+│   │   └── session.ts
+│   ├── config/
+│   │   └── environment.ts
+│   ├── db/
+│   │   ├── client.ts
+│   │   ├── index.ts
+│   │   ├── node.ts
+│   │   ├── seed-data.ts
+│   │   ├── taxonomy-defaults.ts
+│   │   └── workspace-store.ts
+│   ├── handlers/
+│   │   ├── auth.ts
+│   │   ├── health.ts
+│   │   ├── manager.ts
+│   │   ├── monthly-winner.ts
+│   │   ├── public.ts
+│   │   ├── records.ts
+│   │   ├── space-managers.ts
+│   │   └── workspace.ts
+│   ├── http.ts
+│   ├── security/
+│   │   └── tokens.ts
+│   └── services/
+│       ├── programme-window.ts
+│       └── space-managers.ts
+├── tests/
+│   ├── architecture.test.ts
+│   ├── domain.test.ts
+│   ├── e2e/
+│   │   └── access.spec.ts
+│   ├── fixtures/
+│   │   └── application-state.ts
+│   ├── form-errors.test.ts
+│   ├── integration.ts
+│   └── server-env.test.ts
+├── tsconfig.json
+└── vercel.json

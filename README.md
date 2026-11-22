@@ -1,6 +1,14 @@
 # Founders Lab
 
-A private founder-programme workspace with public booking, hosted by **⭕️La_Crrypt💰₿**. The application uses one domain, a light interface, Next.js, TypeScript, Prisma and PostgreSQL.
+A Web3 founder conversation and relationship-building programme, supported by private operational workspaces and hosted by **⭕️La_Crrypt💰₿**. The application uses one domain, a light interface, Next.js, TypeScript, Prisma and PostgreSQL.
+
+## V4 public experience
+
+`/` introduces the programme in a light, responsive homepage. Founders book through `/book`, apply through `/apply` and retain their existing private confirmation link. Public navigation contains no workspace login links; Admin bookmarks `/signin` and invited managers use their existing passwordless email flow.
+
+Founder awards are retired for new participation. `/campaigns` is a protected read-only archive, available from Admin Settings → Programme. Historical award records and payment references remain intact; no new award decisions can be written through the old endpoints. BD introductions are invitation-only and informational; no referral accounts, commission rules or payouts are implemented.
+
+See the [V4 implementation audit](docs/v4/IMPLEMENTATION.md), [award audit](docs/v4/AWARD-AUDIT.md), [future BD proposal](docs/v4/BD-REFERRAL-PROPOSAL.md) and [test results/screenshots](docs/v4/VALIDATION.md). This product PR depends on architecture PR #1 and is not deployed automatically.
 
 ## What you do next
 
@@ -17,20 +25,25 @@ Keep `BOOTSTRAP_ADMIN_EMAIL` configured. Do not share passwords or API keys in c
 ## Repository layout
 
 ```text
-app/          Public, Admin and manager routes; server API endpoints
-components/   Active light-theme screens, forms and shared UI
-lib/          Authentication, permissions, validation, data and programme logic
-prisma/       Relational schema and immutable SQL migrations
-scripts/      Provisioning, migrations, checks and screenshot commands
-tests/        Unit, browser and isolated PostgreSQL integration tests
-artifacts/    Current QA screenshots, not live programme records
+app/          Routing: public and Admin groups, manager entry, thin API adapters
+features/     Focused screens and browser-safe feature calculations
+components/   Shared UI, layout, workspace shell and record editor
+server/       Authentication, security, Prisma, services and HTTP handlers
+lib/          Browser-safe types/catalog, validation, domain logic and dates
+prisma/       Original relational schema and immutable SQL migrations
+scripts/      Node provisioning, migrations and verification commands
+tests/        Unit, architecture, browser and isolated PostgreSQL integration tests
+docs/         Architecture, audit inventories and refactor validation evidence
+artifacts/    Existing QA screenshots, not live programme records
 ```
+
+See [architecture and frontend/backend boundaries](docs/ARCHITECTURE.md), the [pre-refactor audit](docs/architecture/AUDIT.md) and [validation results](docs/architecture/VALIDATION.md). The architecture refactor preserves existing URLs, API contracts, UI and security behaviour; it does not deploy or modify production data.
 
 Removed screens and unused forms are not kept in the frontend. Historical database models/migrations remain so existing records and references are preserved. Test fixtures are server-side testing infrastructure, never a browser demo or production seed.
 
 ## Public workflow
 
-`/` opens `/book`. A founder chooses an available Saturday, completes `/apply`, and receives a private, limited-scope `/confirmation#token=…` link. There are no founder accounts or public signup. Every submission is stored in PostgreSQL. Missing database configuration produces an unavailable state, never a fictional fallback. Browser demo routes and mode switches have been removed.
+`/` displays the public programme homepage; its calls to action open `/book`. A founder chooses an available Saturday, completes `/apply`, and receives a private, limited-scope `/confirmation#token=…` link. There are no founder accounts or public signup. Every submission is stored in PostgreSQL. Missing database configuration produces an unavailable state, never a fictional fallback. Browser demo routes and mode switches have been removed.
 
 The calendar shows **eight Saturdays as two four-week cycles**, with the number of **slots left**. Full, cancelled and past weeks cannot be booked. All programme sessions start at **7 PM Europe/London**, automatically applying GMT/BST. Booking details and confirmations also show the visitor's browser-local time and date.
 
@@ -48,9 +61,9 @@ New booking requests outside the active season are rejected by the server, inclu
 - `/manager/spaces`: separately invited, passwordless Space Managers can edit only assigned listener totals, duration and X links. They cannot access the Admin dashboard or founder contacts. See [SPACE-MANAGERS.md](SPACE-MANAGERS.md).
 - Admin: Founder Spaces → Applications / Bookings to review requests. Founder/company profiles share their associated weekly session data and recording links. Reports and charts derive from stored records.
 
-## Monthly winner and permanent deletion
+## Historical awards and permanent deletion
 
-Open **Monthly winner**, choose a month, select one founder from that month's Space participants, and save. No campaign setup, assessments or selection-criteria form is required. Saving another selection replaces the month's winner; no cryptocurrency payment is sent.
+The former Monthly Winner operation is archived. Admin Settings links to the read-only historical campaign/award table. Recorded decisions and payment references remain; no cryptocurrency payment is sent and no new founder awards are offered. Current public terms describe participation without future awards and do not overwrite stored historical policy or incurred obligations.
 
 Open a founder profile or an application review and choose **Delete permanently**. Type `DELETE` to confirm. Declined, pending and approved records can be removed. Deleting a linked approved application also deletes its founder record and owned applications/bookings/research/opportunities. Orphaned company records are removed; companies and Spaces shared with other founders remain. Deleted confirmation links stop working. Only the pre-provisioned Admin can delete records.
 
@@ -83,10 +96,13 @@ npm run check:client-secrets
 npm run test:integration
 # Against a running backend-backed local server:
 npm run test:e2e
+npx tsx scripts/check-route-contracts.ts
 npm run screenshots
 ```
 
-The integration runner creates its own random local PostgreSQL database and password, uses a mock transactional email provider, and removes the database afterward. It verifies applications, approvals, capacity, private access, manager permissions/revocation, shared records, eight-week cycle progression, booking preservation and logout. No real emails or cryptocurrency transfers are sent by tests.
+The architecture tests guard client/server boundaries, runtime cycles, original security handler implementations and byte-identical database migrations. Route checks compare status codes, redirects and headings against reviewed V4 contracts; the original architecture route captures remain historical evidence.
+
+The integration runner creates its own random local PostgreSQL database and password, uses a mock transactional email provider, and removes the database afterward. It verifies applications, approvals, capacity, private access, manager permissions/revocation, shared records, eight-week cycle progression, booking preservation, award archive retention/write rejection and logout. No real emails or cryptocurrency transfers are sent by tests.
 
 ## Deploy and limits
 

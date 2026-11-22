@@ -1,4 +1,4 @@
-import type { Section } from "./types";
+import type { Section } from "@/lib/types";
 export const SECTION_PERMISSIONS: Record<Section, string> = {
   dashboard: "directory.read",
   founders: "directory.read",

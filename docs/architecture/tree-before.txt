@@ -1,0 +1,162 @@
+founderslab/
+├── .env.example
+├── .gitignore
+├── AGENTS.md
+├── DEPLOYMENT.md
+├── README.md
+├── SECURITY-REVIEW.md
+├── SPACE-MANAGERS.md
+├── TESTING.md
+├── app/
+│   ├── (private)/
+│   │   └── [section]/
+│   │       ├── [id]/
+│   │       │   └── page.tsx
+│   │       └── page.tsx
+│   ├── api/
+│   │   ├── auth/
+│   │   │   └── [action]/
+│   │   │       └── route.ts
+│   │   ├── health/
+│   │   │   └── route.ts
+│   │   ├── manager/
+│   │   │   └── [action]/
+│   │   │       └── route.ts
+│   │   ├── monthly-winner/
+│   │   │   └── route.ts
+│   │   ├── public/
+│   │   │   └── [action]/
+│   │   │       └── route.ts
+│   │   ├── records/
+│   │   │   └── route.ts
+│   │   ├── space-managers/
+│   │   │   └── route.ts
+│   │   └── workspace/
+│   │       └── route.ts
+│   ├── apply/
+│   │   └── page.tsx
+│   ├── book/
+│   │   └── page.tsx
+│   ├── confirmation/
+│   │   └── page.tsx
+│   ├── demo/
+│   │   └── [[...path]]/
+│   │       └── page.tsx
+│   ├── error.tsx
+│   ├── globals.css
+│   ├── icon.svg
+│   ├── invite/
+│   │   └── page.tsx
+│   ├── layout.tsx
+│   ├── manager/
+│   │   └── spaces/
+│   │       └── page.tsx
+│   ├── not-found.tsx
+│   ├── page.tsx
+│   ├── signin/
+│   │   └── page.tsx
+│   └── terms/
+│       └── page.tsx
+├── artifacts/
+│   ├── README.md
+│   ├── application-desktop.png
+│   ├── application-mobile.png
+│   ├── booking-desktop.png
+│   ├── booking-eight-weeks-mobile.png
+│   ├── booking-mobile.png
+│   ├── manager-signin-desktop.png
+│   ├── manager-signin-mobile.png
+│   ├── monthly-winner-mobile.png
+│   ├── private-founder-mobile.png
+│   ├── signin-desktop.png
+│   ├── signin-mobile.png
+│   ├── space-manager-desktop.png
+│   ├── space-manager-mobile.png
+│   └── space-manager-settings-mobile.png
+├── components/
+│   ├── AuthScreen.tsx
+│   ├── BrandMark.tsx
+│   ├── Campaigns.tsx
+│   ├── Charts.tsx
+│   ├── DeleteRecordButton.tsx
+│   ├── Directory.tsx
+│   ├── FounderSpaces.tsx
+│   ├── ManagerSpaces.tsx
+│   ├── Overview.tsx
+│   ├── PrivateWorkspace.tsx
+│   ├── PublicBookingCalendar.tsx
+│   ├── PublicHeader.tsx
+│   ├── PublicPages.tsx
+│   ├── RecordEditor.tsx
+│   ├── Reports.tsx
+│   ├── SessionCalendar.tsx
+│   ├── SessionTime.tsx
+│   ├── Settings.tsx
+│   ├── SpaceManagersSettings.tsx
+│   ├── Spaces.tsx
+│   ├── WeeklySpaceEditor.tsx
+│   ├── Workspace.tsx
+│   ├── WorkspaceContext.tsx
+│   └── ui.tsx
+├── compose.yaml
+├── eslint.config.mjs
+├── lib/
+│   ├── auth.ts
+│   ├── booking.ts
+│   ├── catalog.ts
+│   ├── db.ts
+│   ├── design.ts
+│   ├── domain.ts
+│   ├── export.ts
+│   ├── form-errors.ts
+│   ├── http.ts
+│   ├── programme-window.ts
+│   ├── saturday-schedule.ts
+│   ├── sections.ts
+│   ├── seed.ts
+│   ├── selectors.ts
+│   ├── server-env.ts
+│   ├── space-data.ts
+│   ├── space-managers.ts
+│   ├── types.ts
+│   └── validation.ts
+├── next-env.d.ts
+├── next.config.ts
+├── package-lock.json
+├── package.json
+├── playwright.config.ts
+├── postcss.config.mjs
+├── prisma/
+│   ├── README.md
+│   ├── migrations/
+│   │   ├── 202611200001_initial/
+│   │   │   └── migration.sql
+│   │   ├── 202611210002_space_data/
+│   │   │   └── migration.sql
+│   │   ├── 202611210003_shared_weekly_post/
+│   │   │   └── migration.sql
+│   │   ├── 202611220001_space_managers/
+│   │   │   └── migration.sql
+│   │   ├── 202611220002_programme_cycles/
+│   │   │   └── migration.sql
+│   │   └── 202611220003_session_name/
+│   │       └── migration.sql
+│   └── schema.prisma
+├── prisma.config.ts
+├── scripts/
+│   ├── admin.ts
+│   ├── check-client-secrets.ts
+│   ├── migrate.ts
+│   ├── prepare-vercel.ts
+│   ├── publish-saturdays.ts
+│   ├── screenshots.ts
+│   └── seed.ts
+├── tests/
+│   ├── domain.test.ts
+│   ├── e2e/
+│   │   └── access.spec.ts
+│   ├── form-errors.test.ts
+│   ├── integration.ts
+│   └── server-env.test.ts
+├── tsconfig.json
+└── vercel.json

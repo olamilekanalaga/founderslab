@@ -2,11 +2,11 @@ export {};
 try {
   process.loadEnvFile(".env");
 } catch {}
-const { db, ensureRoles, loadState, persistDiff } = await import("../lib/db");
-const { makeSeed } = await import("../lib/seed");
+const { db, ensureRoles, loadState, persistDiff } =
+  await import("@/server/db/node");
+const { taxonomyDefaults } = await import("@/server/db/taxonomy-defaults");
 await ensureRoles();
-const seed = makeSeed();
-for (const label of seed.labels)
+for (const label of taxonomyDefaults())
   await db().classificationLabel.upsert({
     where: { group_name: { group: label.group, name: label.name } },
     create: label,
@@ -27,6 +27,8 @@ if (process.argv.includes("--demo")) {
     throw new Error(
       "Demo seeding requires a database without founder records. Never mix seed fixtures into a production programme.",
     );
+  const { makeSeed } = await import("@/server/db/seed-data");
+  const seed = makeSeed();
   await db().$transaction(
     async (tx) => {
       const before = await loadState(tx);

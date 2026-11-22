@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { applicationSchema } from "../lib/validation";
-import { formError } from "../lib/form-errors";
+import { applicationSchema } from "@/lib/validation";
+import { formError } from "@/lib/validation/form-errors";
 test("validation errors return a readable field message instead of raw issue JSON", () => {
   const result = applicationSchema.safeParse({
     founderName: "Founder",

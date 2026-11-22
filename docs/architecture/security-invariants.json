@@ -1,0 +1,233 @@
+{
+  "base": "f5b13558130e774ff9cd6ae3675c35bd7841dbfc",
+  "functions": [
+    {
+      "original": "lib/auth.ts",
+      "file": "server/auth/passwords.ts",
+      "name": "passwordHash",
+      "sha256": "8d48b4c76d94e78299171c6e0b6c7b54cddbba595459183afdef02127785c04a"
+    },
+    {
+      "original": "lib/auth.ts",
+      "file": "server/auth/passwords.ts",
+      "name": "verifyPassword",
+      "sha256": "919ce1aeb3f433dfe6b6a777fa3d8456b5cc03eda0296928c1cfeafd17110d30"
+    },
+    {
+      "original": "lib/auth.ts",
+      "file": "server/auth/session.ts",
+      "name": "isProvisionedAdmin",
+      "sha256": "a876437216a45d7cf89666c6a113d44da6594500c34c0901692f488c7ad6d226"
+    },
+    {
+      "original": "lib/auth.ts",
+      "file": "server/auth/session.ts",
+      "name": "getViewer",
+      "sha256": "67e059cc9c5e21445cffc52848b6c80c95cb0cad2e06c431d1e0d9ecef7916e3"
+    },
+    {
+      "original": "lib/auth.ts",
+      "file": "server/auth/session.ts",
+      "name": "requireViewer",
+      "sha256": "a0a2e3ad4efbbe5caa6484be9f6580afbb8e3d179180d8aa913fbac5d9422708"
+    },
+    {
+      "original": "lib/auth.ts",
+      "file": "server/auth/session.ts",
+      "name": "requireOrigin",
+      "sha256": "2bda5effa4af6b2572a9fbb5daf571d7425c14c8db64d1ba9078b17dbb7a7ffe"
+    },
+    {
+      "original": "lib/auth.ts",
+      "file": "server/auth/session.ts",
+      "name": "requireCsrf",
+      "sha256": "bfd9d4a1f9f5fa5e48b18086692e499cd47288070bb71edcd78c657e4e420351"
+    },
+    {
+      "original": "lib/auth.ts",
+      "file": "server/auth/session.ts",
+      "name": "startSession",
+      "sha256": "b5e29fdd2403d80bbfc37c662312cdcf8d5345c8e6fc560d28850f0e71773d1d"
+    },
+    {
+      "original": "lib/auth.ts",
+      "file": "server/auth/session.ts",
+      "name": "endSession",
+      "sha256": "aaf8a3af48feae445a8d112a6211515758afaada243f3a067e180644a61d7821"
+    },
+    {
+      "original": "lib/auth.ts",
+      "file": "server/auth/session.ts",
+      "name": "rateLimit",
+      "sha256": "909192ab947ad2f36553cfae07811cfb9058de2f63c1324c282c5e03ba6349bf"
+    },
+    {
+      "original": "lib/space-managers.ts",
+      "file": "server/services/space-managers.ts",
+      "name": "managerSession",
+      "sha256": "37abe4a275fe6a66ce0da3a99744a3befc482153138b95b2c90f08435e92e1b5"
+    },
+    {
+      "original": "lib/space-managers.ts",
+      "file": "server/services/space-managers.ts",
+      "name": "requireManager",
+      "sha256": "632e5db02353800276e0a9dabc5f1f790ee4c6322327acae65f47963611582d3"
+    },
+    {
+      "original": "lib/space-managers.ts",
+      "file": "server/services/space-managers.ts",
+      "name": "managerCsrf",
+      "sha256": "8606245527e1c956c9d09a2d759e931d88bbdd4240e5b52b0afa3c8393e0feae"
+    },
+    {
+      "original": "lib/space-managers.ts",
+      "file": "server/services/space-managers.ts",
+      "name": "lockManager",
+      "sha256": "ad0fc9966a030e54172af9f9dfa22bd642e0449a8109e532dd44bc5457ca008a"
+    },
+    {
+      "original": "lib/space-managers.ts",
+      "file": "server/services/space-managers.ts",
+      "name": "sendManagerEmail",
+      "sha256": "5aabbf6cbba4a4ba7a4a1f94676af6c0177c5aff80e36497b4f5cdc16402b80a"
+    },
+    {
+      "original": "lib/space-managers.ts",
+      "file": "server/services/space-managers.ts",
+      "name": "issueManagerLink",
+      "sha256": "6fe1f1e1aa271a752a2f0d7972bc78de941866ca0de8dda59953c1c44cecef9e"
+    },
+    {
+      "original": "lib/space-managers.ts",
+      "file": "server/services/space-managers.ts",
+      "name": "assignedSpaces",
+      "sha256": "cd4ac99b1f447b9c258a836505f499cd5633014786eb1bb214c48e0692981899"
+    },
+    {
+      "original": "lib/programme-window.ts",
+      "file": "server/services/programme-window.ts",
+      "name": "lockProgramme",
+      "sha256": "df7ca8008be5cab04efca0aa3c86b8b960c2d57fe4178308522d6c373f40773b"
+    },
+    {
+      "original": "lib/programme-window.ts",
+      "file": "server/services/programme-window.ts",
+      "name": "ensureProgrammeWindow",
+      "sha256": "f0fe85fdc198aadf8f02a79af9ee16c5c22725155b7257369ded79af3a934a33"
+    },
+    {
+      "original": "lib/programme-window.ts",
+      "file": "server/services/programme-window.ts",
+      "name": "requireProgrammeBooking",
+      "sha256": "e0dfedd9f325ce13ecaab18d16992417ec109a16c0e81f4ff54f066dd984d03a"
+    },
+    {
+      "original": "app/api/auth/[action]/route.ts",
+      "file": "server/handlers/auth.ts",
+      "name": "GET",
+      "sha256": "02fbdf360e1f9e04a3ee42384d2835a7ee0a23cc19549c151f84dcae5620c77d"
+    },
+    {
+      "original": "app/api/auth/[action]/route.ts",
+      "file": "server/handlers/auth.ts",
+      "name": "POST",
+      "sha256": "9268c619fb7b92c534379962dac1c597421d05bca6bf2b5c9a45737a40963b34"
+    },
+    {
+      "original": "app/api/health/route.ts",
+      "file": "server/handlers/health.ts",
+      "name": "GET",
+      "sha256": "104ab06067483a46475fd0828844250dbe74b85726f7f171c3a38418a39a44e5"
+    },
+    {
+      "original": "app/api/manager/[action]/route.ts",
+      "file": "server/handlers/manager.ts",
+      "name": "GET",
+      "sha256": "ebfd23c63a549da12d57364d4b1d8c88b09c0df72f24c550be826fa289ac1727"
+    },
+    {
+      "original": "app/api/manager/[action]/route.ts",
+      "file": "server/handlers/manager.ts",
+      "name": "POST",
+      "sha256": "13c3a41a412f9213038bfc3ca46bc77e915a63862774a368e210cbde92a310cf"
+    },
+    {
+      "original": "app/api/monthly-winner/route.ts",
+      "file": "server/handlers/monthly-winner.ts",
+      "name": "POST",
+      "sha256": "cd0ad47ba27a86bd60d929836c851111d8c541922ebe8f8c113c601c8d7653b3"
+    },
+    {
+      "original": "app/api/public/[action]/route.ts",
+      "file": "server/handlers/public.ts",
+      "name": "GET",
+      "sha256": "e6253cafa565f0951ca5c6d46d03dc423698dae63c42d0fa0bc1c168f020bd74"
+    },
+    {
+      "original": "app/api/public/[action]/route.ts",
+      "file": "server/handlers/public.ts",
+      "name": "POST",
+      "sha256": "714e50f62f02baf27528bb45a11ec3087afcb19fe73227cbaf4b15b891e0f38b"
+    },
+    {
+      "original": "app/api/records/route.ts",
+      "file": "server/handlers/records.ts",
+      "name": "DELETE",
+      "sha256": "f6a099f16303b627a02220f17eb395ddd883da5c88162159353cd2fedee5a754"
+    },
+    {
+      "original": "app/api/space-managers/route.ts",
+      "file": "server/handlers/space-managers.ts",
+      "name": "GET",
+      "sha256": "0d9142d7ef03702f17c248546d773930bfc0fb35f2324afd9f23ce4409badce4"
+    },
+    {
+      "original": "app/api/space-managers/route.ts",
+      "file": "server/handlers/space-managers.ts",
+      "name": "POST",
+      "sha256": "61ac74cb943b1b43558187c5687d987c54b7ff63f960d2b68db7e342ba0e7607"
+    },
+    {
+      "original": "app/api/workspace/route.ts",
+      "file": "server/handlers/workspace.ts",
+      "name": "GET",
+      "sha256": "0584578bf8df0c0bcafacf6b0914d2a8e07fd3115a748f74d4f1b887a108634c"
+    },
+    {
+      "original": "app/api/workspace/route.ts",
+      "file": "server/handlers/workspace.ts",
+      "name": "POST",
+      "sha256": "8fc73275e6caa624c60bf55675915d45192bb44a5b9ab461773ca9903a33aba1"
+    }
+  ],
+  "database": [
+    {
+      "file": "prisma/migrations/202611200001_initial/migration.sql",
+      "sha256": "0cb750397488041fe4c28ce437f01a1d4dd093034386d40dcb2c74382559fa1b"
+    },
+    {
+      "file": "prisma/migrations/202611210002_space_data/migration.sql",
+      "sha256": "13da65498a5cc5d7f4c430ce5e9d1b405170a7516753babbef82357862712d86"
+    },
+    {
+      "file": "prisma/migrations/202611210003_shared_weekly_post/migration.sql",
+      "sha256": "664d3ca87a9f6d2f094eb6f44f32a111e08b1fc7975af1dc2f84b6832e57b15e"
+    },
+    {
+      "file": "prisma/migrations/202611220001_space_managers/migration.sql",
+      "sha256": "4e5d1d76bb470232670979df9b51861352967a4c4b67ea69e8f214fc58ddb20c"
+    },
+    {
+      "file": "prisma/migrations/202611220002_programme_cycles/migration.sql",
+      "sha256": "810a151008e1f844b5b20d2a4109a41b4e7aae28c82a7c3bbbee9db4b8645339"
+    },
+    {
+      "file": "prisma/migrations/202611220003_session_name/migration.sql",
+      "sha256": "67747c1c9bff6d493e3529609da53711860ca995baba24fbf38b7968f0c3e674"
+    },
+    {
+      "file": "prisma/schema.prisma",
+      "sha256": "dff0aad3d887a65fdc490c9323262ced754f8820d9caf91ea14da6d68a6c1fce"
+    }
+  ]
+}

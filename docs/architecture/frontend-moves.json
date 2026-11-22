@@ -1,0 +1,47 @@
+{
+  "moves": {
+    "components/AuthScreen.tsx": "features/auth/components/AdminSignIn.tsx",
+    "components/BrandMark.tsx": "components/shared/BrandMark.tsx",
+    "components/Campaigns.tsx": "features/campaigns/components/MonthlyWinner.tsx",
+    "components/Charts.tsx": "components/ui/Charts.tsx",
+    "components/DeleteRecordButton.tsx": "features/founders/components/DeleteRecordButton.tsx",
+    "components/Directory.tsx": "features/directory/components/Directory.tsx",
+    "components/FounderSpaces.tsx": "features/spaces/components/FounderSpaces.tsx",
+    "components/ManagerSpaces.tsx": "features/space-managers/components/ManagerSpaces.tsx",
+    "components/Overview.tsx": "features/programme/components/Overview.tsx",
+    "components/PrivateWorkspace.tsx": "components/layout/PrivateWorkspace.tsx",
+    "components/PublicBookingCalendar.tsx": "features/bookings/components/PublicBookingCalendar.tsx",
+    "components/PublicHeader.tsx": "components/layout/PublicHeader.tsx",
+    "components/RecordEditor.tsx": "components/shared/RecordEditor.tsx",
+    "components/Reports.tsx": "features/reports/components/Reports.tsx",
+    "components/SessionCalendar.tsx": "features/spaces/components/SessionCalendar.tsx",
+    "components/SessionTime.tsx": "components/shared/SessionTime.tsx",
+    "components/Settings.tsx": "features/settings/components/Settings.tsx",
+    "components/SpaceManagersSettings.tsx": "features/space-managers/components/SpaceManagersSettings.tsx",
+    "components/Spaces.tsx": "features/spaces/components/Spaces.tsx",
+    "components/WeeklySpaceEditor.tsx": "features/spaces/components/WeeklySpaceEditor.tsx",
+    "components/Workspace.tsx": "components/layout/AdminWorkspace.tsx",
+    "components/WorkspaceContext.tsx": "components/layout/WorkspaceContext.tsx",
+    "components/ui.tsx": "components/ui/index.tsx"
+  },
+  "splits": {
+    "components/PublicPages.tsx": [
+      "features/bookings/components/ApplicationForm.tsx",
+      "features/bookings/components/BookingPage.tsx",
+      "features/bookings/components/Confirmation.tsx",
+      "features/programme/components/Terms.tsx",
+      "components/layout/PublicFooter.tsx",
+      "features/bookings/lib/public-api.ts",
+      "features/bookings/lib/confirmation-store.ts"
+    ],
+    "components/Directory.tsx": [
+      "features/directory/components/Directory.tsx",
+      "features/founders/components/FounderProfile.tsx",
+      "features/companies/components/CompanyProfile.tsx"
+    ],
+    "components/Spaces.tsx": [
+      "features/spaces/components/Spaces.tsx",
+      "features/bookings/components/BookingEditor.tsx"
+    ]
+  }
+}

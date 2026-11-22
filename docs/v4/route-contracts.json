@@ -1,0 +1,164 @@
+[
+  {
+    "path": "/",
+    "status": 200,
+    "location": null,
+    "headings": [
+      "Building connections between founders, products and opportunities."
+    ]
+  },
+  {
+    "path": "/book",
+    "status": 200,
+    "location": null,
+    "headings": [
+      "Founders Lab"
+    ]
+  },
+  {
+    "path": "/apply",
+    "status": 200,
+    "location": null,
+    "headings": [
+      "Bring your founder story."
+    ]
+  },
+  {
+    "path": "/confirmation",
+    "status": 200,
+    "location": null,
+    "headings": []
+  },
+  {
+    "path": "/signin",
+    "status": 200,
+    "location": null,
+    "headings": [
+      "Welcome back."
+    ]
+  },
+  {
+    "path": "/terms",
+    "status": 200,
+    "location": null,
+    "headings": [
+      "Clear expectations. Informed participation."
+    ]
+  },
+  {
+    "path": "/manager/spaces",
+    "status": 200,
+    "location": null,
+    "headings": [
+      "Your weekly Spaces"
+    ]
+  },
+  {
+    "path": "/demo",
+    "status": 404,
+    "location": null,
+    "headings": []
+  },
+  {
+    "path": "/invite",
+    "status": 404,
+    "location": null,
+    "headings": []
+  },
+  {
+    "path": "/dashboard",
+    "status": 307,
+    "location": "/signin",
+    "headings": []
+  },
+  {
+    "path": "/founders",
+    "status": 307,
+    "location": "/signin",
+    "headings": []
+  },
+  {
+    "path": "/founders/f1",
+    "status": 307,
+    "location": "/signin",
+    "headings": []
+  },
+  {
+    "path": "/companies",
+    "status": 307,
+    "location": "/signin",
+    "headings": []
+  },
+  {
+    "path": "/spaces",
+    "status": 307,
+    "location": "/signin",
+    "headings": []
+  },
+  {
+    "path": "/reports",
+    "status": 307,
+    "location": "/signin",
+    "headings": []
+  },
+  {
+    "path": "/campaigns",
+    "status": 307,
+    "location": "/signin",
+    "headings": []
+  },
+  {
+    "path": "/settings",
+    "status": 307,
+    "location": "/signin",
+    "headings": []
+  },
+  {
+    "path": "/research",
+    "status": 307,
+    "location": "/founders",
+    "headings": []
+  },
+  {
+    "path": "/market-map",
+    "status": 307,
+    "location": "/founders",
+    "headings": []
+  },
+  {
+    "path": "/classification",
+    "status": 307,
+    "location": "/founders",
+    "headings": []
+  },
+  {
+    "path": "/opportunities",
+    "status": 307,
+    "location": "/founders",
+    "headings": []
+  },
+  {
+    "path": "/api/workspace",
+    "status": 401,
+    "location": null,
+    "headings": []
+  },
+  {
+    "path": "/api/auth/me",
+    "status": 401,
+    "location": null,
+    "headings": []
+  },
+  {
+    "path": "/api/manager/spaces",
+    "status": 401,
+    "location": null,
+    "headings": []
+  },
+  {
+    "path": "/api/space-managers",
+    "status": 401,
+    "location": null,
+    "headings": []
+  }
+]

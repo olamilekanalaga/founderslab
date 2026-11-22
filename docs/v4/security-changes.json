@@ -1,0 +1,23 @@
+[
+  {
+    "file": "server/handlers/public.ts",
+    "name": "GET",
+    "reason": "Publish current participation terms; omit legacy award defaults. Submission and confirmation unchanged.",
+    "originalSha256": "e6253cafa565f0951ca5c6d46d03dc423698dae63c42d0fa0bc1c168f020bd74",
+    "sha256": "0e2e3fb09d4241dc2ce329e4c00288e9b33e951ce3c93d63ba52b34ea1999a86"
+  },
+  {
+    "file": "server/handlers/workspace.ts",
+    "name": "POST",
+    "reason": "Reject retired campaign/award writes after existing authentication, permission and CSRF checks.",
+    "originalSha256": "8fc73275e6caa624c60bf55675915d45192bb44a5b9ab461773ca9903a33aba1",
+    "sha256": "be8be0c34e7fcfac0b4bca43825df0a879be663a3ad15ede234b0877b1e481ae"
+  },
+  {
+    "file": "server/handlers/monthly-winner.ts",
+    "name": "POST",
+    "reason": "Return 410 after existing administrator and CSRF checks, preserving historical rows.",
+    "originalSha256": "cd0ad47ba27a86bd60d929836c851111d8c541922ebe8f8c113c601c8d7653b3",
+    "sha256": "369ba67d4caaf50e8d0e0a9dec93164759b79953706fc5540cfdee1196b3a192"
+  }
+]

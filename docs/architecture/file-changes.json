@@ -1,0 +1,766 @@
+[
+  {
+    "status": "M",
+    "paths": [
+      "README.md"
+    ]
+  },
+  {
+    "status": "R084",
+    "paths": [
+      "app/(private)/[section]/[id]/page.tsx",
+      "app/(admin)/[section]/[id]/page.tsx"
+    ]
+  },
+  {
+    "status": "R076",
+    "paths": [
+      "app/(private)/[section]/page.tsx",
+      "app/(admin)/[section]/page.tsx"
+    ]
+  },
+  {
+    "status": "R064",
+    "paths": [
+      "app/apply/page.tsx",
+      "app/(public)/apply/page.tsx"
+    ]
+  },
+  {
+    "status": "R065",
+    "paths": [
+      "app/book/page.tsx",
+      "app/(public)/book/page.tsx"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "app/(public)/confirmation/page.tsx"
+    ]
+  },
+  {
+    "status": "R100",
+    "paths": [
+      "app/page.tsx",
+      "app/(public)/page.tsx"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "app/(public)/terms/page.tsx"
+    ]
+  },
+  {
+    "status": "M",
+    "paths": [
+      "app/api/auth/[action]/route.ts"
+    ]
+  },
+  {
+    "status": "M",
+    "paths": [
+      "app/api/health/route.ts"
+    ]
+  },
+  {
+    "status": "M",
+    "paths": [
+      "app/api/manager/[action]/route.ts"
+    ]
+  },
+  {
+    "status": "M",
+    "paths": [
+      "app/api/monthly-winner/route.ts"
+    ]
+  },
+  {
+    "status": "M",
+    "paths": [
+      "app/api/public/[action]/route.ts"
+    ]
+  },
+  {
+    "status": "M",
+    "paths": [
+      "app/api/records/route.ts"
+    ]
+  },
+  {
+    "status": "M",
+    "paths": [
+      "app/api/space-managers/route.ts"
+    ]
+  },
+  {
+    "status": "M",
+    "paths": [
+      "app/api/workspace/route.ts"
+    ]
+  },
+  {
+    "status": "D",
+    "paths": [
+      "app/confirmation/page.tsx"
+    ]
+  },
+  {
+    "status": "M",
+    "paths": [
+      "app/demo/[[...path]]/page.tsx"
+    ]
+  },
+  {
+    "status": "M",
+    "paths": [
+      "app/globals.css"
+    ]
+  },
+  {
+    "status": "M",
+    "paths": [
+      "app/manager/spaces/page.tsx"
+    ]
+  },
+  {
+    "status": "M",
+    "paths": [
+      "app/signin/page.tsx"
+    ]
+  },
+  {
+    "status": "D",
+    "paths": [
+      "app/terms/page.tsx"
+    ]
+  },
+  {
+    "status": "R093",
+    "paths": [
+      "components/Workspace.tsx",
+      "components/layout/AdminWorkspace.tsx"
+    ]
+  },
+  {
+    "status": "R090",
+    "paths": [
+      "components/PrivateWorkspace.tsx",
+      "components/layout/PrivateWorkspace.tsx"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "components/layout/PublicFooter.tsx"
+    ]
+  },
+  {
+    "status": "R094",
+    "paths": [
+      "components/PublicHeader.tsx",
+      "components/layout/PublicHeader.tsx"
+    ]
+  },
+  {
+    "status": "R097",
+    "paths": [
+      "components/WorkspaceContext.tsx",
+      "components/layout/WorkspaceContext.tsx"
+    ]
+  },
+  {
+    "status": "R100",
+    "paths": [
+      "components/BrandMark.tsx",
+      "components/shared/BrandMark.tsx"
+    ]
+  },
+  {
+    "status": "R099",
+    "paths": [
+      "components/RecordEditor.tsx",
+      "components/shared/RecordEditor.tsx"
+    ]
+  },
+  {
+    "status": "R093",
+    "paths": [
+      "components/SessionTime.tsx",
+      "components/shared/SessionTime.tsx"
+    ]
+  },
+  {
+    "status": "R100",
+    "paths": [
+      "components/Charts.tsx",
+      "components/ui/Charts.tsx"
+    ]
+  },
+  {
+    "status": "R100",
+    "paths": [
+      "components/ui.tsx",
+      "components/ui/index.tsx"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "docs/ARCHITECTURE.md"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "docs/architecture/AUDIT.md"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "docs/architecture/VALIDATION.md"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "docs/architecture/after-inventory.json"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "docs/architecture/before-inventory.json"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "docs/architecture/file-changes.json"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "docs/architecture/frontend-moves.json"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "docs/architecture/routes-after.json"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "docs/architecture/routes-before.json"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "docs/architecture/security-invariants.json"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "docs/architecture/tree-after.txt"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "docs/architecture/tree-before.txt"
+    ]
+  },
+  {
+    "status": "R098",
+    "paths": [
+      "components/AuthScreen.tsx",
+      "features/auth/components/AdminSignIn.tsx"
+    ]
+  },
+  {
+    "status": "R061",
+    "paths": [
+      "components/PublicPages.tsx",
+      "features/bookings/components/ApplicationForm.tsx"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "features/bookings/components/BookingEditor.tsx"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "features/bookings/components/BookingPage.tsx"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "features/bookings/components/Confirmation.tsx"
+    ]
+  },
+  {
+    "status": "R098",
+    "paths": [
+      "components/PublicBookingCalendar.tsx",
+      "features/bookings/components/PublicBookingCalendar.tsx"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "features/bookings/lib/confirmation-store.ts"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "features/bookings/lib/public-api.ts"
+    ]
+  },
+  {
+    "status": "R096",
+    "paths": [
+      "components/Campaigns.tsx",
+      "features/campaigns/components/MonthlyWinner.tsx"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "features/companies/components/CompanyProfile.tsx"
+    ]
+  },
+  {
+    "status": "R067",
+    "paths": [
+      "components/Directory.tsx",
+      "features/directory/components/Directory.tsx"
+    ]
+  },
+  {
+    "status": "R094",
+    "paths": [
+      "components/DeleteRecordButton.tsx",
+      "features/founders/components/DeleteRecordButton.tsx"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "features/founders/components/FounderProfile.tsx"
+    ]
+  },
+  {
+    "status": "R094",
+    "paths": [
+      "components/Overview.tsx",
+      "features/programme/components/Overview.tsx"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "features/programme/components/Terms.tsx"
+    ]
+  },
+  {
+    "status": "R094",
+    "paths": [
+      "components/Reports.tsx",
+      "features/reports/components/Reports.tsx"
+    ]
+  },
+  {
+    "status": "R095",
+    "paths": [
+      "lib/export.ts",
+      "features/reports/lib/export.ts"
+    ]
+  },
+  {
+    "status": "R090",
+    "paths": [
+      "lib/selectors.ts",
+      "features/reports/lib/selectors.ts"
+    ]
+  },
+  {
+    "status": "R096",
+    "paths": [
+      "components/Settings.tsx",
+      "features/settings/components/Settings.tsx"
+    ]
+  },
+  {
+    "status": "R100",
+    "paths": [
+      "components/ManagerSpaces.tsx",
+      "features/space-managers/components/ManagerSpaces.tsx"
+    ]
+  },
+  {
+    "status": "R099",
+    "paths": [
+      "components/SpaceManagersSettings.tsx",
+      "features/space-managers/components/SpaceManagersSettings.tsx"
+    ]
+  },
+  {
+    "status": "R094",
+    "paths": [
+      "components/FounderSpaces.tsx",
+      "features/spaces/components/FounderSpaces.tsx"
+    ]
+  },
+  {
+    "status": "R096",
+    "paths": [
+      "components/SessionCalendar.tsx",
+      "features/spaces/components/SessionCalendar.tsx"
+    ]
+  },
+  {
+    "status": "R083",
+    "paths": [
+      "components/Spaces.tsx",
+      "features/spaces/components/Spaces.tsx"
+    ]
+  },
+  {
+    "status": "R098",
+    "paths": [
+      "components/WeeklySpaceEditor.tsx",
+      "features/spaces/components/WeeklySpaceEditor.tsx"
+    ]
+  },
+  {
+    "status": "R099",
+    "paths": [
+      "lib/space-data.ts",
+      "features/spaces/lib/space-data.ts"
+    ]
+  },
+  {
+    "status": "R094",
+    "paths": [
+      "lib/booking.ts",
+      "lib/dates/booking.ts"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "lib/dates/format.ts"
+    ]
+  },
+  {
+    "status": "R100",
+    "paths": [
+      "lib/saturday-schedule.ts",
+      "lib/dates/saturday-schedule.ts"
+    ]
+  },
+  {
+    "status": "R079",
+    "paths": [
+      "lib/domain.ts",
+      "lib/domain/commands.ts"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "lib/domain/errors.ts"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "lib/domain/index.ts"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "lib/domain/queries.ts"
+    ]
+  },
+  {
+    "status": "M",
+    "paths": [
+      "lib/sections.ts"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "lib/validation/application.ts"
+    ]
+  },
+  {
+    "status": "R077",
+    "paths": [
+      "lib/validation.ts",
+      "lib/validation/commands.ts"
+    ]
+  },
+  {
+    "status": "R100",
+    "paths": [
+      "lib/form-errors.ts",
+      "lib/validation/form-errors.ts"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "lib/validation/index.ts"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "lib/validation/primitives.ts"
+    ]
+  },
+  {
+    "status": "M",
+    "paths": [
+      "package-lock.json"
+    ]
+  },
+  {
+    "status": "M",
+    "paths": [
+      "package.json"
+    ]
+  },
+  {
+    "status": "M",
+    "paths": [
+      "scripts/admin.ts"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "scripts/check-route-contracts.ts"
+    ]
+  },
+  {
+    "status": "M",
+    "paths": [
+      "scripts/migrate.ts"
+    ]
+  },
+  {
+    "status": "M",
+    "paths": [
+      "scripts/prepare-vercel.ts"
+    ]
+  },
+  {
+    "status": "M",
+    "paths": [
+      "scripts/publish-saturdays.ts"
+    ]
+  },
+  {
+    "status": "M",
+    "paths": [
+      "scripts/seed.ts"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "server/auth/index.ts"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "server/auth/passwords.ts"
+    ]
+  },
+  {
+    "status": "R082",
+    "paths": [
+      "lib/auth.ts",
+      "server/auth/session.ts"
+    ]
+  },
+  {
+    "status": "R100",
+    "paths": [
+      "lib/server-env.ts",
+      "server/config/environment.ts"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "server/db/client.ts"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "server/db/index.ts"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "server/db/node.ts"
+    ]
+  },
+  {
+    "status": "R095",
+    "paths": [
+      "lib/seed.ts",
+      "server/db/seed-data.ts"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "server/db/taxonomy-defaults.ts"
+    ]
+  },
+  {
+    "status": "R089",
+    "paths": [
+      "lib/db.ts",
+      "server/db/workspace-store.ts"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "server/handlers/auth.ts"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "server/handlers/health.ts"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "server/handlers/manager.ts"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "server/handlers/monthly-winner.ts"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "server/handlers/public.ts"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "server/handlers/records.ts"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "server/handlers/space-managers.ts"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "server/handlers/workspace.ts"
+    ]
+  },
+  {
+    "status": "R094",
+    "paths": [
+      "lib/http.ts",
+      "server/http.ts"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "server/security/tokens.ts"
+    ]
+  },
+  {
+    "status": "R097",
+    "paths": [
+      "lib/programme-window.ts",
+      "server/services/programme-window.ts"
+    ]
+  },
+  {
+    "status": "R097",
+    "paths": [
+      "lib/space-managers.ts",
+      "server/services/space-managers.ts"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "tests/architecture.test.ts"
+    ]
+  },
+  {
+    "status": "M",
+    "paths": [
+      "tests/domain.test.ts"
+    ]
+  },
+  {
+    "status": "A",
+    "paths": [
+      "tests/fixtures/application-state.ts"
+    ]
+  },
+  {
+    "status": "M",
+    "paths": [
+      "tests/form-errors.test.ts"
+    ]
+  },
+  {
+    "status": "M",
+    "paths": [
+      "tests/integration.ts"
+    ]
+  },
+  {
+    "status": "M",
+    "paths": [
+      "tests/server-env.test.ts"
+    ]
+  },
+  {
+    "status": "M",
+    "paths": [
+      "vercel.json"
+    ]
+  }
+]
