@@ -227,6 +227,7 @@ export function makeSeed(): DataState {
     s.companies.push({
       id: c,
       name: companyNames[i],
+      xHandle: null,
       description: `${companyNames[i]} is a fictional ${SECTORS[i % 10].toLowerCase()} product helping small businesses and Web3 teams simplify everyday work.`,
       website: `https://project${i + 1}.example.invalid`,
       country: countries[i],
@@ -277,6 +278,7 @@ export function makeSeed(): DataState {
       founderName: name,
       companyName: companyNames[i],
       xHandle: s.founders[i].xHandle,
+      projectXHandle: null,
       website: s.companies[i].website,
       country: countries[i],
       description: s.companies[i].description,

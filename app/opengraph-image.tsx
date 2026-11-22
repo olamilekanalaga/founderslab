@@ -1,10 +1,12 @@
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { ImageResponse } from "next/og";
-import BrandMark from "@/components/shared/BrandMark";
 export const alt =
   "Founders Lab. Meet the founders building Web3. Saturdays on X Spaces with ⭕️La_Crrypt💰₿.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-export default function Image() {
+export default async function Image() {
+  const logo = `data:image/jpeg;base64,${(await readFile(join(process.cwd(), "public/founders-lab-logo.jpg"))).toString("base64")}`;
   return new ImageResponse(
     <div
       style={{
@@ -27,7 +29,14 @@ export default function Image() {
           color: "#6946d3",
         }}
       >
-        <BrandMark size={42} />
+        {/* ImageResponse needs a native image rather than Next.js image optimisation. */}
+        <img
+          src={logo}
+          width={42}
+          height={42}
+          alt=""
+          style={{ borderRadius: 6 }}
+        />
         <span>Founders Lab</span>
       </div>
       <div

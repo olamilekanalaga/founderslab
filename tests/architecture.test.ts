@@ -168,20 +168,38 @@ test("authentication, manager permissions and request implementations match revi
     );
   }
 });
-test("Prisma schema and ordered historical migration files remain byte-identical", () => {
+test("historical Prisma migrations remain byte-identical; the schema adds only nullable project identities", () => {
   for (const entry of manifest.database) {
     assert.ok(existsSync(entry.file), entry.file);
-    assert.equal(digest(readFileSync(entry.file)), entry.sha256, entry.file);
+    const contents =
+      entry.file === "prisma/schema.prisma"
+        ? readFileSync(entry.file, "utf8")
+            .replace(/^  xHandle +String\?\n/m, "")
+            .replace(/^  projectXHandle +String\?\n/m, "")
+        : readFileSync(entry.file);
+    assert.equal(digest(contents), entry.sha256, entry.file);
   }
   const sql = readdirSync("prisma/migrations", { recursive: true })
     .filter((f) => String(f).endsWith(".sql"))
     .map((f) => `prisma/migrations/${String(f).replaceAll("\\", "/")}`)
     .sort();
+  const addition = readFileSync(
+    "prisma/migrations/202611220004_project_x_identity/migration.sql",
+    "utf8",
+  )
+    .split("\n")
+    .filter((line) => line.trim() && !line.trim().startsWith("--"))
+    .join("\n");
+  assert.equal(
+    addition,
+    'ALTER TABLE "Company" ADD COLUMN "xHandle" TEXT;\nALTER TABLE "Application" ADD COLUMN "projectXHandle" TEXT;',
+  );
   assert.deepEqual(
     sql,
     manifest.database
       .map((e) => e.file)
       .filter((f) => f.endsWith(".sql"))
+      .concat("prisma/migrations/202611220004_project_x_identity/migration.sql")
       .sort(),
   );
 });

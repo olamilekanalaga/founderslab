@@ -52,6 +52,7 @@ export default function RecordEditor({
       companyIds: [],
     },
     company: {
+      xHandle: "",
       name: "",
       description: "",
       website: "",
@@ -146,13 +147,14 @@ export default function RecordEditor({
     founder: [
       f("name", "Founder name"),
       f("role", "Role"),
-      f("xHandle", "X username"),
+      f("xHandle", "Founder X"),
       f("contact", "Email or Telegram", "text", undefined, false),
       f("country", "Country", "country"),
       f("companyIds", "Associated companies", "multi", co, false, true),
     ],
     company: [
       f("name", "Company name"),
+      f("xHandle", "Project X", "text", undefined, false),
       f("website", "Website", "url"),
       f(
         "description",

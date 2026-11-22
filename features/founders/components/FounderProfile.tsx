@@ -63,6 +63,10 @@ export default function FounderProfile({
         <h2>Founder details</h2>
         <dl className="facts">
           <div>
+            <dt>Founder X</dt>
+            <dd>@{founder.xHandle}</dd>
+          </div>
+          <div>
             <dt>Country</dt>
             <dd>{founder.country}</dd>
           </div>

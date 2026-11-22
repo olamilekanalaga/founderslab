@@ -32,11 +32,26 @@ export const optionalUrl = z
 export const date = z
   .string()
   .refine((v) => Number.isFinite(Date.parse(v)), "Enter a valid date and time");
+const countryKey = (value: string) =>
+  value.trim().replace(/\s+/g, " ").toLowerCase();
 export const country = z
   .string()
+  .transform(
+    (value) =>
+      COUNTRIES.find((name) => countryKey(name) === countryKey(value)) ||
+      value.trim(),
+  )
   .refine((v) => COUNTRIES.includes(v), "Choose a country from the list");
 export const xHandle = short
-  .transform((v) => v.replace(/^@/, "").toLowerCase())
+  .transform((v) => v.replace(/\s+/g, "").replace(/^@/, "").toLowerCase())
   .pipe(
     z.string().regex(/^[a-z0-9_]{1,50}$/, "Use an X username without a URL"),
   );
+
+/** Optional official project identity; blank and absent values remain unknown. */
+export const optionalXHandle = z
+  .preprocess(
+    (value) => (typeof value === "string" && !value.trim() ? null : value),
+    xHandle.nullish(),
+  )
+  .transform((value) => value ?? null);
