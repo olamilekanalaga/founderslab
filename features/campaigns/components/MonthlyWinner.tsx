@@ -1,109 +1,73 @@
 "use client";
-import { useState } from "react";
-import { Award } from "lucide-react";
 import { useWorkspace } from "@/components/layout/WorkspaceContext";
-import { londonDay } from "@/lib/dates/saturday-schedule";
-export default function Campaigns() {
-  const { state: s, viewer, mutate, busy } = useWorkspace();
-  const [period, setPeriod] = useState(() => londonDay(new Date()).slice(0, 7)),
-    [chosen, setChosen] = useState("");
-  const ids = new Set(
-    s.participants
-      .filter(
-        (p) =>
-          p.attendance !== "Cancelled" &&
-          s.sessions.some(
-            (session) =>
-              session.id === p.sessionId &&
-              londonDay(session.startsAt).slice(0, 7) === period,
-          ),
-      )
-      .map((p) => p.founderId),
+
+/** Read-only history. Retiring the programme must not rewrite past obligations. */
+export default function AwardArchive() {
+  const { state } = useWorkspace();
+  const campaigns = state.campaigns.toSorted((a, b) =>
+    b.period.localeCompare(a.period),
   );
-  const founders = s.founders
-    .filter((f) => ids.has(f.id))
-    .sort((a, b) => a.name.localeCompare(b.name));
-  const campaign = s.campaigns.find((c) => c.period === period),
-    award = s.awards.find((a) => a.campaignId === campaign?.id),
-    winner = s.founders.find((f) => f.id === award?.founderId);
-  const value = chosen || winner?.id || "";
   return (
     <>
       <div className="page-heading">
-        <h1>Monthly winner</h1>
+        <h1>Founder award archive</h1>
       </div>
       <section className="panel padded">
-        <form
-          className="stack-form"
-          onSubmit={async (e) => {
-            e.preventDefault();
-            await mutate("/api/monthly-winner", { period, founderId: value });
-          }}
-        >
-          <label>
-            Month
-            <input
-              type="month"
-              required
-              value={period}
-              onChange={(e) => {
-                setPeriod(e.target.value);
-                setChosen("");
-              }}
-            />
-          </label>
-          <label>
-            Winner
-            <select
-              required
-              aria-label="Winner"
-              value={value}
-              onChange={(e) => setChosen(e.target.value)}
-            >
-              <option value="">Choose a founder</option>
-              {founders.map((f) => {
-                const company = s.companies.find((c) =>
-                  s.memberships.some(
-                    (m) => m.founderId === f.id && m.companyId === c.id,
-                  ),
+        <p>
+          The founder reward programme has ended. These historical records are
+          read-only; recorded decisions, payment references and any existing
+          obligations are preserved.
+        </p>
+        <p>
+          No new founder awards are offered. This archive is separate from any
+          future BD referral programme.
+        </p>
+      </section>
+      <section className="panel">
+        <div className="table-wrap">
+          <table>
+            <caption className="sr-only">
+              Historical founder campaigns and award decisions
+            </caption>
+            <thead>
+              <tr>
+                <th>Period / campaign</th>
+                <th>Recorded amount</th>
+                <th>Founder</th>
+                <th>Decision status</th>
+                <th>Payment reference</th>
+              </tr>
+            </thead>
+            <tbody>
+              {campaigns.map((campaign) => {
+                const award = state.awards.find(
+                  (a) => a.campaignId === campaign.id,
+                );
+                const founder = state.founders.find(
+                  (f) => f.id === award?.founderId,
                 );
                 return (
-                  <option key={f.id} value={f.id}>
-                    {f.name}
-                    {company ? ` · ${company.name}` : ""}
-                  </option>
+                  <tr key={campaign.id}>
+                    <td>
+                      <b>{campaign.period}</b>
+                      <small>{campaign.name}</small>
+                    </td>
+                    <td>{campaign.awardAmount}</td>
+                    <td>{founder?.name || "No recorded winner"}</td>
+                    <td>{award?.status || campaign.status}</td>
+                    <td>
+                      {award?.transactionReference || "No reference recorded"}
+                    </td>
+                  </tr>
                 );
               })}
-            </select>
-          </label>
-          <button
-            className="button primary"
-            disabled={
-              busy || !value || !viewer.permissions.includes("campaign.write")
-            }
-          >
-            Save winner
-          </button>
-        </form>
-        {!founders.length && (
-          <p className="muted">
-            No founder participants recorded for this month.
-          </p>
+            </tbody>
+          </table>
+        </div>
+        {!campaigns.length && (
+          <p className="padded muted">No historical campaign records.</p>
         )}
       </section>
-      {winner && (
-        <section className="panel padded">
-          <div className="award-winner">
-            <Award size={30} />
-            <div>
-              <h2>{winner.name}</h2>
-              <p>
-                {campaign?.awardAmount || "1 SOL"} · {period}
-              </p>
-            </div>
-          </div>
-        </section>
-      )}
     </>
   );
 }

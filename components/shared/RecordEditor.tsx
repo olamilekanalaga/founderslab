@@ -218,10 +218,9 @@ export default function RecordEditor({
       f("capacity", "Default project seats per Space", "number"),
       f("retentionDays", "Privacy retention policy · days", "number"),
       f("campaignTarget", "Monthly founder target", "number"),
-      f("awardAmount", "Default award amount"),
       f(
         "terms",
-        "Published programme terms",
+        "Historical programme terms (current public policy is maintained separately)",
         "textarea",
         undefined,
         true,

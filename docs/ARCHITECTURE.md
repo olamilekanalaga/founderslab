@@ -2,6 +2,8 @@
 
 This is an incremental reorganisation of the existing Next.js 16 App Router application, not a replacement application. Baseline: `f5b1355`. URLs, page copy/design, API contracts, database models, migration paths/order and environment variable names are preserved.
 
+V4 adds a public homepage and retires new founder awards. See [V4 implementation and reviewed policy changes](v4/IMPLEMENTATION.md) and [current verification](v4/VALIDATION.md). Original refactor inventories below remain historical evidence. The original handler fingerprints are retained, with three explicitly reviewed V4 changes recorded separately.
+
 ## Before and after
 
 The full original tree, file classifications, line counts and runtime import dependencies are recorded in [before-inventory.json](architecture/before-inventory.json). The [audit and movement plan](architecture/AUDIT.md) preceded implementation. [Frontend movements](architecture/frontend-moves.json) list the initial screen extractions; [all file changes](architecture/file-changes.json) include server moves and additions.

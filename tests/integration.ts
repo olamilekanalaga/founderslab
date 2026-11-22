@@ -9,6 +9,10 @@ import AxeBuilder from "@axe-core/playwright";
 import { chromium } from "@playwright/test";
 import { isLondonProgrammeTime } from "@/lib/dates/saturday-schedule";
 import type { DataState } from "@/lib/types";
+import {
+  PARTICIPATION_TERMS,
+  RETIRED_AWARD_COMMANDS,
+} from "@/lib/programme-policy";
 try {
   process.loadEnvFile(".env");
 } catch {}
@@ -1239,7 +1243,21 @@ try {
     'UPDATE "Application" SET "promotionalConsent"=false WHERE "founderId"=$1 AND "companyId"=$2',
     [research.founderId, research.companyId],
   );
+  const legacyTerms =
+    "Historical programme policy: One eligible founder may receive 1 SOL.";
+  await consentDb.query(
+    `UPDATE "Setting" SET value=jsonb_set(value::jsonb, '{terms}', to_jsonb($1::text)) WHERE key='programme'`,
+    [legacyTerms],
+  );
   const withoutConsent = await request("/api/public/programme");
+  assert.equal(withoutConsent.data.settings.terms, PARTICIPATION_TERMS);
+  assert.ok(!("awardAmount" in withoutConsent.data.settings));
+  assert.ok(!("campaignTarget" in withoutConsent.data.settings));
+  const retainedPolicy = await consentDb.query(
+    `SELECT value FROM "Setting" WHERE key='programme'`,
+  );
+  assert.equal(retainedPolicy.rows[0].value.terms, legacyTerms);
+
   assert.equal(withoutConsent.data.highlights.length, 0);
   await consentDb.query(
     'UPDATE "Application" SET "promotionalConsent"=true WHERE "founderId"=$1 AND "companyId"=$2',
@@ -1507,6 +1525,31 @@ try {
   pass(
     "Eight-week season advances once after four distinct submitted Spaces; drafts/repeated saves do not count, archived history and booking IDs remain intact, and out-of-season bookings are rejected",
   );
+  const deletionDb = new Client({ connectionString: url.toString() });
+  deletionDb.on("error", () => {});
+  await deletionDb.connect();
+  async function historicalAwards() {
+    return {
+      campaigns: (
+        await deletionDb.query('SELECT * FROM "Campaign" ORDER BY id')
+      ).rows,
+      participants: (
+        await deletionDb.query(
+          'SELECT * FROM "CampaignParticipant" ORDER BY "campaignId", "founderId"',
+        )
+      ).rows,
+      awards: (
+        await deletionDb.query('SELECT * FROM "AwardDecision" ORDER BY id')
+      ).rows,
+    };
+  }
+  // Non-empty payment/evidence values prove retirement does not erase old obligations.
+  await deletionDb.query(
+    'UPDATE "AwardDecision" SET "transactionReference"=$1, status=$2 WHERE id=$3',
+    ["historical-payment-reference", "Paid", "award1"],
+  );
+  const historicalBefore = await historicalAwards();
+  assert.ok(historicalBefore.awards.length > 0);
   assert.equal(
     (
       await request("/api/monthly-winner", {
@@ -1530,16 +1573,6 @@ try {
     (
       await request(
         "/api/monthly-winner",
-        { period: "2026-10", founderId: linked.founderId },
-        admin,
-      )
-    ).status,
-    400,
-  );
-  assert.equal(
-    (
-      await request(
-        "/api/monthly-winner",
         { period: "2026-10", founderId: "f1" },
         admin,
         false,
@@ -1551,31 +1584,32 @@ try {
     (
       await request(
         "/api/monthly-winner",
-        { period: "2026-10", founderId: "f1" },
-        admin,
-      )
-    ).status,
-    200,
-  );
-  assert.equal(
-    (
-      await request(
-        "/api/monthly-winner",
         { period: "2026-10", founderId: "f2" },
         admin,
       )
     ).status,
-    200,
+    410,
   );
-  const deletionDb = new Client({ connectionString: url.toString() });
-  deletionDb.on("error", () => {});
-  await deletionDb.connect();
-  const winners = await deletionDb.query(
-    'SELECT a."founderId" FROM "AwardDecision" a JOIN "Campaign" c ON c.id=a."campaignId" WHERE c.period=$1',
-    ["2026-10"],
-  );
-  assert.equal(winners.rows.length, 1);
-  assert.equal(winners.rows[0].founderId, "f2");
+  for (const type of RETIRED_AWARD_COMMANDS) {
+    assert.equal(
+      (await request("/api/workspace", { type, payload: {} })).status,
+      401,
+    );
+    assert.equal(
+      (await request("/api/workspace", { type, payload: {} }, manager)).status,
+      401,
+    );
+    assert.equal(
+      (await request("/api/workspace", { type, payload: {} }, admin, false))
+        .status,
+      403,
+    );
+    assert.equal(
+      (await request("/api/workspace", { type, payload: {} }, admin)).status,
+      410,
+    );
+  }
+  assert.deepEqual(await historicalAwards(), historicalBefore);
   state = await command("founder.save", {
     ...state.founders[0],
     id: undefined,
@@ -1601,24 +1635,31 @@ try {
     await page.waitForURL("**/dashboard");
     await page.goto(origin + "/campaigns");
     await page
-      .getByRole("heading", { name: "Monthly winner", exact: true })
+      .getByRole("heading", { name: "Founder award archive", exact: true })
       .waitFor();
-    await page.getByLabel("Month", { exact: true }).fill("2026-10");
-    await page.getByLabel("Winner", { exact: true }).selectOption("f2");
-    await page
-      .getByRole("button", { name: "Save winner", exact: true })
-      .click();
-    await page.getByText("Changes saved.", { exact: true }).waitFor();
     assert.equal(
-      await page.getByText("Selection criteria", { exact: true }).count(),
+      await page
+        .getByRole("button", { name: "Save winner", exact: true })
+        .count(),
+      0,
+    );
+    assert.equal(
+      await page
+        .getByRole("navigation")
+        .getByRole("link", { name: /Monthly winner/ })
+        .count(),
       0,
     );
     await page
-      .getByRole("button", { name: "Dismiss notification", exact: true })
-      .click();
+      .getByRole("cell", { name: "1 SOL", exact: true })
+      .first()
+      .waitFor();
+    await page
+      .getByRole("cell", { name: "historical-payment-reference", exact: true })
+      .waitFor();
     await page.mouse.move(0, 0);
     await page.screenshot({
-      path: "artifacts/monthly-winner-mobile.png",
+      path: "artifacts/v4-award-archive-mobile.png",
       fullPage: true,
     });
     await page.goto(origin + "/founders/" + uiFounder.id);
@@ -1781,7 +1822,7 @@ try {
   );
   await deletionDb.end();
   pass(
-    "One monthly winner is selected from actual Space participants without assessments; permanent founder/application deletion revokes confirmations, removes owned data and preserves shared Spaces, with Admin-only CSRF checks",
+    "Historical award rows survive archive reads and rejected writes; permanent founder/application deletion revokes confirmations, removes owned data and preserves shared Spaces, with Admin-only CSRF checks",
   );
   const oldCookie = admin.cookie;
   assert.equal(

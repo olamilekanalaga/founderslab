@@ -1,29 +1,60 @@
 "use client";
-import { useSyncExternalStore } from "react";
-const subscribe = () => () => {};
-const clientSnapshot = () => true;
-const serverSnapshot = () => false;
+import { useState } from "react";
 import Link from "next/link";
+import { Menu, X } from "lucide-react";
 import BrandMark from "@/components/shared/BrandMark";
+
+const publicLinks = [
+  { href: "/", label: "Home" },
+  { href: "/#about", label: "About" },
+  { href: "/#how-it-works", label: "How It Works" },
+  { href: "/book", label: "Book a Space" },
+];
 export default function PublicHeader() {
-  const ready = useSyncExternalStore(subscribe, clientSnapshot, serverSnapshot);
+  const [open, setOpen] = useState(false);
   return (
-    <header className="public-header" data-ready={ready}>
-      <Link className="brand" href="/">
-        <span className="brand-mark">
+    <header className="public-header programme-header">
+      <Link
+        className="brand"
+        href="/"
+        aria-label="Founders Lab with Ola_Crrypt — Home"
+        onClick={() => setOpen(false)}
+      >
+        <span className="brand-mark" aria-hidden="true">
           <BrandMark />
         </span>
         <span>
-          Founders Lab<small>with ⭕️La_Crrypt💰₿</small>
+          Founders Lab<small>with Ola_Crrypt</small>
         </span>
       </Link>
-      <nav aria-label="Programme navigation">
-        <Link href="/book">Booking</Link>
-        <Link className="button" href="/signin">
-          Admin
-        </Link>
-        <Link className="button primary" href="/book">
-          Apply as a founder
+      <button
+        type="button"
+        className="programme-menu-toggle"
+        aria-label={
+          open ? "Close programme navigation" : "Open programme navigation"
+        }
+        aria-expanded={open}
+        aria-controls="programme-navigation"
+        onClick={() => setOpen(!open)}
+      >
+        {open ? <X size={22} /> : <Menu size={22} />}
+      </button>
+      <nav
+        id="programme-navigation"
+        aria-label="Programme navigation"
+        className={open ? "is-expanded" : ""}
+      >
+        {publicLinks.map(({ href, label }) => (
+          <Link key={href} href={href} onClick={() => setOpen(false)}>
+            {label}
+          </Link>
+        ))}
+        <Link
+          className="button primary"
+          href="/book"
+          onClick={() => setOpen(false)}
+        >
+          Book a Founder Space
         </Link>
       </nav>
     </header>

@@ -5,7 +5,7 @@ import { chromium } from "@playwright/test";
 
 const origin = process.env.PLAYWRIGHT_BASE_URL || "http://localhost:3000";
 const baseline = JSON.parse(
-  await readFile("docs/architecture/routes-before.json", "utf8"),
+  await readFile("docs/v4/route-contracts.json", "utf8"),
 ) as {
   path: string;
   status: number;
@@ -44,12 +44,12 @@ try {
     });
   }
   await writeFile(
-    "docs/architecture/routes-after.json",
+    "docs/v4/routes-after.json",
     JSON.stringify(actual, null, 2) + "\n",
   );
   assert.deepEqual(actual, baseline);
   console.log(
-    `PASS: ${actual.length} route status, redirect and heading contracts match the pre-refactor baseline.`,
+    `PASS: ${actual.length} route status, redirect and heading contracts match the V4 route contracts.`,
   );
 } finally {
   await browser.close();

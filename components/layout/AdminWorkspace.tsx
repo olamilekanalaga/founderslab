@@ -9,7 +9,6 @@ import {
   Building2,
   Mic2,
   ChartNoAxesCombined,
-  Award,
   Settings as SettingsIcon,
   Search,
   Menu,
@@ -40,7 +39,6 @@ const navigation = [
   { id: "companies", label: "Companies", icon: Building2 },
   { id: "spaces", label: "Founder Spaces", icon: Mic2 },
   { id: "reports", label: "Reports", icon: ChartNoAxesCombined },
-  { id: "campaigns", label: "Monthly winner", icon: Award },
   { id: "settings", label: "Settings", icon: SettingsIcon },
 ] as const;
 export default function Workspace(props: {
@@ -103,11 +101,10 @@ function Shell({ section, id }: { section: Section; id?: string }) {
       ))}
     </nav>
   );
-  const campaign = s.campaigns.filter((c) => c.status === "Open").at(-1),
-    members = s.campaignParticipants.filter(
-      (p) => p.campaignId === campaign?.id,
-    ).length;
-  const title = navigation.find((n) => n.id === section)?.label;
+  const title =
+    section === "campaigns"
+      ? "Founder award archive"
+      : navigation.find((n) => n.id === section)?.label;
   const can = viewer.permissions.includes(SECTION_PERMISSIONS[section]);
   return (
     <div className="app-shell">
@@ -133,30 +130,6 @@ function Shell({ section, id }: { section: Section; id?: string }) {
         <p className="nav-label">WORKSPACE</p>
         {nav()}
         <div className="sidebar-bottom">
-          {campaign && (
-            <Link className="sidebar-campaign" href={path("campaigns")}>
-              <div className="row-between">
-                <span className="mini-award">
-                  <Award size={17} />
-                </span>
-                <span>MONTHLY COHORT</span>
-              </div>
-              <b>{campaign.name}</b>
-              <p>
-                {members} of {campaign.target} founders
-              </p>
-              <span className="progress">
-                <i
-                  style={{
-                    width: `${Math.min(100, (100 * members) / campaign.target)}%`,
-                  }}
-                />
-              </span>
-              <small>
-                {campaign.awardAmount} founder award <ArrowUpRight size={13} />
-              </small>
-            </Link>
-          )}
           <Link className="sidebar-public" href="/">
             Programme website <ArrowUpRight size={14} />
           </Link>

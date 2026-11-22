@@ -6,7 +6,8 @@
   "outputDirectory": ".next",
   "git": {
     "deploymentEnabled": {
-      "refactor/feature-architecture": false
+      "refactor/feature-architecture": false,
+      "feature/v4-public-homepage": false
     }
   }
 }

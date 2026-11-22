@@ -136,7 +136,16 @@ const manifest = JSON.parse(
 };
 const digest = (input: string | Buffer) =>
   createHash("sha256").update(input).digest("hex");
-test("authentication, manager permissions and request implementations match the pre-refactor baseline", () => {
+const reviewedChanges = JSON.parse(
+  readFileSync("docs/v4/security-changes.json", "utf8"),
+) as {
+  file: string;
+  name: string;
+  originalSha256: string;
+  sha256: string;
+  reason: string;
+}[];
+test("authentication, manager permissions and request implementations match reviewed baselines", () => {
   const printer = ts.createPrinter({ removeComments: true });
   for (const entry of manifest.functions) {
     const source = sources.get(entry.file)!;
@@ -145,9 +154,16 @@ test("authentication, manager permissions and request implementations match the 
         ts.isFunctionDeclaration(node) && node.name?.text === entry.name,
     );
     assert.ok(declaration, `${entry.file} ${entry.name}`);
+    const reviewed = reviewedChanges.find(
+      (change) => change.file === entry.file && change.name === entry.name,
+    );
+    if (reviewed) {
+      assert.equal(reviewed.originalSha256, entry.sha256);
+      assert.ok(reviewed.reason.length > 20);
+    }
     assert.equal(
       digest(printer.printNode(ts.EmitHint.Unspecified, declaration, source)),
-      entry.sha256,
+      reviewed?.sha256 || entry.sha256,
       `${entry.file} ${entry.name}`,
     );
   }

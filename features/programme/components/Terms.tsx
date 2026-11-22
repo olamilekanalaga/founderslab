@@ -1,29 +1,26 @@
 "use client";
-import { useEffect, useState } from "react";
 import Link from "next/link";
 
 import { ArrowRight } from "lucide-react";
 import PublicHeader from "@/components/layout/PublicHeader";
 
-import { defaultSettings } from "@/lib/catalog";
+import { PARTICIPATION_TERMS } from "@/lib/programme-policy";
 
 import PublicFooter from "@/components/layout/PublicFooter";
-import { api } from "@/features/bookings/lib/public-api";
 export function Terms() {
-  const [terms, setTerms] = useState(defaultSettings.terms);
-  useEffect(() => {
-    void api("programme")
-      .then((r) => setTerms(r.settings.terms))
-      .catch(() => {});
-  }, []);
   return (
     <div className="public-app">
       <PublicHeader />
       <main className="public-form-page prose" id="main-content">
         <div className="eyebrow">PROGRAMME TERMS & PRIVACY</div>
         <h1>Clear expectations. Informed participation.</h1>
-        <h2>Founder participation & the monthly award</h2>
-        <p>{terms}</p>
+        <h2>Founder participation</h2>
+        <p>{PARTICIPATION_TERMS}</p>
+        <p>
+          Previous programme terms, recorded decisions and any obligations
+          already incurred remain applicable to their historical records. These
+          terms describe new participation.
+        </p>
         <h2>Privacy and research</h2>
         <p>
           Applications are used to review participation, arrange sessions and

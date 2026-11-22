@@ -1,3 +1,4 @@
+import { PARTICIPATION_TERMS } from "@/lib/programme-policy";
 import countries from "i18n-iso-countries";
 import english from "i18n-iso-countries/langs/en.json";
 countries.registerLocale(english);
@@ -135,9 +136,9 @@ export const defaultSettings = {
   capacity: 5,
   retentionDays: 365,
   campaignTarget: 20,
+  // Historical compatibility only. Not published or offered by the current programme.
   awardAmount: "1 SOL",
-  terms:
-    "Participation is free and subject to review. The monthly programme targets 20 founders; capacity and selection are not guaranteed. One eligible founder may receive 1 SOL after human review against published criteria. No fee, investment or token purchase is required. Conflicts of interest must be disclosed. The award does not endorse a company or promise financial returns. No automatic cryptocurrency payments. Decisions and any transfer reference are recorded separately. Founder information is private unless separately approved for publication.",
+  terms: PARTICIPATION_TERMS,
 };
 export function allowed(permissions: string[], key: string) {
   return permissions.includes(key);

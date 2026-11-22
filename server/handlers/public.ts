@@ -1,4 +1,5 @@
 import "server-only";
+import { PARTICIPATION_TERMS } from "@/lib/programme-policy";
 import {
   ensureProgrammeWindow,
   requireProgrammeBooking,
@@ -60,9 +61,7 @@ export async function GET(
           return {
             countryOptions: s.countryOptions,
             capacity: s.capacity,
-            campaignTarget: s.campaignTarget,
-            awardAmount: s.awardAmount,
-            terms: s.terms,
+            terms: PARTICIPATION_TERMS,
           };
         })(),
         labels: await db().classificationLabel.findMany({

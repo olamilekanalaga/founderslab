@@ -1,4 +1,8 @@
 import "server-only";
+import {
+  RETIRED_AWARD_COMMANDS,
+  RETIRED_AWARD_MESSAGE,
+} from "@/lib/programme-policy";
 import { z } from "zod";
 import { body, json, failure } from "@/server/http";
 import { db, loadState, executeCommand } from "@/server/db";
@@ -28,6 +32,9 @@ export async function POST(request: Request) {
     const permission = actionPermission(command.type);
     if (!permission || !viewer.permissions.includes(permission))
       throw new DomainError("Permission required.", 403);
+    if (RETIRED_AWARD_COMMANDS.some((type) => type === command.type)) {
+      throw new DomainError(RETIRED_AWARD_MESSAGE, 410);
+    }
     if (command.type === "invite.create") {
       throw new DomainError("Administrator invitations are disabled.", 403);
     }
