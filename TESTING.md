@@ -22,7 +22,7 @@ Checks run locally against Node.js 24, PostgreSQL 17, the Next.js production bui
 - Simple founder/company profiles expose short descriptions; edit and reload a company description. No research notes, needs or follow-up stories appear in these profiles. Former Research URLs redirect to founders.
 - Short founder answers remain accepted; invalid fields show human-readable messages.
 - Weekly Space data is edited from founder profiles. Two founders in one week share listener totals, duration, X post and Space links while their project attendance stays separate; save and refresh preserve values. Overview retains the cumulative growth selector.
-- Calendar week cards show 5/5 available before picking and 0/5 Full on a disabled date. Only Saturdays appear in the rolling 12-week window.
+- Calendar week cards show 0/5 booked before picking and 5/5 Full on a disabled date. Only Saturdays appear in the rolling 12-week window.
 
 ## Database and domain checks
 

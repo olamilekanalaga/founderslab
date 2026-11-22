@@ -418,28 +418,45 @@ test("public booking calendar enables only open Saturdays and disables full date
           attendance: "Approved",
         }),
       );
+    seed.companies
+      .slice(0, 2)
+      .forEach((company: { id: string }, index: number) =>
+        seed.participants.push({
+          ...seed.participants[0],
+          id: `partial-saturday-${index}`,
+          companyId: company.id,
+          sessionId: "up2",
+          attendance: "Approved",
+        }),
+      );
     localStorage.setItem("founders-lab-demo-v1", JSON.stringify(seed));
   });
   await page.goto("/book?mode=demo");
   await expect(
-    page.getByRole("button", { name: /0\/5 Full.*Saturday, 5 December 2026/ }),
+    page.getByRole("button", { name: /5\/5 Full.*Saturday, 5 December 2026/ }),
   ).toBeDisabled();
   await expect(page.locator(".weekly-date")).toHaveCount(12);
   await expect(
     page.getByRole("button", { name: /Friday, 4 December 2026/ }),
   ).toHaveCount(0);
   await expect(
-    page.getByRole("button", { name: /0\/5 Full.*Saturday, 5 December 2026/ }),
-  ).toContainText("0/5");
-  await expect(
-    page.getByRole("button", { name: /Saturday, 12 December 2026/ }),
+    page.getByRole("button", { name: /5\/5 Full.*Saturday, 5 December 2026/ }),
   ).toContainText("5/5");
   await expect(
     page.getByRole("button", { name: /Saturday, 12 December 2026/ }),
+  ).toContainText("2/5");
+  await expect(
+    page.getByRole("button", { name: /Saturday, 12 December 2026/ }),
   ).toBeEnabled();
+  await expect(
+    page.getByRole("button", { name: /Saturday, 19 December 2026/ }),
+  ).toContainText("0/5");
   await page
     .getByRole("button", { name: /Saturday, 12 December 2026/ })
     .click();
+  await expect(page.locator(".weekly-selection")).toContainText(
+    "2 confirmed founder projects · 3 places available",
+  );
   await expect(
     page.getByRole("link", { name: "View booking details", exact: true }),
   ).toHaveAttribute("href", "/apply?session=up2&mode=demo");

@@ -65,12 +65,12 @@ export default function PublicBookingCalendar({
         {weeks.map((w) => {
           const full = !!w.session && w.session.availableSeats <= 0;
           const count = w.session
-            ? `${w.session.availableSeats}/${w.session.capacity}`
+            ? `${Math.max(0, w.session.capacity - w.session.availableSeats)}/${w.session.capacity}`
             : "—/5";
           const state = full
             ? "Full"
             : w.open
-              ? "available"
+              ? "booked"
               : w.session
                 ? "Closed"
                 : "Not published";
