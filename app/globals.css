@@ -2470,6 +2470,39 @@ td select {
 .confirmation-booking h3 {
   font-size: 14px;
 }
+.founder-contact {
+  margin-top: 24px;
+  padding: clamp(20px, 4vw, 28px);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+}
+.founder-contact h2 {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  font-size: clamp(18px, 3vw, 22px);
+  line-height: 1.35;
+}
+.founder-contact h2 svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+  color: var(--forest);
+}
+.founder-contact p {
+  margin: 14px 0 20px;
+  color: var(--muted);
+}
+.founder-contact-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+  gap: 12px;
+}
+.founder-contact-actions .button {
+  min-height: 46px;
+  font-size: 14px;
+}
 .prose h2 {
   font-size: 19px;
   margin: 28px 0 12px;

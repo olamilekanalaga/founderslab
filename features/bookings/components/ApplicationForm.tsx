@@ -13,6 +13,7 @@ import { publicApplicationSchema as applicationSchema } from "@/lib/validation/a
 
 import PublicFooter from "@/components/layout/PublicFooter";
 import { api } from "@/features/bookings/lib/public-api";
+import { FounderContact } from "@/features/bookings/components/FounderContact";
 export function ApplicationForm({ configured }: { configured: boolean }) {
   const params = useSearchParams(),
     router = useRouter();
@@ -475,6 +476,7 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
             Submitting an application does not guarantee a speaking slot.
           </small>
         </form>
+        <FounderContact />
       </main>
       <PublicFooter />
     </div>
