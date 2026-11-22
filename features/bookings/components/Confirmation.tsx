@@ -9,6 +9,7 @@ import SessionTime from "@/components/shared/SessionTime";
 import { Status } from "@/components/ui";
 import PublicFooter from "@/components/layout/PublicFooter";
 import { api } from "@/features/bookings/lib/public-api";
+import { FounderContact } from "@/features/bookings/components/FounderContact";
 import {
   subscribeBrowser,
   noopSubscribe,
@@ -83,6 +84,7 @@ export function Confirmation() {
             <p>
               Thank you for telling us about <b>{data.companyName}</b>.
             </p>
+            <FounderContact />
             <dl className="facts">
               <div>
                 <dt>Application reference</dt>

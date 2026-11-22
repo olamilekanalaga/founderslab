@@ -4,6 +4,19 @@ test("application starts with honest examples and accepts a bare domain through 
   page,
 }) => {
   await page.goto("/apply");
+  const contact = page.getByRole("region", {
+    name: "Let’s connect before your Space",
+  });
+  await expect(page.locator("form + .founder-contact")).toBeVisible();
+  await expect(
+    contact.getByRole("link", { name: "X DM", exact: true }),
+  ).toHaveAttribute(
+    "href",
+    "https://x.com/messages/compose?recipient_id=1506909333740826628",
+  );
+  await expect(
+    contact.getByRole("link", { name: "Telegram", exact: true }),
+  ).toHaveAttribute("href", "https://t.me/ola_crrypt");
   await expect(
     page.getByRole("heading", { name: "About you", exact: true }),
   ).toBeVisible();
@@ -67,6 +80,16 @@ test("missing required answers focus the field, while optional email and normali
       },
     });
   });
+  await page.route("**/api/public/confirmation", (route) =>
+    route.fulfill({
+      json: {
+        reference: "FORM-TEST",
+        companyName: "Example Project",
+        status: "Pending",
+        bookings: [],
+      },
+    }),
+  );
   await page.goto("/apply");
   await page
     .getByRole("button", { name: "Submit founder application" })
@@ -100,6 +123,25 @@ test("missing required answers focus the field, while optional email and normali
     .getByRole("button", { name: "Submit founder application" })
     .click();
   await expect(page).toHaveURL(/\/confirmation#token=/);
+  const contact = page.getByRole("region", {
+    name: "Let’s connect before your Space",
+  });
+  await expect(contact).toBeVisible();
+  for (const name of ["X DM", "Telegram"]) {
+    const link = contact.getByRole("link", { name, exact: true });
+    await expect(link).toHaveAttribute("target", "_blank");
+    await expect(link).toHaveAttribute("rel", "noopener noreferrer");
+    await expect(link).toHaveAttribute("referrerpolicy", "no-referrer");
+  }
+  await expect(
+    contact.getByRole("link", { name: "X DM", exact: true }),
+  ).toHaveAttribute(
+    "href",
+    "https://x.com/messages/compose?recipient_id=1506909333740826628",
+  );
+  await expect(
+    contact.getByRole("link", { name: "Telegram", exact: true }),
+  ).toHaveAttribute("href", "https://t.me/ola_crrypt");
   expect(submitted?.contact).toBe("");
   expect(submitted?.xHandle).toBe("personal_founder");
   expect(submitted?.projectXHandle).toBe("official_project");
