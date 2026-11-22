@@ -56,10 +56,7 @@ export default function FounderSpaces({
           {week.session.title}
           <ArrowUpRight size={14} />
         </Link>
-        <small>
-          {dateTime(week.session.startsAt, week.session.timezone)} ·{" "}
-          {week.session.timezone}
-        </small>
+        <small>{dateTime(week.session.startsAt)} · UTC / GMT</small>
         <ExternalLink href={week.session.postUrl}>Weekly X post</ExternalLink>
         <ExternalLink href={week.session.liveUrl}>Weekly Space</ExternalLink>
         <ExternalLink href={week.session.recordingUrl}>

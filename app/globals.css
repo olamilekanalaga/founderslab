@@ -5504,3 +5504,4 @@ td > b,
 .own-week-team{background:#faf8ff}.weekly-shared-caption,.weekly-edit-hint{color:#65708a;font-size:12px;line-height:1.6;padding:0 22px 20px}.weekly-edit-hint{padding:0;margin:0 0 16px}
 @media(max-width:600px){.founder-weekly-spaces>.section-heading{flex-wrap:wrap;gap:12px}.weekly-team-card dl{grid-template-columns:repeat(2,minmax(0,1fr))}.profile-week-picker select{font-size:16px}.weekly-shared-metrics,.weekly-own-teams,.weekly-space-heading{padding-left:16px;padding-right:16px}}
 .weekly-link-fields{display:grid;gap:16px;margin-bottom:22px}.weekly-link-fields label{display:flex;flex-direction:column;gap:7px;color:#65708a;font-size:12px}
+.calendar-empty-state{margin-top:20px;border:1px solid #e5e2f1;border-radius:10px;background:#faf9ff;padding:16px;font-size:12px;line-height:1.6}.calendar-empty-state p{color:#65708a;margin:6px 0 10px}

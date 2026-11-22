@@ -201,7 +201,7 @@ export default function Overview({ addFounder }: { addFounder: () => void }) {
           >
             <span>
               <b>{session.title}</b>
-              <small>{dateTime(session.startsAt, session.timezone)}</small>
+              <small>{dateTime(session.startsAt)}</small>
             </span>
             <ArrowUpRight size={16} />
           </Link>

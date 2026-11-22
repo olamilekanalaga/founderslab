@@ -135,7 +135,7 @@ function SpaceForm({
       <div className="section-heading">
         <div>
           <h2>{session.title}</h2>
-          <p>{dateTime(session.startsAt, session.timezone)}</p>
+          <p>{dateTime(session.startsAt)}</p>
         </div>
         <Status value={record ? "Recorded" : "Not recorded"} />
       </div>

@@ -1,3 +1,5 @@
+export const BOOKING_TIME_ZONE = "UTC";
+export const BOOKING_TIME_LABEL = "UTC / GMT";
 export interface PublicSession {
   id: string;
   title: string;
@@ -12,7 +14,7 @@ export interface PublicSession {
 type SessionDate = Pick<PublicSession, "startsAt" | "timezone">;
 export function sessionDay(session: SessionDate) {
   return new Intl.DateTimeFormat("en-CA", {
-    timeZone: session.timezone,
+    timeZone: BOOKING_TIME_ZONE,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -22,7 +24,7 @@ export function isSaturday(session: SessionDate) {
   return (
     new Intl.DateTimeFormat("en-US", {
       weekday: "short",
-      timeZone: session.timezone,
+      timeZone: BOOKING_TIME_ZONE,
     }).format(new Date(session.startsAt)) === "Sat"
   );
 }

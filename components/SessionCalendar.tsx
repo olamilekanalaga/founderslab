@@ -144,9 +144,7 @@ export default function SessionCalendar({
                   </Link>
                   <Status value={v.status} />
                 </div>
-                <p>
-                  {dateTime(v.startsAt, v.timezone)} · {v.timezone}
-                </p>
+                <p>{dateTime(v.startsAt)} · UTC / GMT</p>
                 <div className="row-between">
                   <div className="participant-stack">
                     {people.slice(0, 5).map((p, j) => (

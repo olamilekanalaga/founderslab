@@ -9,6 +9,8 @@ import {
   Clock3,
 } from "lucide-react";
 import {
+  BOOKING_TIME_ZONE,
+  BOOKING_TIME_LABEL,
   isSaturday,
   publicSlotOpen,
   sessionDay,
@@ -22,6 +24,9 @@ export default function PublicBookingCalendar({
   demo: boolean;
 }) {
   const open = sessions.filter((s) => publicSlotOpen(s, s.availableSeats));
+  const hasPublishedSaturday = sessions.some(
+    (s) => s.status === "Scheduled" && isSaturday(s),
+  );
   const first = open.toSorted((a, b) =>
     a.startsAt.localeCompare(b.startsAt),
   )[0];
@@ -63,7 +68,7 @@ export default function PublicBookingCalendar({
           <CalendarDays size={17} /> Saturdays
         </div>
         <div>
-          <Clock3 size={17} /> Times shown in Africa/Lagos
+          <Clock3 size={17} /> Times shown in {BOOKING_TIME_LABEL}
         </div>
         <small>Bookings are reviewed by the programme team.</small>
       </aside>
@@ -176,6 +181,23 @@ export default function PublicBookingCalendar({
         <p className="booking-capacity-key">
           Project places booked / capacity · e.g. 0/5
         </p>
+        {!open.length && (
+          <div className="calendar-empty-state" role="status">
+            <strong>
+              {hasPublishedSaturday
+                ? "No Saturday slots available"
+                : "No Saturday slots published yet"}
+            </strong>
+            <p>
+              {hasPublishedSaturday
+                ? "Published sessions are full or closed. The host can open more Saturdays."
+                : "Grey dates are unavailable, not fully booked. The host needs to publish the next sessions."}
+            </p>
+            <Link className="text-link" href="/signin">
+              Host sign in <ArrowRight size={13} />
+            </Link>
+          </div>
+        )}
       </div>
       <div className="booking-times" aria-live="polite">
         <h2>
@@ -196,7 +218,7 @@ export default function PublicBookingCalendar({
           </p>
         ) : (
           <>
-            <span className="booking-timezone">Africa/Lagos</span>
+            <span className="booking-timezone">{BOOKING_TIME_LABEL}</span>
             <div className="booking-time-options">
               {sessions
                 .filter((s) => sessionDay(s) === day && isSaturday(s))
@@ -214,7 +236,7 @@ export default function PublicBookingCalendar({
                       {new Date(s.startsAt).toLocaleTimeString("en-GB", {
                         hour: "2-digit",
                         minute: "2-digit",
-                        timeZone: "Africa/Lagos",
+                        timeZone: BOOKING_TIME_ZONE,
                       })}
                     </strong>
                     <span>

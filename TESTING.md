@@ -1,13 +1,13 @@
-# Verification — 21 November 2026
+# Verification — 22 November 2026
 
 Checks run locally against Node.js 24, PostgreSQL 17, the Next.js production build and Chromium. Public Vercel browser verification is separate from CI deployment status.
 
 | Check | Result |
 |---|---|
 | TypeScript and ESLint | Passed |
-| Domain/validation tests | 19 passed |
+| Domain/validation tests | 20 passed |
 | Production build | Passed |
-| Browser journeys | 10 passed |
+| Browser journeys | 11 passed |
 | PostgreSQL/production HTTP | 10 verification groups passed |
 | Responsive screenshots | 20 current desktop/mobile captures, plus booking and shared-recording journey captures |
 | Accessibility | Axe WCAG A/AA checks on overview, founders/list and profile, companies/list and profile, Spaces, reports, application and booking |
@@ -39,3 +39,5 @@ Domain tests verify a single shared SpaceData record across two founder profiles
 ## Connected production release
 
 The isolated PostgreSQL integration suite runs the exact production preparation script twice, confirms zero fictional founders and one bootstrap administrator, and then exercises production HTTP with only a prefixed database variable. It checks `/demo` is unavailable, anonymous workspace access is rejected, and the readiness endpoint succeeds. Existing real application submission, capacity, approval and shared weekly data checks run against that initialized schema. Local browser-demo tests retain the non-production environment.
+
+UTC checks cover late-Friday/late-Saturday boundaries independently of the original stored timezone, public time selection at 17:00 UTC, and a calendar with no published sessions. The empty calendar explains unavailability and has no enabled date buttons. Existing timestamps are not shifted.

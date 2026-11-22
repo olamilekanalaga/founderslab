@@ -100,7 +100,7 @@ export default function RecordEditor({
     session: {
       title: "",
       startsAt: now,
-      timezone: "Africa/Lagos",
+      timezone: "UTC",
       host: "Ola_Crrypt",
       capacity: state.settings.capacity,
       deadline: now,

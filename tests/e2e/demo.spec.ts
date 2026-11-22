@@ -39,7 +39,7 @@ test("demo application, approval, booking and one recording propagate to linked 
   await page.setViewportSize({ width: 393, height: 852 });
   await page.goto("/book?mode=demo");
   await page.getByRole("button", { name: /Saturday, 5 December 2026/ }).click();
-  await page.getByRole("button", { name: /18:00.*places available/ }).click();
+  await page.getByRole("button", { name: /17:00.*places available/ }).click();
   await page.getByRole("link", { name: "Continue", exact: true }).click();
   await expect(page).toHaveURL(/apply\?session=up1&mode=demo/);
   await expect(page.locator(".selected-booking")).toContainText("5 Dec");
@@ -438,7 +438,7 @@ test("public booking calendar enables only open Saturdays and disables full date
   await page
     .getByRole("button", { name: /Saturday, 12 December 2026/ })
     .click();
-  await page.getByRole("button", { name: /18:00.*places available/ }).click();
+  await page.getByRole("button", { name: /17:00.*places available/ }).click();
   await expect(
     page.getByRole("link", { name: "Continue", exact: true }),
   ).toHaveAttribute("href", "/apply?session=up2&mode=demo");
@@ -452,4 +452,28 @@ test("public booking calendar enables only open Saturdays and disables full date
     path: "artifacts/booking-calendar-desktop.png",
     fullPage: true,
   });
+});
+
+test("empty real-style calendar explains unpublished dates and shows UTC", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 393, height: 852 });
+  await page.goto("/demo");
+  await page.getByRole("button", { name: "Reset demo", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Reset fictional demo", exact: true })
+    .click();
+  await page.evaluate(() => {
+    const seed = JSON.parse(localStorage.getItem("founders-lab-demo-v1")!);
+    seed.sessions = seed.sessions.filter(
+      (s: { status: string }) => s.status !== "Scheduled",
+    );
+    localStorage.setItem("founders-lab-demo-v1", JSON.stringify(seed));
+  });
+  await page.goto("/book?mode=demo");
+  await expect(page.getByRole("status")).toContainText(
+    "No Saturday slots published yet",
+  );
+  await expect(page.locator(".booking-intro")).toContainText("UTC / GMT");
+  await expect(page.locator(".booking-days button:enabled")).toHaveCount(0);
 });

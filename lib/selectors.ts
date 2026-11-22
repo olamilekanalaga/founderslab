@@ -124,7 +124,7 @@ export function growthData(s: DataState) {
       added: v.value,
     }));
 }
-export const dateTime = (date: string, timezone = "Africa/Lagos") =>
+export const dateTime = (date: string, timezone = "UTC") =>
   new Intl.DateTimeFormat("en-GB", {
     day: "numeric",
     month: "short",

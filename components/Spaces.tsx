@@ -43,8 +43,8 @@ export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
             <div>
               <h1>{session.title}</h1>
               <p>
-                {dateTime(session.startsAt, session.timezone)} ·{" "}
-                {session.timezone} · Hosted by {session.host}
+                {dateTime(session.startsAt)} · UTC / GMT · Hosted by{" "}
+                {session.host}
               </p>
             </div>
             {can && (

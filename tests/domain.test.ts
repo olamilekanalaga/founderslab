@@ -682,3 +682,19 @@ test("weekly profiles share one Space record but preserve per-company figures an
     ),
   );
 });
+
+test("Saturday eligibility follows UTC rather than the original session timezone", async () => {
+  const { isSaturday, sessionDay } = await import("../lib/booking");
+  const lateFriday = {
+    startsAt: "2026-12-04T23:30:00.000Z",
+    timezone: "Africa/Lagos",
+  };
+  assert.equal(isSaturday(lateFriday), false);
+  assert.equal(sessionDay(lateFriday), "2026-12-04");
+  const lateSaturday = {
+    startsAt: "2026-12-05T23:30:00.000Z",
+    timezone: "Africa/Lagos",
+  };
+  assert.equal(isSaturday(lateSaturday), true);
+  assert.equal(sessionDay(lateSaturday), "2026-12-05");
+});

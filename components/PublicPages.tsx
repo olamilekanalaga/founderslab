@@ -224,9 +224,7 @@ export function Landing() {
               <article className="panel session-card" key={s.id}>
                 <CalendarDays size={23} />
                 <h3>{s.title}</h3>
-                <p>
-                  {dateTime(s.startsAt, s.timezone)} · {s.timezone}
-                </p>
+                <p>{dateTime(s.startsAt)} · UTC / GMT</p>
                 <small>
                   {s.availableSeats} / {s.capacity} project seats available ·{" "}
                   {s.host}
@@ -429,8 +427,7 @@ export function ApplicationForm({
               <span className="eyebrow">YOUR SELECTED SPACE</span>
               <strong>
                 {chosenSession
-                  ? dateTime(chosenSession.startsAt, "Africa/Lagos") +
-                    " · Africa/Lagos"
+                  ? dateTime(chosenSession.startsAt) + " · UTC / GMT"
                   : "Loading selected Space…"}
               </strong>
               <span>{chosenSession?.title}</span>
@@ -961,10 +958,7 @@ export function Confirmation() {
             {data.bookings.map((b, i) => (
               <div className="confirmation-booking" key={i}>
                 <h3>{b.session.title}</h3>
-                <p>
-                  {dateTime(b.session.startsAt, b.session.timezone)} ·{" "}
-                  {b.session.timezone}
-                </p>
+                <p>{dateTime(b.session.startsAt)} · UTC / GMT</p>
                 <Status value={b.status} />
               </div>
             ))}
