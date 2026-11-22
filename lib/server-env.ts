@@ -30,6 +30,6 @@ export function migrationUrl(env: Env = process.env) {
   }
   return application;
 }
-export function publicDemoAllowed(env: Env = process.env) {
-  return env.VERCEL_ENV !== "production";
+export function publicDemoAllowed() {
+  return false;
 }

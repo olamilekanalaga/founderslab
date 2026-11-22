@@ -1,3 +1,4 @@
+import { lockProgramme, ensureProgrammeWindow } from "@/lib/programme-window";
 import { z } from "zod";
 import { cookies } from "next/headers";
 import { db, hash, token } from "@/lib/db";
@@ -36,6 +37,7 @@ export async function GET(
 }
 const saveSchema = schemas["space-data.save"]
   .pick({
+    submit: true,
     sessionId: true,
     liveListeners: true,
     durationMinutes: true,
@@ -62,11 +64,15 @@ export async function POST(
         15 * 60000,
       );
       const manager = await db().spaceManager.findUnique({ where: { email } });
-      if (manager && !manager.revokedAt)
-        await issueManagerLink(manager.id, "Passwordless access request");
+      if (manager && !manager.revokedAt) {
+        // Keep public responses uniform; delivery/configuration details belong to Admin.
+        try {
+          await issueManagerLink(manager.id, "Passwordless access request");
+        } catch {}
+      }
       return json({
         message:
-          "If this email has active manager access, a sign-in email has been requested. Check your inbox.",
+          "Request received. If this address has active manager access, check its inbox. Contact the administrator if no link arrives.",
       });
     }
     if (action === "verify") {
@@ -145,6 +151,7 @@ export async function POST(
       throw new DomainError("Duplicate attendance project.");
     await db().$transaction(async (tx) => {
       const manager = await lockManager(tx, session.managerId);
+      await lockProgramme(tx);
       const liveSession = await tx.spaceManagerSession.findUnique({
         where: { id: session.id },
       });
@@ -174,9 +181,32 @@ export async function POST(
           "Attendance must belong to participating projects.",
           403,
         );
+      if (p.submit) {
+        const event = await tx.session.findUniqueOrThrow({
+          where: { id: p.sessionId },
+        });
+        if (event.startsAt > new Date())
+          throw new DomainError(
+            "Attendance can only be submitted after the Space starts.",
+          );
+        if (
+          p.liveListeners === null ||
+          p.durationMinutes === null ||
+          participants.some(
+            (a) => !p.teams.some((t) => t.companyId === a.companyId),
+          )
+        )
+          throw new DomainError(
+            "Enter listeners, duration and attendance for every participating project.",
+          );
+      }
       await tx.session.update({
         where: { id: p.sessionId },
-        data: { postUrl: p.postUrl, recordingUrl: p.recordingUrl },
+        data: {
+          postUrl: p.postUrl,
+          recordingUrl: p.recordingUrl,
+          ...(p.submit ? { status: "Completed" } : {}),
+        },
       });
       const record = await tx.spaceData.upsert({
         where: { sessionId: p.sessionId },
@@ -185,6 +215,9 @@ export async function POST(
           liveListeners: p.liveListeners,
           durationMinutes: p.durationMinutes,
           recordedBy: manager.email,
+          ...(p.submit
+            ? { submittedAt: new Date(), submittedBy: manager.email }
+            : {}),
         },
         update: {
           liveListeners: p.liveListeners,
@@ -192,6 +225,11 @@ export async function POST(
           recordedBy: manager.email,
         },
       });
+      if (p.submit && !record.submittedAt)
+        await tx.spaceData.update({
+          where: { id: record.id },
+          data: { submittedAt: new Date(), submittedBy: manager.email },
+        });
       for (const team of p.teams)
         await tx.spaceTeamAttendance.upsert({
           where: {
@@ -206,6 +244,7 @@ export async function POST(
             otherTeamCount: team.otherTeamCount,
           },
         });
+      if (p.submit) await ensureProgrammeWindow(tx);
       await tx.spaceManager.update({
         where: { id: manager.id },
         data: { lastActivityAt: new Date() },

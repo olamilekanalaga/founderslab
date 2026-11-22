@@ -13,6 +13,15 @@ for (const label of seed.labels)
     update: {},
   });
 if (process.argv.includes("--demo")) {
+  const source =
+    process.env.DATABASE_URL || process.env.DATABASE_DATABASE_URL || "";
+  if (
+    process.env.VERCEL === "1" ||
+    !["localhost", "127.0.0.1", "[::1]"].includes(new URL(source).hostname)
+  )
+    throw new Error(
+      "Fictional fixtures are restricted to isolated local testing.",
+    );
   const count = await db().founder.count();
   if (count)
     throw new Error(

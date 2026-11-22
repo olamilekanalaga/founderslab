@@ -25,8 +25,6 @@ test("Neon prefixed variables resolve without replacing a canonical connection",
     /UNPOOLED/,
   );
 });
-test("production public demo is closed independently of a caller's query string", () => {
-  assert.equal(publicDemoAllowed({ VERCEL_ENV: "production" }), false);
-  assert.equal(publicDemoAllowed({ VERCEL_ENV: "preview" }), true);
-  assert.equal(publicDemoAllowed({}), true);
+test("browser demo access is disabled in every environment", () => {
+  assert.equal(publicDemoAllowed(), false);
 });

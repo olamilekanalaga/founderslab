@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 export const metadata: Metadata = {
-  title: "Founders Lab with Ola_Crrypt",
+  title: "Founders Lab with ⭕️La_Crrypt💰₿",
   description:
     "A private workspace for founder conversations, Web3 research and business opportunities.",
 };

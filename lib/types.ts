@@ -56,6 +56,7 @@ export interface Settings {
   terms: string;
 }
 export interface DataState {
+  programmeSessionIds?: string[];
   version: 1;
   fictional?: boolean;
   founders: Person[];

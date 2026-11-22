@@ -1,3 +1,8 @@
+import {
+  lockProgramme,
+  ensureProgrammeWindow,
+  requireProgrammeBooking,
+} from "./programme-window";
 import { databaseUrl } from "./server-env";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient, Prisma } from "@prisma/client";
@@ -67,7 +72,16 @@ export async function loadState(client: Client = db()): Promise<DataState> {
     where: { key: "dataset" },
   });
   const team = await client.user.findMany({
-    include: { role: { include: { permissions: true } }, grants: true },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      active: true,
+      roleId: true,
+      customPermissions: true,
+      role: { include: { permissions: true } },
+      grants: true,
+    },
   });
   const invitations = await client.invitation.findMany({
     select: {
@@ -80,6 +94,17 @@ export async function loadState(client: Client = db()): Promise<DataState> {
       createdAt: true,
     },
   });
+  const schedule = await client.programmeSchedule.findUnique({
+    where: { id: "main" },
+  });
+  const programme = schedule
+    ? await client.programmeWeek.findMany({
+        where: {
+          position: { gte: schedule.activeStart, lt: schedule.activeStart + 8 },
+        },
+        select: { sessionId: true },
+      })
+    : [];
   const data = Object.fromEntries(pairs);
   data.applications = (data.applications as Row[]).map(
     ({
@@ -98,6 +123,7 @@ export async function loadState(client: Client = db()): Promise<DataState> {
     JSON.stringify({
       ...data,
       version: 1,
+      programmeSessionIds: programme.map((w) => w.sessionId),
       fictional: dataset?.value === true,
       users: team.map((u) => ({
         id: u.id,
@@ -191,6 +217,8 @@ export async function executeCommand(command: Command, viewer: Viewer) {
     throw new DomainError("Use the team command handler");
   return db().$transaction(
     async (tx) => {
+      if (command.type === "booking.create")
+        await requireProgrammeBooking(tx, String(command.payload.sessionId));
       // All capacity decisions for one session serialize on the same PostgreSQL row lock.
       if (command.type === "booking.review") {
         const booking = await tx.bookingRequest.findUnique({
@@ -199,6 +227,7 @@ export async function executeCommand(command: Command, viewer: Viewer) {
         if (!booking) throw new DomainError("Booking not found", 404);
         await tx.$queryRaw`SELECT id FROM "Session" WHERE id = ${booking.sessionId} FOR UPDATE`;
       } else if (command.type === "space-data.save") {
+        await lockProgramme(tx);
         await tx.$queryRaw`SELECT id FROM "Session" WHERE id = ${String(command.payload.sessionId)} FOR UPDATE`;
       } else if (command.type === "session.save" && command.payload.id) {
         await tx.$queryRaw`SELECT id FROM "Session" WHERE id = ${String(command.payload.id)} FOR UPDATE`;
@@ -206,6 +235,10 @@ export async function executeCommand(command: Command, viewer: Viewer) {
       const before = await loadState(tx),
         after = applyCommand(before, command, viewer);
       await persistDiff(tx, before, after);
+      if (command.type === "space-data.save" && command.payload.submit) {
+        await ensureProgrammeWindow(tx);
+        return scopeState(await loadState(tx), viewer.permissions);
+      }
       return scopeState(after, viewer.permissions);
     },
     { maxWait: 10000, timeout: 30000 },

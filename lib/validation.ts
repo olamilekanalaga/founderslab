@@ -131,6 +131,7 @@ export const schemas = {
     status: z.enum(["Approved", "Waitlisted", "Declined"]),
   }),
   "space-data.save": z.object({
+    submit: z.boolean().optional().default(false),
     postUrl: z.union([safeUrl, z.literal("")]).optional(),
     liveUrl: z.union([safeUrl, z.literal("")]).optional(),
     recordingUrl: z.union([safeUrl, z.literal("")]).optional(),

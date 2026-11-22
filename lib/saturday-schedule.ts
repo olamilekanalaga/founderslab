@@ -39,10 +39,10 @@ export function saturdaySessions(now = new Date(), weeks = 12) {
       startsAt = londonSaturdayStart(day);
     return {
       id: `founders-lab-saturday-${day}`,
-      title: "Founders Lab — Saturday Space",
+      title: "Founders Lab with ⭕️La_Crrypt💰₿",
       startsAt,
       timezone: LONDON_TIME_ZONE,
-      host: "Ola_Crrypt",
+      host: "⭕️La_Crrypt💰₿",
       capacity: 5,
       deadline: startsAt,
       status: "Scheduled",

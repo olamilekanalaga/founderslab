@@ -1,108 +1,69 @@
-# Founders Lab with Ola_Crrypt
+# Founders Lab
 
-A private founder register and X Spaces booking programme, with a no-login fictional demo. The current interface focuses on names, companies, countries, short product descriptions and programme numbers.
+A private founder-programme workspace with public booking, hosted by **⭕️La_Crrypt💰₿**. The application uses one domain, a light interface, Next.js, TypeScript, Prisma and PostgreSQL.
 
-## Current screens
+## Public workflow
 
-- **Overview:** founder, company, country and completed-Space counts; founder growth; country distribution; recorded attendance totals; pending applications and upcoming Spaces.
-- **Founders:** searchable cards/table, company links, short descriptions, contact details and Space appearances.
-- **Companies:** company name, country, short product description, team size, sector/stage, founders and shared recording links.
-- **Founder Spaces:** applications, booking approvals and weekly sessions.
-- **Reports:** filtered founder/company records, country/team counts, CSV and PDF exports.
-- **Campaigns & awards:** programme cohorts and manually recorded award decisions; no payment automation.
-- **Settings:** administrator access, company options and programme configuration.
+`/` opens `/book`. A founder chooses an available Saturday, completes `/apply`, and receives a private, limited-scope `/confirmation#token=…` link. There are no founder accounts or public signup. Every submission is stored in PostgreSQL. Missing database configuration produces an unavailable state, never a fictional fallback. Browser demo routes and mode switches have been removed.
 
-Research, classification, market-map and opportunity screens have been retired from navigation. Their old URLs redirect to the founder directory. Profiles, editors and reports no longer display research notes, business-need stories or follow-up narratives. Existing database records and the underlying legacy models are preserved; this update does not delete historical data or import posts from X.
+The calendar shows **eight Saturdays as two four-week cycles**, with the number of **slots left**. Full, cancelled and past weeks cannot be booked. All programme sessions start at **7 PM Europe/London**, automatically applying GMT/BST. Booking details and confirmations also show the visitor's browser-local time and date.
 
-## Run the demo
+## Attendance-gated calendar
 
-```bash
+Admin and assigned Space Managers can save drafts and explicitly **Submit attendance**. A final submission requires listeners, duration and attendance for every participating project; zero counts are valid. Future sessions cannot be submitted. A distinct session counts once regardless of later edits.
+
+When all four Spaces in the oldest cycle have submitted attendance, that cycle leaves the public calendar and the next four Saturdays are opened. The public window remains eight weeks. The calendar does not advance merely because time passes. Completed sessions, submissions, bookings, founders, recording links and audit logs remain in private history; no historical records are deleted. Existing sessions are reused by London date and their bookings/capacities are preserved.
+
+New booking requests outside the active season are rejected by the server, including direct API requests. Pending requests do not reserve seats. Admin approval uses transactional capacity checks and counts founder projects separately from speakers.
+
+## Private access
+
+- `/signin` → `/dashboard`: only the active Admin matching `BOOTSTRAP_ADMIN_EMAIL` can sign in. No default password or public administrator creation endpoint exists.
+- `/manager/spaces`: separately invited, passwordless Space Managers can edit only assigned attendance, duration and X links. They cannot access the Admin dashboard or founder contacts. See [SPACE-MANAGERS.md](SPACE-MANAGERS.md).
+- Admin: Founder Spaces → Applications / Bookings to review requests. Founder/company profiles share their associated weekly session data and recording links. Reports and charts derive from stored records.
+
+## Monthly winner and permanent deletion
+
+Open **Monthly winner**, choose a month, select one founder from that month's Space participants, and save. No campaign setup, assessments or selection-criteria form is required. Saving another selection replaces the month's winner; no cryptocurrency payment is sent.
+
+Open a founder profile or an application review and choose **Delete permanently**. Type `DELETE` to confirm. Declined, pending and approved records can be removed. Deleting a linked approved application also deletes its founder record and owned applications/bookings/research/opportunities. Orphaned company records are removed; companies and Spaces shared with other founders remain. Deleted confirmation links stop working. Only the pre-provisioned Admin can delete records.
+
+## Local setup
+
+Use Node.js 24 and PostgreSQL. Copy `.env.example` to `.env`, configure the local database and bootstrap credentials, then run:
+
+```sh
 npm install
-npm run dev
-```
-
-Open `http://localhost:3000/demo`. No secrets, paid APIs or database are needed. Demo changes persist only in the current browser. **Reset demo** restores fictional fixtures: 50 founders, 50 companies, global country coverage, 10 completed Spaces, twelve upcoming Saturday sessions and two campaigns.
-
-Public booking: `/book?mode=demo`. Private demo approvals: `/demo/spaces?tab=applications` and `/demo/spaces?tab=bookings`.
-
-## Database-backed workspace
-
-Node.js 24 and PostgreSQL are required for private records. Copy `.env.example` to `.env` and configure `DATABASE_URL`, `APP_ORIGIN` and bootstrap administrator credentials. Keep secrets outside Git.
-
-```bash
 npm run db:generate
 npm run db:migrate
+npm run db:seed
 npm run db:admin
+npx tsx scripts/publish-saturdays.ts
 npm run dev
 ```
 
-Sign in at `/signin`. To seed fictional records into a development database, run `npm run db:seed -- --demo`; inspect the script before using it against an existing database. Never seed a production founder database just to test the interface.
+`db:seed` creates programme defaults and taxonomies, not fictional founders. Isolated test fixtures remain available to the integration runner on localhost only and are blocked on hosted Vercel databases.
 
-Migration uses the checked-in PostgreSQL runner (`npm run db:migrate`), not Prisma's native migration engine. Existing installations must apply the additive Space Data and shared weekly post migrations before serving the current revision. See [DEPLOYMENT.md](DEPLOYMENT.md).
+Keep `BOOTSTRAP_ADMIN_EMAIL` configured: it remains the Admin allowlist after provisioning. Provisioning never overwrites an existing password. Passwords use salted scrypt; sessions use hashed random tokens and HTTP-only cookies. Environment values must never be committed or exposed as `NEXT_PUBLIC_` variables.
 
-## Founder booking flow
+## Checks
 
-1. Open the 12-week calendar at `/book`.
-2. Choose an available Saturday week card at 7:00 PM London time (GMT/BST).
-3. Continue to the founder questions with that session attached.
-4. Submit the application and pending booking together.
-5. An administrator approves/declines the application, then approves/waitlists/declines the booking under Founder Spaces.
-
-Only future Saturday sessions with an open deadline and remaining approved capacity can be selected. Week cards show approved bookings/capacity (0/5 booked, 3/5 booked, 5/5 Full). Full dates are disabled. Multiple speakers from one project count as one project seat. Pending requests do not reserve confirmed seats. Server-side session row locks protect approval capacity and recheck availability when public submissions arrive.
-
-Confirmation links use random, expiring capabilities and reveal only the submitting project's status. The public calendar exposes no founder identities or private session notes. Automatic email/Telegram notifications are not configured.
-
-## Weekly Spaces inside founder profiles
-
-Open a founder card and use **Weekly Spaces → Edit weekly Space data**. The same editor is available on the weekly session page. Enter actual attendance independently of booked places and expected speakers. Founders plus other team members form total attendance. Blank figures remain unknown; explicit zero is preserved. Edits replace a Space's numbers rather than counting it twice. Charts accumulate recorded activity by Space date. Repeat attendees/listeners across different Spaces count again; totals are not deduplicated unique audience figures.
-
-The weekly X post, live Space URL and recording URL are stored once on the session and inherited by linked founder/company pages. There is no recording upload, transcription or automatic capture of X conversations.
-
-## Access and persistence
-
-The real workspace requires an authenticated, authorised Admin session. Public visitors can book without an account; they cannot access private founder data. Demo Admin is a fictional local preview, not real authentication. Server authorization, CSRF/origin checks, capability expiry, password hashing, rate limits and audit logs protect database-backed commands.
-
-Administrator invitations and public account registration are disabled. Only the active Admin matching BOOTSTRAP_ADMIN_EMAIL can authenticate; keep that email configured after provisioning. MFA, password recovery and SSO are not integrated. Restricted Space Managers use a separate passwordless email flow; see [SPACE-MANAGERS.md](SPACE-MANAGERS.md) for Resend configuration and assignments. Ordinary multi-device sessions are supported. Demo browser storage does not synchronize across devices.
-
-## Verification
-
-```bash
+```sh
 npm run typecheck
 npm run lint
 npm test
 npm run build
-npm start
-# In another terminal:
-npm run test:e2e -- --workers=1
-npm run screenshots
-# Local PostgreSQL with CREATE DATABASE privileges:
+npm run check:client-secrets
 npm run test:integration
+# Against a running backend-backed local server:
+npm run test:e2e
+npm run screenshots
 ```
 
-Playwright uses `/usr/bin/chromium` here; `PLAYWRIGHT_CHROMIUM_EXECUTABLE` and `PLAYWRIGHT_BASE_URL` override the browser/server. The integration runner creates and drops an isolated random localhost database, never the configured application database. See [TESTING.md](TESTING.md) and [screenshots](artifacts/README.md).
+The integration runner creates its own random local PostgreSQL database and password, uses a mock transactional email provider, and removes the database afterward. It verifies applications, approvals, capacity, private access, manager permissions/revocation, shared records, eight-week cycle progression, booking preservation and logout. No real emails or cryptocurrency transfers are sent by tests.
 
-## Deployment and limits
+## Deploy and limits
 
-The existing Vercel project is linked to `olamilekanalaga/founderslab`, production branch `main`, at `https://founderslab-orcin.vercel.app`. Deployment success alone does not verify the public browser flow. All data shown without live database configuration is fictional browser-local demonstration data.
+Use the existing Vercel project. `npm run build:vercel` applies checked-in migrations, provisions defaults, ensures the current attendance-gated window, provisions the configured Admin if absent, and compiles the application. No additional project/domain is needed. See [DEPLOYMENT.md](DEPLOYMENT.md).
 
-The initial programme uses an authorised snapshot rather than server pagination. General concurrent field edits use last committed values; booking capacity and Space Data updates serialize per session. Retention settings record policy but do not schedule automatic deletion. Reports describe programme participants, not the entire Web3 industry. No external X ingestion, automated research, cryptocurrency payments or paid integrations run in this version.
-
-## Shared weekly mapping
-
-Space Data is no longer a navigation page; its old route redirects to founders. A founder's Weekly Spaces view resolves their named session participation and recorded company-level attendance. Co-founders sharing a company see the same project row. Within a weekly Space, the X post, Space/recording links, live listeners, duration and recorded session totals are shared. Each company retains its own founders attended, other team members, total attendance and expected speakers. Expected speakers come from approved participation and are not treated as actual attendance.
-
-The same-week table links the other participating founders and companies. Existing booking approvals assign the founder/project to the week; attendance rows also link a project to that week without inventing named individual attendance. Unknown figures remain blank. Global growth charts and Space totals remain on Overview and count each session once, regardless of the number of founder profiles displaying it.
-
-## Connected Neon production setup
-
-Vercel uses `npm run build:vercel` to prepare the connected production database before compiling the app. It applies the checked-in migrations and inserts programme defaults only; no fictional founder records are seeded. Add your chosen `BOOTSTRAP_ADMIN_EMAIL` and `BOOTSTRAP_ADMIN_PASSWORD` as sensitive Production variables and redeploy to create the first administrator. Remove bootstrap variables after provisioning. The password is not printed or reset on subsequent deployments.
-
-Production turns off the public Admin demo and browser-local demo forms. A supported prefixed Neon connection is resolved on the server; connection values never reach the browser. Readiness is available at `/api/health`. See DEPLOYMENT.md for direct versus pooled connections and initial setup.
-
-Booking date eligibility uses Europe/London. Public session details and confirmations show London time and a conversion to the visitor’s browser timezone, including the local date when it differs. The recurring programme stays at 7 PM London year-round: 19:00 UTC in winter and 18:00 UTC in summer. Private historical timestamps remain stored as UTC instants.
-
-## Approved recurring Saturday programme
-
-Production preparation publishes a rolling 12-week window of real Saturday sessions at **7:00 PM Europe/London**, capacity **five project places** for new sessions. The IANA timezone automatically applies GMT/BST. Booking stays open until the start time; requests still require Admin approval. The publisher uses deterministic London-date IDs and a transaction lock. It updates recurring and legacy fixed-UTC programme slots in place, preserving IDs, booking associations, capacities, cancellations and custom deadlines. A deadline that tracked the original start moves with the updated start. Existing dates prevent duplicate creation; unrelated custom events are not rescheduled. Every deployment extends the window as needed.
-
-The booking calendar follows the weekly-card layout in the website’s light theme: three columns, four rows, numbered Week 1–12, selected-week details and a View booking details action leading to the founder questions. Counts mean approved project bookings; a fully booked week has 5/5 and is disabled. The hosted publisher verifies newly created dates through the live public booking API before the release continues.
+Manager invitations require a verified Resend sender and configured email variables. MFA, password recovery and automatic award transfers are not implemented. Reports describe programme participants, not the entire industry. A passing deployment is not proof that the deployed authentication journey or real email delivery has been tested. See [SECURITY-REVIEW.md](SECURITY-REVIEW.md) for verification scope.

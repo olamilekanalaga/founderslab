@@ -5524,3 +5524,21 @@ td > b,
 
 .manager-page .button.primary:hover, .space-managers-settings .button.primary:hover { color: #fff; }
 .visitor-session-time { display: block; margin-top: 4px; font-size: 12px; color: #596277; }
+
+/* Founders Lab uses light surfaces throughout, including private navigation. */
+:root { color-scheme: light; }
+.sidebar { background:#fff; border-color:#e1e2ee; color:#4b4564; }
+.sidebar .brand { color:#25263d; }
+.sidebar .brand small, .sidebar-user small, .sidebar-public, .sidebar-campaign p, .sidebar-campaign small { color:#667086; }
+.sidebar nav a { color:#596277; }
+.sidebar nav a:hover, .sidebar nav a.active { background:#f1ebff; color:#7040c8; border-color:#e4d9fb; }
+.sidebar-campaign, .sidebar-user { background:#faf9ff; border-color:#e1e2ee; color:#4b4564; }
+.sidebar-campaign .progress { background:#e9e3f4; }
+.sidebar-user .icon-button { color:#7040c8; }
+.weekly-dates { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.weekly-date b { font-size:19px; }
+.sidebar .mini-award { background:#f1ebff; color:#7040c8; }
+.sidebar .sidebar-campaign a { color:#7040c8; }
+.toast { background:#fff; color:#25263d; border:1px solid #e1e2ee; }
+.weekly-date { min-height:110px; }
+.button.primary:hover { color:#fff; }

@@ -13,11 +13,8 @@ import {
   Settings as SettingsIcon,
   Search,
   Menu,
-  RotateCcw,
-  PlayCircle,
   ChevronRight,
   ArrowUpRight,
-  ArrowLeft,
   X,
   LogOut,
   ShieldCheck,
@@ -40,19 +37,17 @@ const navigation = [
   { id: "companies", label: "Companies", icon: Building2 },
   { id: "spaces", label: "Founder Spaces", icon: Mic2 },
   { id: "reports", label: "Reports", icon: ChartNoAxesCombined },
-  { id: "campaigns", label: "Campaigns & awards", icon: Award },
+  { id: "campaigns", label: "Monthly winner", icon: Award },
   { id: "settings", label: "Settings", icon: SettingsIcon },
 ] as const;
 export default function Workspace(props: {
   section: Section;
   id?: string;
-  demo: boolean;
-  initialState?: DataState;
-  initialViewer?: Viewer;
+  initialState: DataState;
+  initialViewer: Viewer;
 }) {
   return (
     <WorkspaceProvider
-      demo={props.demo}
       initialState={props.initialState}
       initialViewer={props.initialViewer}
     >
@@ -61,20 +56,10 @@ export default function Workspace(props: {
   );
 }
 function Shell({ section, id }: { section: Section; id?: string }) {
-  const {
-      state: s,
-      viewer,
-      demo,
-      path,
-      message,
-      setMessage,
-      reset,
-    } = useWorkspace(),
+  const { state: s, viewer, path, message, setMessage } = useWorkspace(),
     router = useRouter();
   const [mobile, setMobile] = useState(false),
-    [resetting, setReset] = useState(false),
     [search, setSearch] = useState(""),
-    [tour, setTour] = useState<number | null>(null),
     [editor, setEditor] = useState<{
       resource: Resource;
       record?: Record<string, unknown>;
@@ -129,14 +114,14 @@ function Shell({ section, id }: { section: Section; id?: string }) {
             <BrandMark />
           </span>
           <span>
-            Founders Lab<small>with Ola_Crrypt</small>
+            Founders Lab<small>with ⭕️La_Crrypt💰₿</small>
           </span>
         </Link>
         <div className="sidebar-workspace">
           <span className="workspace-dot" />
           <div>
             <b>Founder intelligence</b>
-            <small>{demo ? "Demo workspace" : "Private workspace"}</small>
+            <small>Private workspace</small>
           </div>
           <span className="tiny-lock">
             <ShieldCheck size={14} />
@@ -178,7 +163,7 @@ function Shell({ section, id }: { section: Section; id?: string }) {
               <b>{viewer.name}</b>
               <small>{ROLES[viewer.roleId]?.name}</small>
             </div>
-            {!demo && (
+            {
               <button
                 aria-label="Sign out"
                 className="icon-button"
@@ -193,7 +178,7 @@ function Shell({ section, id }: { section: Section; id?: string }) {
               >
                 <LogOut size={16} />
               </button>
-            )}
+            }
           </div>
         </div>
       </aside>
@@ -231,28 +216,6 @@ function Shell({ section, id }: { section: Section; id?: string }) {
             <kbd>↵</kbd>
           </form>
           <div className="topbar-actions">
-            {demo && (
-              <>
-                <button
-                  className="button guide-button"
-                  onClick={() => {
-                    setTour(0);
-                    router.push(path("spaces") + "?tab=applications");
-                  }}
-                  aria-label="Start guided walkthrough"
-                >
-                  <PlayCircle size={16} />
-                  <span>Guided walkthrough</span>
-                </button>
-                <button
-                  className="icon-button"
-                  aria-label="Reset demo"
-                  onClick={() => setReset(true)}
-                >
-                  <RotateCcw size={17} />
-                </button>
-              </>
-            )}
             <Link
               href={path("settings")}
               className="host-avatar"
@@ -262,14 +225,6 @@ function Shell({ section, id }: { section: Section; id?: string }) {
             </Link>
           </div>
         </header>
-        {(demo || s.fictional) && (
-          <div className="demo-banner">
-            <div>
-              <span className="demo-dot" />
-              <b>{demo ? "Fictional demo" : "Fictional seed data"}</b>
-            </div>
-          </div>
-        )}
         <main className="workspace-main" id="main-content">
           {!can ? (
             <Empty>
@@ -285,20 +240,16 @@ function Shell({ section, id }: { section: Section; id?: string }) {
           ) : section === "reports" ? (
             <Reports />
           ) : section === "campaigns" ? (
-            <Campaigns edit={edit} />
+            <Campaigns />
           ) : (
             <TeamSettings edit={edit} />
           )}
         </main>
         <footer className="workspace-footer">
           <span>
-            Founders Lab <span>with Ola_Crrypt</span>
+            Founders Lab <span>with ⭕️La_Crrypt💰₿</span>
           </span>
-          <span>
-            {demo
-              ? "Fictional programme data · Demo v1"
-              : "Private workspace · Authorised access only"}
-          </span>
+          <span>Private workspace · Authorised access only</span>
         </footer>
       </div>
       {mobile && (
@@ -307,30 +258,6 @@ function Shell({ section, id }: { section: Section; id?: string }) {
           <Link className="text-link" href="/">
             Public programme <ArrowUpRight size={14} />
           </Link>
-        </Modal>
-      )}
-      {resetting && (
-        <Modal title="Reset the demo?" close={() => setReset(false)}>
-          <p>
-            This resets local demo edits to the 50-founder sample. Private
-            database records and public applications are untouched.
-          </p>
-          <div className="form-actions">
-            <button className="button" onClick={() => setReset(false)}>
-              Keep changes
-            </button>
-            <button
-              className="button primary"
-              onClick={() => {
-                reset();
-                setEditor(null);
-                setReset(false);
-                router.push("/demo");
-              }}
-            >
-              Reset fictional demo
-            </button>
-          </div>
         </Modal>
       )}
       {editor && (
@@ -353,102 +280,6 @@ function Shell({ section, id }: { section: Section; id?: string }) {
           </button>
         </div>
       )}
-      {tour !== null && (
-        <Tour
-          step={tour}
-          change={setTour}
-          close={() => setTour(null)}
-          navigate={(url) => router.push(url)}
-          path={path}
-        />
-      )}
     </div>
-  );
-}
-function Tour({
-  step,
-  change,
-  close,
-  navigate,
-  path,
-}: {
-  step: number;
-  change: (n: number) => void;
-  close: () => void;
-  navigate: (url: string) => void;
-  path: (s: string) => string;
-}) {
-  const steps = [
-    {
-      name: "Review an application",
-      url: path("spaces") + "?tab=applications",
-      text: "Open a pending application and approve it. Founder and company records will be linked.",
-    },
-    {
-      name: "Assign a Space",
-      url: path("spaces") + "?tab=bookings",
-      text: "Create a pending booking, then approve it. Capacity is counted per founder project, not per speaker.",
-    },
-    {
-      name: "Record Space numbers",
-      url: path("founders"),
-      text: "Open a founder card, select their weekly Space and enter the shared numbers and team attendance.",
-    },
-    {
-      name: "Keep founder details up to date",
-      url: path("founders"),
-      text: "View names, companies, countries and short product descriptions.",
-    },
-    {
-      name: "Export your records",
-      url: path("reports"),
-      text: "Filter founder and company records, then export CSV or PDF.",
-    },
-  ];
-  const current = steps[step];
-  return (
-    <aside className="tour-bar" aria-label="Guided walkthrough">
-      <div className="tour-step">
-        {step + 1}
-        <small>/ {steps.length}</small>
-      </div>
-      <div>
-        <b>{current.name}</b>
-        <p>{current.text}</p>
-      </div>
-      <div className="tour-actions">
-        <button
-          className="icon-button"
-          aria-label="Previous tour step"
-          disabled={!step}
-          onClick={() => {
-            change(step - 1);
-            navigate(steps[step - 1].url);
-          }}
-        >
-          <ArrowLeft size={16} />
-        </button>
-        <button
-          className="button primary"
-          onClick={() => {
-            if (step === steps.length - 1) close();
-            else {
-              change(step + 1);
-              navigate(steps[step + 1].url);
-            }
-          }}
-        >
-          {step === steps.length - 1 ? "Finish" : "Next"}
-          <ChevronRight size={14} />
-        </button>
-        <button
-          className="icon-button"
-          aria-label="Close guided walkthrough"
-          onClick={close}
-        >
-          <X size={16} />
-        </button>
-      </div>
-    </aside>
   );
 }

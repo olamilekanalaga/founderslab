@@ -15,6 +15,7 @@ type Space = {
   spaceData: null | {
     liveListeners: number | null;
     durationMinutes: number | null;
+    submittedAt: string | null;
     teams: {
       companyId: string;
       foundersCount: number;
@@ -163,7 +164,12 @@ export default function ManagerSpaces() {
                 onChange={(e) => setEmail(e.target.value)}
               />
             </label>
-            <button className="button primary" disabled={busy}>
+            <button
+              className="button"
+              name="intent"
+              value="draft"
+              disabled={busy}
+            >
               Email me a sign-in link
             </button>
           </form>
@@ -261,6 +267,10 @@ function SpaceEditor({
         onSubmit={(e) => {
           e.preventDefault();
           void save({
+            submit:
+              (e.nativeEvent as SubmitEvent).submitter?.getAttribute(
+                "value",
+              ) === "complete",
             sessionId: space.id,
             liveListeners: listeners === "" ? null : Number(listeners),
             durationMinutes:
@@ -270,7 +280,7 @@ function SpaceEditor({
             recordingUrl: recording,
             postUrl: post,
             teams: teams
-              .filter((t) => t.foundersCount !== "" || t.otherTeamCount !== "")
+              .filter((t) => t.foundersCount !== "" && t.otherTeamCount !== "")
               .map((t) => ({
                 ...t,
                 foundersCount: Number(t.foundersCount || 0),
@@ -370,8 +380,18 @@ function SpaceEditor({
             </div>
           </fieldset>
         ))}
-        <button className="button primary" disabled={busy}>
+        <button className="button" name="intent" value="draft" disabled={busy}>
           {busy ? "Saving…" : "Save Space data"}
+        </button>
+        <button
+          className="button primary"
+          name="intent"
+          value="complete"
+          disabled={busy || new Date(space.startsAt) > new Date()}
+        >
+          {space.spaceData?.submittedAt
+            ? "Update submitted attendance"
+            : "Submit attendance"}
         </button>
       </form>
     </section>

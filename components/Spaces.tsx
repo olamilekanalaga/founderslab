@@ -16,12 +16,14 @@ import { spaceTotals } from "@/lib/space-data";
 import { approvedSeats } from "@/lib/domain";
 import { dateTime, niceDate } from "@/lib/selectors";
 import { BOOKING_STATUSES } from "@/lib/catalog";
+import { formatSessionTime } from "./SessionTime";
+import DeleteRecordButton from "./DeleteRecordButton";
 import WeeklySpaceEditor from "./WeeklySpaceEditor";
 import SessionCalendar from "./SessionCalendar";
 import type { Resource } from "./RecordEditor";
 type Editor = (resource: Resource, record?: Record<string, unknown>) => void;
 export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
-  const { state: s, viewer, path, commit, busy, demo } = useWorkspace(),
+  const { state: s, viewer, path, commit, busy } = useWorkspace(),
     router = useRouter(),
     params = useSearchParams();
   const tab = params.get("tab") || "sessions";
@@ -101,9 +103,7 @@ export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
               <ExternalLink href={session.postUrl}>Weekly X post</ExternalLink>
               <ExternalLink href={session.liveUrl}>Live Space</ExternalLink>
               <ExternalLink href={session.recordingUrl}>
-                {demo
-                  ? "Shared recording · fictional placeholder"
-                  : "Shared session recording"}
+                Shared session recording
               </ExternalLink>
             </div>
             {!session.recordingUrl && (
@@ -385,6 +385,11 @@ export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
           close={() => setSelected(null)}
           wide
         >
+          <DeleteRecordButton
+            kind="application"
+            id={a.id}
+            name={a.founderName}
+          />
           <div className="application-review">
             <div className="row-between">
               <div>
@@ -504,7 +509,12 @@ function BookingEditor({
       s.applications.find((a) => a.status === "Approved")?.id || "",
     ),
     [selectedSession, setSession] = useState(
-      sessionId || s.sessions.find((v) => v.status === "Scheduled")?.id || "",
+      sessionId ||
+        s.sessions.find(
+          (v) =>
+            v.status === "Scheduled" && s.programmeSessionIds?.includes(v.id),
+        )?.id ||
+        "",
     ),
     [speakers, setSpeakers] = useState(1);
   return (
@@ -554,11 +564,15 @@ function BookingEditor({
           >
             <option value="">Select session</option>
             {s.sessions
-              .filter((v) => v.status === "Scheduled")
+              .filter(
+                (v) =>
+                  v.status === "Scheduled" &&
+                  s.programmeSessionIds?.includes(v.id),
+              )
               .map((v) => (
                 <option value={v.id} key={v.id}>
-                  {v.title} · {v.capacity - approvedSeats(s, v.id)} project
-                  seats free
+                  {formatSessionTime(v.startsAt, "Europe/London")} · {v.title} ·{" "}
+                  {v.capacity - approvedSeats(s, v.id)} project seats free
                 </option>
               ))}
           </select>

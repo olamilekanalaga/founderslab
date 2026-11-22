@@ -85,9 +85,10 @@ async function request(
   payload?: unknown,
   jar?: Jar,
   csrf = true,
+  method?: string,
 ) {
   const response = await fetch(origin + path, {
-    method: payload === undefined ? "GET" : "POST",
+    method: method || (payload === undefined ? "GET" : "POST"),
     headers: {
       Origin: origin,
       "Content-Type": "application/json",
@@ -128,7 +129,7 @@ try {
   const slots = await initialDb.query(
     'SELECT id,"startsAt",capacity FROM "Session" ORDER BY "startsAt"',
   );
-  assert.equal(slots.rows.length, 12);
+  assert.equal(slots.rows.length, 8);
   assert.ok(
     slots.rows.every(
       (row) =>
@@ -153,8 +154,10 @@ try {
   assert.equal(
     (await initialDb.query('SELECT count(*)::int AS n FROM "Session"')).rows[0]
       .n,
-    12,
+    8,
   );
+  await initialDb.query('DELETE FROM "ProgrammeWeek"');
+  await initialDb.query('DELETE FROM "ProgrammeSchedule"');
   await initialDb.end();
   pass(
     "Production release initializes tables/defaults and one admin idempotently without fictional founders",
@@ -396,12 +399,13 @@ try {
     ),
   );
   const sessionPayload = {
+    id: "up4",
     title: "Isolated concurrency session",
-    startsAt: "2027-06-12T17:00:00.000Z",
+    startsAt: "2026-12-26T19:00:00.000Z",
     timezone: "Africa/Lagos",
     host: "Fictional host",
     capacity: 5,
-    deadline: "2027-06-11T17:00:00.000Z",
+    deadline: "2026-12-26T19:00:00.000Z",
     status: "Scheduled",
     researchStatus: "Not started",
     liveUrl: "",
@@ -548,6 +552,7 @@ try {
   );
   state = await command("session.save", {
     ...sessionPayload,
+    id: undefined,
     title: "Closed weekday",
     startsAt: "2027-06-11T17:00:00.000Z",
   });
@@ -936,6 +941,16 @@ try {
     ).status,
     400,
   );
+  assert.equal(
+    (
+      await request(
+        "/api/manager/save",
+        { ...managerPayload, submit: true },
+        manager,
+      )
+    ).status,
+    400,
+  );
   const managerSave = await request(
     "/api/manager/save",
     managerPayload,
@@ -1161,6 +1176,16 @@ try {
   assert.ok(
     managerList.find((m: { id: string }) => m.id === managerId).lastActivityAt,
   );
+  const unknownLink = await request("/api/manager/request-link", {
+    email: "unknown@integration.example.invalid",
+  });
+  const revokedLink = await request("/api/manager/request-link", {
+    email: managerEmail,
+  });
+  assert.equal(unknownLink.status, 200);
+  assert.equal(revokedLink.status, 200);
+  assert.deepEqual(unknownLink.data, revokedLink.data);
+
   state = (await request("/api/workspace", undefined, admin)).data.state;
   assert.equal(
     state.spaceData.find((r) => r.sessionId === session.id)!.liveListeners,
@@ -1289,6 +1314,450 @@ try {
   }
   pass(
     "Production mobile sign-in, private dashboard and newly approved founder profile render without runtime errors",
+  );
+  // Attendance-gated cycles: isolated past-session fixtures, never production records.
+  const cycleDb = new Client({ connectionString: url.toString() });
+  await cycleDb.connect();
+  const cycleIds: string[] = [];
+  for (let i = 0; i < 8; i++) {
+    const date = new Date("2026-10-03T19:00:00Z");
+    date.setUTCDate(date.getUTCDate() + i * 7);
+    state = await command("session.save", {
+      ...sessionPayload,
+      id: undefined,
+      title: `Attendance cycle week ${i + 1}`,
+      startsAt: date.toISOString(),
+      deadline: date.toISOString(),
+      timezone: "Europe/London",
+    });
+    const id = state.sessions.find(
+      (s) => s.title === `Attendance cycle week ${i + 1}`,
+    )!.id;
+    cycleIds.push(id);
+    await cycleDb.query(
+      'INSERT INTO "SessionParticipant"(id,"sessionId","founderId","companyId",speakers,attendance) VALUES($1,$2,$3,$4,1,$5)',
+      [crypto.randomUUID(), id, "f1", "c1", "Approved"],
+    );
+  }
+  await cycleDb.query('DELETE FROM "ProgrammeWeek"');
+  await cycleDb.query(
+    'UPDATE "ProgrammeSchedule" SET "anchorDay"=$1,"activeStart"=0 WHERE id=$2',
+    ["2026-10-03", "main"],
+  );
+  for (let i = 0; i < 8; i++)
+    await cycleDb.query(
+      'INSERT INTO "ProgrammeWeek"("sessionId",position) VALUES($1,$2)',
+      [cycleIds[i], i],
+    );
+  const attendance = (sessionId: string, submit: boolean) => ({
+    sessionId,
+    submit,
+    postUrl: "https://x.com/founders/status/cycle",
+    liveListeners: 100,
+    durationMinutes: 60,
+    notes: "Actual attendance",
+    teams: [{ companyId: "c1", foundersCount: 1, otherTeamCount: 0 }],
+  });
+  await command("space-data.save", attendance(cycleIds[0], false));
+  assert.equal(
+    (
+      await cycleDb.query(
+        'SELECT "activeStart" FROM "ProgrammeSchedule" WHERE id=$1',
+        ["main"],
+      )
+    ).rows[0].activeStart,
+    0,
+  );
+  assert.equal(
+    (
+      await adminManagerRequest({
+        action: "invite",
+        email: "cycle-manager@integration.example.invalid",
+        sessionIds: [cycleIds[0]],
+      })
+    ).status,
+    201,
+  );
+  const cycleManager: Jar = { cookie: "", csrf: "" };
+  assert.equal(
+    (
+      await request(
+        "/api/manager/verify",
+        { token: emailToken() },
+        cycleManager,
+      )
+    ).status,
+    200,
+  );
+  cycleManager.csrf = (
+    await request("/api/manager/spaces", undefined, cycleManager)
+  ).data.csrf;
+  const { notes: ignoredNotes, ...managerAttendance } = attendance(
+    cycleIds[0],
+    true,
+  );
+  void ignoredNotes;
+  assert.equal(
+    (await request("/api/manager/save", managerAttendance, cycleManager))
+      .status,
+    200,
+  );
+  await command("space-data.save", attendance(cycleIds[0], true));
+  await command("space-data.save", attendance(cycleIds[0], true));
+  assert.equal(
+    (
+      await cycleDb.query(
+        'SELECT "activeStart" FROM "ProgrammeSchedule" WHERE id=$1',
+        ["main"],
+      )
+    ).rows[0].activeStart,
+    0,
+  );
+  await command("space-data.save", attendance(cycleIds[1], true));
+  await command("space-data.save", attendance(cycleIds[2], true));
+  assert.equal(
+    (
+      await cycleDb.query(
+        'SELECT "activeStart" FROM "ProgrammeSchedule" WHERE id=$1',
+        ["main"],
+      )
+    ).rows[0].activeStart,
+    0,
+  );
+  const retainedBookingIds = (
+    await cycleDb.query('SELECT id FROM "BookingRequest" ORDER BY id')
+  ).rows.map((r) => r.id);
+  await command("space-data.save", attendance(cycleIds[3], true));
+  await command("space-data.save", attendance(cycleIds[3], true));
+  assert.equal(
+    (
+      await cycleDb.query(
+        'SELECT "activeStart" FROM "ProgrammeSchedule" WHERE id=$1',
+        ["main"],
+      )
+    ).rows[0].activeStart,
+    4,
+  );
+  const publicWindow = await request("/api/public/sessions");
+  assert.equal(publicWindow.data.sessions.length, 8);
+  assert.ok(
+    publicWindow.data.sessions.every(
+      (s: { position: number }) => s.position >= 4 && s.position < 12,
+    ),
+  );
+  assert.ok(
+    !publicWindow.data.sessions.some((s: { id: string }) =>
+      cycleIds.slice(0, 4).includes(s.id),
+    ),
+  );
+  assert.equal(
+    (await cycleDb.query('SELECT count(*)::int AS n FROM "ProgrammeWeek"'))
+      .rows[0].n,
+    12,
+  );
+  assert.equal(
+    (
+      await cycleDb.query(
+        'SELECT count(*)::int AS n FROM "SpaceData" WHERE "sessionId"=ANY($1::text[]) AND "submittedAt" IS NOT NULL',
+        [cycleIds.slice(0, 4)],
+      )
+    ).rows[0].n,
+    4,
+  );
+  assert.deepEqual(
+    (
+      await cycleDb.query('SELECT id FROM "BookingRequest" ORDER BY id')
+    ).rows.map((r) => r.id),
+    retainedBookingIds,
+  );
+  assert.equal(
+    (
+      await request("/api/public/book", {
+        token: capability,
+        sessionId: session.id,
+      })
+    ).status,
+    409,
+  );
+  await cycleDb.end();
+  pass(
+    "Eight-week season advances once after four distinct submitted Spaces; drafts/repeated saves do not count, archived history and booking IDs remain intact, and out-of-season bookings are rejected",
+  );
+  assert.equal(
+    (
+      await request("/api/monthly-winner", {
+        period: "2026-10",
+        founderId: "f1",
+      })
+    ).status,
+    401,
+  );
+  assert.equal(
+    (
+      await request(
+        "/api/monthly-winner",
+        { period: "2026-10", founderId: "f1" },
+        manager,
+      )
+    ).status,
+    401,
+  );
+  assert.equal(
+    (
+      await request(
+        "/api/monthly-winner",
+        { period: "2026-10", founderId: linked.founderId },
+        admin,
+      )
+    ).status,
+    400,
+  );
+  assert.equal(
+    (
+      await request(
+        "/api/monthly-winner",
+        { period: "2026-10", founderId: "f1" },
+        admin,
+        false,
+      )
+    ).status,
+    403,
+  );
+  assert.equal(
+    (
+      await request(
+        "/api/monthly-winner",
+        { period: "2026-10", founderId: "f1" },
+        admin,
+      )
+    ).status,
+    200,
+  );
+  assert.equal(
+    (
+      await request(
+        "/api/monthly-winner",
+        { period: "2026-10", founderId: "f2" },
+        admin,
+      )
+    ).status,
+    200,
+  );
+  const deletionDb = new Client({ connectionString: url.toString() });
+  deletionDb.on("error", () => {});
+  await deletionDb.connect();
+  const winners = await deletionDb.query(
+    'SELECT a."founderId" FROM "AwardDecision" a JOIN "Campaign" c ON c.id=a."campaignId" WHERE c.period=$1',
+    ["2026-10"],
+  );
+  assert.equal(winners.rows.length, 1);
+  assert.equal(winners.rows[0].founderId, "f2");
+  state = await command("founder.save", {
+    ...state.founders[0],
+    id: undefined,
+    name: "Delete UI Fixture",
+    xHandle: "delete_ui_fixture",
+  });
+  const uiFounder = state.founders.find(
+    (f) => f.xHandle === "delete_ui_fixture",
+  )!;
+  const finalBrowser = await chromium.launch({
+    executablePath: "/usr/bin/chromium",
+    args: ["--no-sandbox"],
+    headless: true,
+  });
+  try {
+    const page = await finalBrowser.newPage({
+      viewport: { width: 393, height: 852 },
+    });
+    await page.goto(origin + "/signin");
+    await page.getByLabel("Email").fill(env.BOOTSTRAP_ADMIN_EMAIL);
+    await page.getByLabel("Password", { exact: true }).fill(password);
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await page.waitForURL("**/dashboard");
+    await page.goto(origin + "/campaigns");
+    await page
+      .getByRole("heading", { name: "Monthly winner", exact: true })
+      .waitFor();
+    await page.getByLabel("Month", { exact: true }).fill("2026-10");
+    await page.getByLabel("Winner", { exact: true }).selectOption("f2");
+    await page
+      .getByRole("button", { name: "Save winner", exact: true })
+      .click();
+    await page.getByText("Changes saved.", { exact: true }).waitFor();
+    assert.equal(
+      await page.getByText("Selection criteria", { exact: true }).count(),
+      0,
+    );
+    await page
+      .getByRole("button", { name: "Dismiss notification", exact: true })
+      .click();
+    await page.mouse.move(0, 0);
+    await page.screenshot({
+      path: "artifacts/monthly-winner-mobile.png",
+      fullPage: true,
+    });
+    await page.goto(origin + "/founders/" + uiFounder.id);
+    await page
+      .getByRole("button", { name: "Delete permanently", exact: true })
+      .click();
+    await page.getByLabel("Type DELETE to confirm").fill("DELETE");
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: "Delete permanently", exact: true })
+      .click();
+    await page.waitForURL("**/founders");
+  } finally {
+    await finalBrowser.close();
+  }
+  assert.equal(
+    (
+      await deletionDb.query(
+        'SELECT count(*)::int AS n FROM "Founder" WHERE id=$1',
+        [uiFounder.id],
+      )
+    ).rows[0].n,
+    0,
+  );
+  const declined = await request("/api/public/apply", {
+    ...application,
+    founderName: "Delete Declined",
+    companyName: "Deleted Declined Project",
+    xHandle: "delete_declined",
+    contact: "delete-only@example.invalid",
+  });
+  assert.equal(declined.status, 201);
+  state = (await request("/api/workspace", undefined, admin)).data.state;
+  const declinedApp = state.applications.find(
+    (a) => a.reference === declined.data.reference,
+  )!;
+  await command("application.review", {
+    id: declinedApp.id,
+    status: "Declined",
+  });
+  assert.equal(
+    (
+      await request(
+        "/api/records",
+        { kind: "application", id: declinedApp.id, confirmation: "DELETE" },
+        undefined,
+        true,
+        "DELETE",
+      )
+    ).status,
+    401,
+  );
+  assert.equal(
+    (
+      await request(
+        "/api/records",
+        { kind: "application", id: declinedApp.id, confirmation: "DELETE" },
+        manager,
+        true,
+        "DELETE",
+      )
+    ).status,
+    401,
+  );
+  assert.equal(
+    (
+      await request(
+        "/api/records",
+        { kind: "application", id: declinedApp.id, confirmation: "DELETE" },
+        admin,
+        false,
+        "DELETE",
+      )
+    ).status,
+    403,
+  );
+  assert.equal(
+    (
+      await request(
+        "/api/records",
+        { kind: "application", id: declinedApp.id, confirmation: "wrong" },
+        admin,
+        true,
+        "DELETE",
+      )
+    ).status,
+    400,
+  );
+  assert.equal(
+    (
+      await request(
+        "/api/records",
+        { kind: "application", id: declinedApp.id, confirmation: "DELETE" },
+        admin,
+        true,
+        "DELETE",
+      )
+    ).status,
+    200,
+  );
+  assert.equal(
+    (await request("/api/public/confirmation", { token: declined.data.token }))
+      .status,
+    404,
+  );
+  const sharedSessionId = session.id;
+  assert.equal(
+    (
+      await request(
+        "/api/records",
+        { kind: "founder", id: linked.founderId, confirmation: "DELETE" },
+        admin,
+        true,
+        "DELETE",
+      )
+    ).status,
+    200,
+  );
+  for (const [table, column, value] of [
+    ["Founder", "id", linked.founderId],
+    ["Application", "founderId", linked.founderId],
+    ["BookingRequest", "applicationId", app.id],
+    ["Company", "id", linked.companyId],
+  ] as const) {
+    const found = await deletionDb.query(
+      `SELECT count(*)::int AS n FROM "${table}" WHERE "${column}"=$1`,
+      [value],
+    );
+    assert.equal(found.rows[0].n, 0, table);
+  }
+  assert.equal(
+    (
+      await deletionDb.query(
+        'SELECT count(*)::int AS n FROM "Session" WHERE id=$1',
+        [sharedSessionId],
+      )
+    ).rows[0].n,
+    1,
+  );
+  assert.equal(
+    (
+      await deletionDb.query(
+        'SELECT count(*)::int AS n FROM "SpaceData" WHERE "sessionId"=$1',
+        [sharedSessionId],
+      )
+    ).rows[0].n,
+    1,
+  );
+  assert.ok(
+    (
+      await deletionDb.query(
+        'SELECT count(*)::int AS n FROM "SessionParticipant" WHERE "sessionId"=$1',
+        [sharedSessionId],
+      )
+    ).rows[0].n > 0,
+  );
+  assert.equal(
+    (await request("/api/public/confirmation", { token: capability })).status,
+    404,
+  );
+  await deletionDb.end();
+  pass(
+    "One monthly winner is selected from actual Space participants without assessments; permanent founder/application deletion revokes confirmations, removes owned data and preserves shared Spaces, with Admin-only CSRF checks",
   );
   const oldCookie = admin.cookie;
   assert.equal(

@@ -67,16 +67,30 @@ function SpaceForm({
         : String(record.durationMinutes % 60),
     ),
     [notes, setNotes] = useState(record?.notes || ""),
-    [teams, setTeams] = useState<TeamInput[]>(() =>
-      s.spaceAttendance
-        .filter((t) => t.spaceDataId === record?.id)
-        .map((t) => ({
-          key: t.id,
-          companyId: t.companyId,
-          foundersCount: String(t.foundersCount),
-          otherTeamCount: String(t.otherTeamCount),
-        })),
-    );
+    [teams, setTeams] = useState<TeamInput[]>(() => {
+      const existing = s.spaceAttendance.filter(
+        (t) => t.spaceDataId === record?.id,
+      );
+      const companyIds = [
+        ...new Set([
+          ...existing.map((t) => t.companyId),
+          ...s.participants
+            .filter(
+              (p) => p.sessionId === session.id && p.attendance !== "Cancelled",
+            )
+            .map((p) => p.companyId),
+        ]),
+      ];
+      return companyIds.map((companyId) => {
+        const row = existing.find((t) => t.companyId === companyId);
+        return {
+          key: row?.id || companyId,
+          companyId,
+          foundersCount: row ? String(row.foundersCount) : "",
+          otherTeamCount: row ? String(row.otherTeamCount) : "",
+        };
+      });
+    });
   const can = viewer.permissions.includes("booking.write");
   const count = teams.reduce(
     (n, t) => n + Number(t.foundersCount || 0) + Number(t.otherTeamCount || 0),
@@ -111,6 +125,10 @@ function SpaceForm({
         await commit({
           type: "space-data.save",
           payload: {
+            submit:
+              (e.nativeEvent as SubmitEvent).submitter?.getAttribute(
+                "value",
+              ) === "complete",
             sessionId: session.id,
             postUrl,
             liveUrl,
@@ -121,13 +139,13 @@ function SpaceForm({
                 ? null
                 : Number(hours || 0) * 60 + Number(minutes || 0),
             notes,
-            teams: teams.map(
-              ({ companyId, foundersCount, otherTeamCount }) => ({
+            teams: teams
+              .filter((t) => t.foundersCount !== "" && t.otherTeamCount !== "")
+              .map(({ companyId, foundersCount, otherTeamCount }) => ({
                 companyId,
                 foundersCount: Number(foundersCount),
                 otherTeamCount: Number(otherTeamCount),
-              }),
-            ),
+              })),
           },
         });
       }}
@@ -137,7 +155,15 @@ function SpaceForm({
           <h2>{session.title}</h2>
           <p>{dateTime(session.startsAt)}</p>
         </div>
-        <Status value={record ? "Recorded" : "Not recorded"} />
+        <Status
+          value={
+            record?.submittedAt
+              ? "Attendance submitted"
+              : record
+                ? "Draft saved"
+                : "Not recorded"
+          }
+        />
       </div>
       <fieldset disabled={!can || busy} className="space-data-inputs">
         <legend className="sr-only">Space results</legend>
@@ -267,7 +293,6 @@ function SpaceForm({
                   min={0}
                   step={1}
                   inputMode="numeric"
-                  required
                   value={team.foundersCount}
                   onChange={(e) =>
                     changeTeam(team.key, "foundersCount", e.target.value)
@@ -282,7 +307,6 @@ function SpaceForm({
                   min={0}
                   step={1}
                   inputMode="numeric"
-                  required
                   value={team.otherTeamCount}
                   onChange={(e) =>
                     changeTeam(team.key, "otherTeamCount", e.target.value)
@@ -329,11 +353,24 @@ function SpaceForm({
         </small>
         <button
           disabled={!can || busy}
-          className="button primary"
+          className="button"
+          name="intent"
+          value="draft"
           type="submit"
         >
           <Save size={15} />
           {busy ? "Saving…" : "Save Space data"}
+        </button>
+        <button
+          className="button primary"
+          name="intent"
+          value="complete"
+          type="submit"
+          disabled={!can || busy || new Date(session.startsAt) > new Date()}
+        >
+          {record?.submittedAt
+            ? "Update submitted attendance"
+            : "Submit attendance"}
         </button>
       </div>
     </form>

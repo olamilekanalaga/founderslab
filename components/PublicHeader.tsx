@@ -14,7 +14,7 @@ export default function PublicHeader() {
           <BrandMark />
         </span>
         <span>
-          Founders Lab<small>with Ola_Crrypt</small>
+          Founders Lab<small>with ⭕️La_Crrypt💰₿</small>
         </span>
       </Link>
       <nav aria-label="Programme navigation">

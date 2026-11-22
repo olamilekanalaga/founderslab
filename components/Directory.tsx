@@ -16,6 +16,7 @@ import {
 import { useWorkspace } from "./WorkspaceContext";
 import { Avatar, Status, Empty, SectionHeading, ExternalLink } from "./ui";
 import { profileSpaceWeeks } from "@/lib/space-data";
+import DeleteRecordButton from "./DeleteRecordButton";
 import FounderSpaces from "./FounderSpaces";
 import { niceDate } from "@/lib/selectors";
 import type { Resource } from "./RecordEditor";
@@ -389,6 +390,12 @@ function FounderProfile({ id, edit }: { id: string; edit: Editor }) {
             Edit founder
           </button>
         )}
+        <DeleteRecordButton
+          kind="founder"
+          id={founder.id}
+          name={founder.name}
+          backTo={path("founders")}
+        />
       </div>
       <FounderSpaces founderId={id} />
       <section className="panel padded">

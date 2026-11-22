@@ -8,7 +8,7 @@ import { reportRows, downloadCsv, downloadPdf } from "@/lib/export";
 import { SectionHeading } from "./ui";
 const Chart = dynamic(() => import("./Charts"), { ssr: false });
 export default function Reports() {
-  const { state: s, demo, setMessage } = useWorkspace(),
+  const { state: s, setMessage } = useWorkspace(),
     [filters, setFilters] = useState<Filters>(blankFilters),
     [exporting, setExporting] = useState(false);
   const r = reportData(s, filters),
@@ -24,7 +24,7 @@ export default function Reports() {
         <div className="heading-actions">
           <button
             className="button"
-            onClick={() => downloadCsv(reportRows(s, filters, demo))}
+            onClick={() => downloadCsv(reportRows(s, filters, false))}
           >
             <Download size={15} /> Export CSV
           </button>
@@ -34,7 +34,7 @@ export default function Reports() {
             onClick={async () => {
               setExporting(true);
               try {
-                await downloadPdf(reportRows(s, filters, demo));
+                await downloadPdf(reportRows(s, filters, false));
               } catch {
                 setMessage("PDF export failed. CSV is available.");
               } finally {

@@ -11,7 +11,7 @@ export default function Settings({
 }: {
   edit: (resource: Resource, record?: Record<string, unknown>) => void;
 }) {
-  const { state: s, commit, busy, demo } = useWorkspace(),
+  const { state: s, commit, busy } = useWorkspace(),
     [tab, setTab] = useState("Admins"),
     [group, setGroup] = useState("Sector"),
     [userId, setUser] = useState<string | null>(null);
@@ -40,9 +40,7 @@ export default function Settings({
       <section className="panel" hidden={tab !== "Admins"}>
         <SectionHeading
           title="Admin access"
-          detail={
-            demo ? "Fictional admin account" : "Authorised administrators"
-          }
+          detail="Authorised administrators"
         />
         <div className="table-wrap">
           <table>

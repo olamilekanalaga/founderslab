@@ -17,8 +17,8 @@ export default function ErrorPage({
         <button className="button primary" onClick={reset}>
           Try again
         </button>
-        <Link className="text-link" href="/demo">
-          Open the independent fictional demo
+        <Link className="text-link" href="/book">
+          Open the booking calendar
         </Link>
       </section>
     </main>

@@ -98,10 +98,10 @@ export default function RecordEditor({
       labelIds: [],
     },
     session: {
-      title: "",
+      title: "Founders Lab with ⭕️La_Crrypt💰₿",
       startsAt: now,
       timezone: "UTC",
-      host: "Ola_Crrypt",
+      host: "⭕️La_Crrypt💰₿",
       capacity: state.settings.capacity,
       deadline: now,
       status: "Scheduled",

@@ -389,6 +389,29 @@ export function applyCommand(
       const sharedSession = s.sessions.find(
         (session) => session.id === v.sessionId,
       )!;
+      if (v.submit) {
+        check(
+          new Date(sharedSession.startsAt).getTime() <= Date.now(),
+          "Attendance can only be submitted after the Space starts.",
+        );
+        check(
+          v.liveListeners !== null && v.durationMinutes !== null,
+          "Enter listeners and duration before submitting attendance.",
+        );
+        const expected = new Set(
+          s.participants
+            .filter(
+              (p) =>
+                p.sessionId === v.sessionId && p.attendance !== "Cancelled",
+            )
+            .map((p) => p.companyId),
+        );
+        check(
+          [...expected].every((id) => v.teams.some((t) => t.companyId === id)),
+          "Enter attendance for every participating project.",
+        );
+        sharedSession.status = "Completed";
+      }
       for (const key of ["postUrl", "liveUrl", "recordingUrl"] as const) {
         if (v[key] !== undefined) {
           sharedSession[key] = v[key];
@@ -406,6 +429,8 @@ export function applyCommand(
         durationMinutes: v.durationMinutes,
         notes: v.notes,
         recordedBy: actor.name,
+        submittedAt: old?.submittedAt || (v.submit ? now : null),
+        submittedBy: old?.submittedBy || (v.submit ? actor.name : null),
         createdAt: old?.createdAt || now,
         updatedAt: now,
       });

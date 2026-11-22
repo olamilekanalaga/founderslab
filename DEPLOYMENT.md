@@ -57,3 +57,9 @@ For initial Admin provisioning, set `BOOTSTRAP_ADMIN_EMAIL` and `BOOTSTRAP_ADMIN
 In Vercel Production, `/demo` is unavailable, public forms ignore `mode=demo`, and the demo switch/link is hidden. Local development and Preview retain the fictional demonstration. `/api/health` returns only a readiness flag, never founder data, credentials or account details. A healthy response verifies application tables/defaults are readable; it does not verify Admin credentials or booking journeys.
 
 The production preparation step also runs `scripts/publish-saturdays.ts`, publishing the host-approved 12-week schedule at Saturday 19:00 UTC, five places. Existing sessions/cancellations and bookings are preserved. This is the real approved programme schedule, separate from `--demo` fixtures.
+
+## Current programme release
+
+The website now has no browser demo. `/book`, `/apply` and limited confirmations use PostgreSQL; `/demo` returns 404 in every environment. The public calendar shows eight Saturdays in two four-week cycles. It advances only after explicit attendance submission for all four distinct Spaces in the oldest cycle, not on a date-based rolling timer. Existing sessions and bookings remain in private history.
+
+Migration `202611220002_programme_cycles` adds ProgrammeSchedule/ProgrammeWeek and submission metadata on SpaceData. It does not delete sessions or booking requests. The existing production preparation applies it and initializes the current window; do not manually delete historical records. Resend configuration is still required for actual manager emails. Admin access still requires the existing BOOTSTRAP_ADMIN_EMAIL allowlist.

@@ -16,7 +16,8 @@
     "db:admin": "tsx scripts/admin.ts",
     "test:integration": "tsx tests/integration.ts",
     "screenshots": "tsx scripts/screenshots.ts",
-    "build:vercel": "prisma generate && tsx scripts/prepare-vercel.ts && next build"
+    "build:vercel": "prisma generate && tsx scripts/prepare-vercel.ts && next build",
+    "check:client-secrets": "tsx scripts/check-client-secrets.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^6.19.0",
@@ -50,5 +51,9 @@
   "type": "module",
   "engines": {
     "node": "24.x"
+  },
+  "overrides": {
+    "deepmerge-ts": "8.0.2",
+    "effect": "3.22.5"
   }
 }

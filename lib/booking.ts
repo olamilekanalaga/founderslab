@@ -11,6 +11,8 @@ export interface PublicSession {
   deadline: string;
   status: string;
   availableSeats: number;
+  position?: number;
+  submitted?: boolean;
 }
 type SessionDate = Pick<PublicSession, "startsAt" | "timezone">;
 export function sessionDay(session: SessionDate) {

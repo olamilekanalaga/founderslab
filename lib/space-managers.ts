@@ -125,6 +125,15 @@ export async function issueManagerLink(managerId: string, actor: string) {
       where: { id: link.id },
       data: { usedAt: new Date() },
     });
+    await db().auditLog.create({
+      data: {
+        actor,
+        action: "manager.email.failed",
+        entityId: managerId,
+        detail:
+          "Email provider did not confirm acceptance; attempted link invalidated.",
+      },
+    });
     throw error;
   }
   await db().$transaction(async (tx) => {
@@ -167,6 +176,7 @@ export async function assignedSpaces(managerId: string) {
             select: {
               liveListeners: true,
               durationMinutes: true,
+              submittedAt: true,
               teams: {
                 select: {
                   companyId: true,

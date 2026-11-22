@@ -25,41 +25,7 @@ import {
 } from "@/lib/catalog";
 import { formError } from "@/lib/form-errors";
 import { applicationSchema } from "@/lib/validation";
-import {
-  hydrateDemo,
-  getSnapshot,
-  getServerSnapshot,
-  subscribe,
-  saveDemo,
-} from "@/lib/demo-store";
-import {
-  createLocalApplication,
-  createLocalBookingApplication,
-  approvedSeats,
-} from "@/lib/domain";
 import { Status } from "./ui";
-function DemoModeControl({
-  demo,
-  configured,
-  onChange,
-}: {
-  demo: boolean;
-  configured: boolean;
-  onChange: (value: boolean) => void;
-}) {
-  if (!configured)
-    return <span className="tag public-mode-label">Demo mode</span>;
-  return (
-    <label className="public-mode-control">
-      <input
-        type="checkbox"
-        checked={demo}
-        onChange={(e) => onChange(e.target.checked)}
-      />
-      Demo mode
-    </label>
-  );
-}
 async function api(path: string, payload?: unknown) {
   const r = await fetch(
     "/api/public/" + path,
@@ -84,18 +50,11 @@ const subscribeBrowser = (fn: () => void) => {
   };
 };
 const noopSubscribe = () => () => {};
-const saveConfirmation = (id: string) => {
-  const token = crypto.randomUUID() + crypto.randomUUID();
-  localStorage.setItem("fl-demo-confirm-" + token, id);
-  sessionStorage.setItem("fl-demo-confirmation", token);
-  return token;
-};
 export function Landing() {
   const [sessions, setSessions] = useState<PublicSession[]>([]),
     [highlights, setHighlights] = useState<{ company: string; text: string }[]>(
       [],
-    ),
-    [fictional, setFictional] = useState(false);
+    );
   useEffect(() => {
     void api("sessions")
       .then((r) => setSessions(r.sessions))
@@ -103,7 +62,6 @@ export function Landing() {
     void api("programme")
       .then((r) => {
         setHighlights(r.highlights);
-        setFictional(r.fictional);
       })
       .catch(() => {});
   }, []);
@@ -128,8 +86,8 @@ export function Landing() {
             opportunities.
           </p>
           <div className="heading-actions">
-            <Link className="button primary" href="/demo">
-              Explore the working demo <ArrowRight size={16} />
+            <Link className="button primary" href="/book">
+              Choose your Saturday <ArrowRight size={16} />
             </Link>
             <Link className="button" href="/apply">
               Apply as a founder <ArrowUpRight size={15} />
@@ -138,7 +96,7 @@ export function Landing() {
           <div className="host-line">
             <span className="host-avatar">OC</span>
             <span>
-              Hosted by <b>Ola_Crrypt</b>
+              Hosted by <b>⭕️La_Crrypt💰₿</b>
               <small>
                 Starting with Nigeria and Africa. Open to founders worldwide.
               </small>
@@ -214,12 +172,7 @@ export function Landing() {
               Request a slot <ArrowRight size={15} />
             </Link>
           </div>
-          {fictional && (
-            <p className="form-note">
-              These sessions are fictional demonstration records.
-            </p>
-          )}
-          <div className="session-grid">
+          <div className="public-session-grid">
             {sessions.slice(0, 3).map((s) => (
               <article className="panel session-card" key={s.id}>
                 <CalendarDays size={23} />
@@ -240,7 +193,7 @@ export function Landing() {
           {!sessions.length && (
             <p className="public-empty">
               The next sessions will be published here. You can apply now or
-              explore a complete fictional programme in the demo.
+              check back for the next programme dates.
             </p>
           )}
         </section>
@@ -292,7 +245,7 @@ export function PublicFooter() {
   return (
     <footer className="public-footer">
       <span>
-        Founders Lab <small>with Ola_Crrypt</small>
+        Founders Lab <small>with ⭕️La_Crrypt💰₿</small>
       </span>
       <div>
         <Link href="/terms">Privacy & programme terms</Link>
@@ -301,24 +254,14 @@ export function PublicFooter() {
     </footer>
   );
 }
-export function ApplicationForm({
-  configured,
-  allowDemo = true,
-}: {
-  configured: boolean;
-  allowDemo?: boolean;
-}) {
+export function ApplicationForm({ configured }: { configured: boolean }) {
   const params = useSearchParams(),
     router = useRouter();
   const selectedSessionId = params.get("session") || "";
   const [availableSessions, setAvailableSessions] = useState<PublicSession[]>(
     [],
   );
-  const [demo, setDemo] = useState(
-      (allowDemo && params.get("mode") === "demo") ||
-        (!configured && allowDemo),
-    ),
-    [busy, setBusy] = useState(false),
+  const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [speakers, setSpeakers] = useState("1"),
     [other, setOther] = useState(4),
@@ -345,21 +288,12 @@ export function ApplicationForm({
   const [privacy, setPrivacy] = useState(false),
     [promo, setPromo] = useState(false),
     [hiring, setHiring] = useState(false);
-  const localState = useSyncExternalStore(
-    subscribe,
-    getSnapshot,
-    getServerSnapshot,
-  );
   const [catalog, setCatalog] = useState({
     countries: COUNTRIES,
     sectors: SECTORS,
     stages: STAGES,
   });
   useEffect(() => {
-    if (demo) {
-      hydrateDemo();
-      return;
-    }
     void api("programme")
       .then((r) => {
         const labels = r.labels as { group: string; name: string }[];
@@ -374,9 +308,9 @@ export function ApplicationForm({
         });
       })
       .catch(() => {});
-  }, [demo]);
+  }, []);
   useEffect(() => {
-    if (!demo && selectedSessionId)
+    if (selectedSessionId)
       void api("sessions")
         .then((r) => setAvailableSessions(r.sessions))
         .catch(() =>
@@ -384,31 +318,19 @@ export function ApplicationForm({
             "Could not load your selected Space. Return to the calendar and try again.",
           ),
         );
-  }, [demo, selectedSessionId]);
-  const chosenSession = demo
-    ? localState.sessions.find((s) => s.id === selectedSessionId)
-    : availableSessions.find((s) => s.id === selectedSessionId);
-  const chosenSeats = chosenSession
-    ? demo
-      ? chosenSession.capacity - approvedSeats(localState, chosenSession.id)
-      : (chosenSession as PublicSession).availableSeats
-    : 0;
+  }, [selectedSessionId]);
+  const chosenSession = availableSessions.find(
+    (s) => s.id === selectedSessionId,
+  );
   const selectionValid =
     !selectedSessionId ||
-    Boolean(chosenSession && publicSlotOpen(chosenSession, chosenSeats));
-  const countries = demo
-    ? localState.settings.countryOptions || COUNTRIES
-    : catalog.countries;
-  const sectors = demo
-    ? localState.labels
-        .filter((l) => l.group === "Sector" && l.active)
-        .map((l) => l.name)
-    : catalog.sectors;
-  const stages = demo
-    ? localState.labels
-        .filter((l) => l.group === "Product stage" && l.active)
-        .map((l) => l.name)
-    : catalog.stages;
+    Boolean(
+      chosenSession &&
+      publicSlotOpen(chosenSession, chosenSession.availableSeats),
+    );
+  const countries = catalog.countries,
+    sectors = catalog.sectors,
+    stages = catalog.stages;
   const change = (key: string, value: string) =>
     setFields((f) => ({ ...f, [key]: value }));
   return (
@@ -416,13 +338,10 @@ export function ApplicationForm({
       <PublicHeader />
       <main className="public-form-page" id="main-content">
         <h1>Bring your founder story.</h1>
-        {allowDemo && (
-          <DemoModeControl
-            demo={demo}
-            configured={configured}
-            onChange={setDemo}
-          />
+        {!configured && (
+          <p role="alert">Applications are temporarily unavailable.</p>
         )}
+
         {selectedSessionId && (
           <div className="selected-booking panel">
             <div>
@@ -441,10 +360,7 @@ export function ApplicationForm({
                 </span>
               )}
             </div>
-            <Link
-              className="text-link"
-              href={demo ? "/book?mode=demo" : "/book"}
-            >
+            <Link className="text-link" href="/book">
               Change date
             </Link>
           </div>
@@ -468,29 +384,12 @@ export function ApplicationForm({
                 throw new Error(
                   "Choose an available Saturday from the booking calendar.",
                 );
-              if (demo) {
-                hydrateDemo();
-                const next = selectedSessionId
-                  ? createLocalBookingApplication(
-                      getSnapshot(),
-                      p,
-                      selectedSessionId,
-                    )
-                  : createLocalApplication(getSnapshot(), p);
-                saveDemo(next);
-                const a = next.applications.at(-1)!;
-                const token = saveConfirmation(a.id);
-                router.push("/confirmation#demo=" + token);
-              } else {
-                const result = await api("apply", {
-                  ...p,
-                  ...(selectedSessionId
-                    ? { sessionId: selectedSessionId }
-                    : {}),
-                });
-                sessionStorage.setItem("fl-confirmation-token", result.token);
-                router.push("/confirmation#token=" + result.token);
-              }
+              const result = await api("apply", {
+                ...p,
+                ...(selectedSessionId ? { sessionId: selectedSessionId } : {}),
+              });
+              sessionStorage.setItem("fl-confirmation-token", result.token);
+              router.push("/confirmation#token=" + result.token);
             } catch (e) {
               const result = formError(e, "Could not submit application");
               setError(result.message);
@@ -748,7 +647,7 @@ export function ApplicationForm({
           )}
           <button
             type="submit"
-            disabled={busy || !selectionValid}
+            disabled={busy || !selectionValid || !configured}
             className="button primary full-width"
           >
             {busy ? "Submitting…" : "Submit founder application"}
@@ -764,26 +663,11 @@ export function ApplicationForm({
     </div>
   );
 }
-export function BookingPage({
-  configured,
-  allowDemo = true,
-}: {
-  configured: boolean;
-  allowDemo?: boolean;
-}) {
-  const params = useSearchParams();
-  const [demo, setDemo] = useState(
-    (allowDemo && params.get("mode") === "demo") || (!configured && allowDemo),
-  );
-  const [remoteSessions, setSessions] = useState<PublicSession[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const local = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+export function BookingPage({ configured }: { configured: boolean }) {
+  const [sessions, setSessions] = useState<PublicSession[]>([]),
+    [loading, setLoading] = useState(true),
+    [error, setError] = useState("");
   useEffect(() => {
-    if (demo) {
-      hydrateDemo();
-      return;
-    }
     let active = true;
     void api("sessions")
       .then((r) => {
@@ -801,15 +685,7 @@ export function BookingPage({
     return () => {
       active = false;
     };
-  }, [demo]);
-  const sessions = demo
-    ? local.sessions
-        .filter((s) => s.status === "Scheduled")
-        .map((s) => ({
-          ...s,
-          availableSeats: Math.max(0, s.capacity - approvedSeats(local, s.id)),
-        }))
-    : remoteSessions;
+  }, []);
   return (
     <div className="public-app">
       <PublicHeader />
@@ -819,26 +695,17 @@ export function BookingPage({
             <span className="eyebrow">BOOK YOUR CONVERSATION</span>
             <h1>Founders Lab</h1>
           </div>
-          {allowDemo && (
-            <DemoModeControl
-              demo={demo}
-              configured={configured}
-              onChange={setDemo}
-            />
-          )}
         </div>
-        {error ? (
+        {!configured ? (
+          <p role="alert">Booking is temporarily unavailable.</p>
+        ) : error ? (
           <p className="error" role="alert">
             {error}
           </p>
-        ) : !demo && loading ? (
+        ) : loading ? (
           <p role="status">Loading available Saturdays…</p>
         ) : (
-          <PublicBookingCalendar
-            key={`${demo}:${sessions.map((s) => s.id).join(",")}`}
-            sessions={sessions}
-            demo={demo}
-          />
+          <PublicBookingCalendar sessions={sessions} />
         )}
       </main>
       <PublicFooter />
@@ -865,23 +732,12 @@ export function Confirmation() {
     () => true,
     () => false,
   );
-  const params = new URLSearchParams(fragment.slice(1)),
-    raw = params.get("token"),
-    local = params.get("demo");
-  const id = useSyncExternalStore(
-    subscribeBrowser,
-    () => (local ? localStorage.getItem("fl-demo-confirm-" + local) : null),
-    () => null,
-  );
-  const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const raw = new URLSearchParams(fragment.slice(1)).get("token");
   const [remote, setRemote] = useState<{
     token: string;
     data?: ConfirmationData;
     error?: string;
   } | null>(null);
-  useEffect(() => {
-    hydrateDemo();
-  }, []);
   useEffect(() => {
     let cancelled = false;
     if (raw)
@@ -896,33 +752,14 @@ export function Confirmation() {
       cancelled = true;
     };
   }, [raw]);
-  const a = state.applications.find((v) => v.id === id),
-    demo = Boolean(local);
-  const data: ConfirmationData | null =
-    local && a
-      ? {
-          reference: a.reference,
-          companyName: a.companyName,
-          status: a.status,
-          bookings: state.bookings
-            .filter((b) => b.applicationId === id)
-            .map((b) => ({
-              status: b.status,
-              session: state.sessions.find((v) => v.id === b.sessionId)!,
-            })),
-        }
-      : raw && remote?.token === raw
-        ? remote.data || null
-        : null;
+  const data = raw && remote?.token === raw ? remote.data || null : null;
   const error = !mounted
     ? ""
-    : local && !a
-      ? "This fictional confirmation is not saved in this browser."
-      : raw && remote?.token === raw
-        ? remote.error || ""
-        : !raw && !local
-          ? "Open the private confirmation link you received after applying. A reference alone does not grant access."
-          : "";
+    : raw && remote?.token === raw
+      ? remote.error || ""
+      : !raw
+        ? "Open the private confirmation link you received after applying. A reference alone does not grant access."
+        : "";
   return (
     <div className="public-app">
       <PublicHeader />
@@ -940,9 +777,7 @@ export function Confirmation() {
             <span className="confirmation-check">
               <CheckCircle2 size={34} />
             </span>
-            <div className="eyebrow">
-              {demo ? "FICTIONAL DEMO CONFIRMATION" : "APPLICATION RECEIVED"}
-            </div>
+            <div className="eyebrow">APPLICATION RECEIVED</div>
             <h1>You’re on our radar.</h1>
             <p>
               Thank you for telling us about <b>{data.companyName}</b>.
@@ -974,10 +809,7 @@ export function Confirmation() {
               pending request does not reserve a seat. Save this private link to
               check your status; do not share it publicly.
             </p>
-            <Link
-              className="button primary"
-              href={demo ? "/book?mode=demo" : "/book"}
-            >
+            <Link className="button primary" href="/book">
               Explore session requests <ArrowRight size={16} />
             </Link>
           </div>
@@ -1021,7 +853,7 @@ export function Terms() {
         </p>
         <h2>Corrections, withdrawal & retention</h2>
         <p>
-          Contact Ola_Crrypt through the programme’s published X identity to
+          Contact ⭕️La_Crrypt💰₿ through the programme’s published X identity to
           request a correction or withdraw from future promotional use. The
           administrator reviews retained information against the programme
           retention policy. Existing public recordings may remain subject to the
@@ -1032,9 +864,7 @@ export function Terms() {
         <p>
           Programme participants form a convenience sample, not a representative
           census of Web3 founders. Self-reported information, missing answers
-          and unverified opportunity hypotheses must be identified as such. Demo
-          founders, URLs, awards and opportunities are fictional and do not
-          refer to real people or businesses.
+          and unverified opportunity hypotheses must be identified as such.
         </p>
         <Link className="button primary" href="/apply">
           Apply with informed consent <ArrowRight size={16} />

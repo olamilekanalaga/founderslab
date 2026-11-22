@@ -187,6 +187,7 @@ model Application {
 }
 
 model Session {
+  programmeWeek      ProgrammeWeek?
   managerAssignments SpaceManagerAssignment[]
   spaceData          SpaceData?
   id                 String                   @id @default(cuid())
@@ -414,6 +415,8 @@ model Setting {
 }
 
 model SpaceData {
+  submittedAt     DateTime?
+  submittedBy     String?
   id              String                @id @default(cuid())
   sessionId       String                @unique
   session         Session               @relation(fields: [sessionId], references: [id], onDelete: Cascade)
@@ -482,4 +485,17 @@ model SpaceManagerSession {
   createdAt DateTime     @default(now())
 
   @@index([managerId])
+}
+
+model ProgrammeSchedule {
+  id          String   @id
+  anchorDay   String
+  activeStart Int      @default(0)
+  createdAt   DateTime @default(now())
+}
+
+model ProgrammeWeek {
+  sessionId String  @id
+  position  Int     @unique
+  session   Session @relation(fields: [sessionId], references: [id], onDelete: Restrict)
 }

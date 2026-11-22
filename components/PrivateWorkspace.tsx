@@ -44,7 +44,6 @@ export default async function PrivateWorkspace({
   const state = scopeState(await loadState(), viewer.permissions);
   return (
     <Workspace
-      demo={false}
       initialViewer={viewer}
       initialState={state}
       section={section as Section}

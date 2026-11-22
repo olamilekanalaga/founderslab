@@ -1,3 +1,8 @@
+import {
+  ensureProgrammeWindow,
+  requireProgrammeBooking,
+  WINDOW_WEEKS,
+} from "@/lib/programme-window";
 import { z } from "zod";
 import { publicSlotOpen } from "@/lib/booking";
 import { db, hash, token, loadState } from "@/lib/db";
@@ -16,9 +21,6 @@ export async function GET(
     if (action === "programme") {
       const settings = await db().setting.findUnique({
         where: { key: "programme" },
-      });
-      const dataset = await db().setting.findUnique({
-        where: { key: "dataset" },
       });
       const approved = await db().researchRecord.findMany({
         where: {
@@ -49,15 +51,23 @@ export async function GET(
         take: 30,
       });
       return json({
-        settings: {
-          ...defaultSettings,
-          ...((settings?.value as object) || {}),
-        },
+        settings: (() => {
+          const s = {
+            ...defaultSettings,
+            ...((settings?.value as object) || {}),
+          };
+          return {
+            countryOptions: s.countryOptions,
+            capacity: s.capacity,
+            campaignTarget: s.campaignTarget,
+            awardAmount: s.awardAmount,
+            terms: s.terms,
+          };
+        })(),
         labels: await db().classificationLabel.findMany({
           where: { active: true, group: { in: ["Sector", "Product stage"] } },
           select: { group: true, name: true },
         }),
-        fictional: dataset?.value === true,
         highlights: approved
           .filter((r) =>
             r.founder.applications.some(
@@ -77,9 +87,21 @@ export async function GET(
       });
     }
     if (action !== "sessions") return json({ error: "Not found" }, 404);
+    const window = await db().$transaction((tx) => ensureProgrammeWindow(tx), {
+      timeout: 30000,
+    });
     const sessions = await db().session.findMany({
-      where: { status: "Scheduled", deadline: { gte: new Date() } },
+      where: {
+        programmeWeek: {
+          position: {
+            gte: window.activeStart,
+            lt: window.activeStart + WINDOW_WEEKS,
+          },
+        },
+      },
       include: {
+        programmeWeek: { select: { position: true } },
+        spaceData: { select: { submittedAt: true } },
         participants: {
           where: { attendance: { not: "Cancelled" } },
           select: { companyId: true },
@@ -90,6 +112,8 @@ export async function GET(
     return json({
       sessions: sessions.map(({ participants, ...s }) => ({
         id: s.id,
+        position: s.programmeWeek!.position,
+        submitted: Boolean(s.spaceData?.submittedAt),
         title: s.title,
         startsAt: s.startsAt,
         timezone: s.timezone,
@@ -153,6 +177,7 @@ export async function POST(
       void ignored;
       const application = await db().$transaction(async (tx) => {
         if (sessionId) {
+          await requireProgrammeBooking(tx, sessionId);
           await tx.$queryRaw`SELECT id FROM "Session" WHERE id = ${sessionId} FOR UPDATE`;
           const session = await tx.session.findUnique({
             where: { id: sessionId },
@@ -245,6 +270,7 @@ export async function POST(
     if (action === "book" && p.sessionId) {
       const result = await db().$transaction(
         async (tx) => {
+          await requireProgrammeBooking(tx, p.sessionId!);
           await tx.$queryRaw`SELECT id FROM "Session" WHERE id = ${p.sessionId!} FOR UPDATE`;
           const session = await tx.session.findUnique({
             where: { id: p.sessionId },
