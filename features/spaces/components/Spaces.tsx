@@ -30,8 +30,24 @@ export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
   const tab = params.get("tab") || "sessions";
   const [selected, setSelected] = useState<string | null>(null),
     [booking, setBooking] = useState(false),
-    [filter, setFilter] = useState("All");
-  const a = s.applications.find((v) => v.id === selected),
+    [filterState, setFilterState] = useState({
+      tab,
+      value: params.get("status") || "All",
+    });
+  const statuses =
+    tab === "sessions"
+      ? ["Scheduled", "Completed", "Cancelled"]
+      : tab === "applications"
+        ? ["Pending", "Approved", "Waitlisted", "Declined"]
+        : BOOKING_STATUSES;
+  const filter =
+    filterState.tab === tab && ["All", ...statuses].includes(filterState.value)
+      ? filterState.value
+      : "All";
+  const setFilter = (value: string) => setFilterState({ tab, value });
+  const a = s.applications.find(
+      (v) => v.id === (selected || params.get("review")),
+    ),
     can = viewer.permissions.includes("booking.write");
   const session = s.sessions.find((v) => v.id === id);
   const actual = spaceTotals(s, id);
@@ -178,6 +194,10 @@ export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
           <div className="page-heading">
             <div>
               <h1>Founder Spaces</h1>
+              <p>
+                Prepare your sessions, review applications and manage project
+                seats.
+              </p>
             </div>
             <div className="heading-actions">
               {can && (
@@ -204,6 +224,7 @@ export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
               <button
                 key={value}
                 className={tab === value ? "active" : ""}
+                aria-pressed={tab === value}
                 onClick={() => router.replace(`${path("spaces")}?tab=${value}`)}
               >
                 {label}
@@ -249,8 +270,13 @@ export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
           {tab === "sessions" ? (
             <SessionCalendar sessions={s.sessions} filter={filter} />
           ) : tab === "applications" ? (
-            <section className="panel">
-              <div className="table-wrap">
+            <section className="panel workflow-desktop">
+              <div
+                className="table-wrap"
+                tabIndex={0}
+                role="region"
+                aria-label="Founder applications"
+              >
                 <table>
                   <thead>
                     <tr>
@@ -300,10 +326,29 @@ export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
                   </tbody>
                 </table>
               </div>
+              {!s.applications.some(
+                (a) => filter === "All" || a.status === filter,
+              ) && (
+                <Empty
+                  title={
+                    filter === "All"
+                      ? "No applications to review"
+                      : "No matching applications"
+                  }
+                >
+                  New submissions will appear here. Try another status if you
+                  have filters selected.
+                </Empty>
+              )}
             </section>
           ) : (
-            <section className="panel">
-              <div className="table-wrap">
+            <section className="panel workflow-desktop">
+              <div
+                className="table-wrap"
+                tabIndex={0}
+                role="region"
+                aria-label="Founder booking requests"
+              >
                 <table>
                   <thead>
                     <tr>
@@ -374,17 +419,126 @@ export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
                       ))}
                   </tbody>
                 </table>
-                {!s.bookings.length && <Empty>No bookings yet.</Empty>}
+                {!s.bookings.some(
+                  (b) => filter === "All" || b.status === filter,
+                ) && (
+                  <Empty title="No matching bookings">
+                    Pending requests appear here. Approve a request to reserve a
+                    project seat.
+                  </Empty>
+                )}
               </div>
             </section>
+          )}
+          {tab === "applications" && (
+            <div className="workflow-mobile">
+              {s.applications
+                .filter((a) => filter === "All" || a.status === filter)
+                .map((item, i) => (
+                  <article className="workflow-card" key={item.id}>
+                    <div className="workflow-card-heading">
+                      <Avatar name={item.founderName} index={i} />
+                      <div>
+                        <b>{item.founderName}</b>
+                        <small>{item.companyName}</small>
+                      </div>
+                    </div>
+                    <p>
+                      {item.country} · {item.speakers} speakers ·{" "}
+                      {item.reference}
+                    </p>
+                    <div className="workflow-card-footer">
+                      <Status value={item.status} />
+                      <button
+                        className="button primary"
+                        onClick={() => setSelected(item.id)}
+                      >
+                        Review application
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              {!s.applications.some(
+                (a) => filter === "All" || a.status === filter,
+              ) && (
+                <section className="panel">
+                  <Empty title="No applications to review">
+                    New founder submissions will appear here.
+                  </Empty>
+                </section>
+              )}
+            </div>
+          )}
+          {tab === "bookings" && (
+            <div className="workflow-mobile">
+              {s.bookings
+                .filter((b) => filter === "All" || b.status === filter)
+                .map((b) => {
+                  const application = s.applications.find(
+                    (a) => a.id === b.applicationId,
+                  );
+                  return (
+                    <article className="workflow-card" key={b.id}>
+                      <b>{application?.companyName || "Founder project"}</b>
+                      <small>{application?.founderName}</small>
+                      <p>
+                        {s.sessions.find((v) => v.id === b.sessionId)?.title}
+                      </p>
+                      <Link
+                        className="text-link"
+                        href={path("spaces", b.sessionId)}
+                      >
+                        Open Space
+                        <ArrowLeft size={15} />
+                      </Link>
+                      {can ? (
+                        <label>
+                          Booking status
+                          <select
+                            aria-label={`Booking status ${b.id}`}
+                            disabled={busy}
+                            value={b.status}
+                            onChange={(e) =>
+                              void commit({
+                                type: "booking.review",
+                                payload: { id: b.id, status: e.target.value },
+                              })
+                            }
+                          >
+                            {BOOKING_STATUSES.map((v) => (
+                              <option key={v}>{v}</option>
+                            ))}
+                          </select>
+                        </label>
+                      ) : (
+                        <Status value={b.status} />
+                      )}
+                    </article>
+                  );
+                })}
+              {!s.bookings.some(
+                (b) => filter === "All" || b.status === filter,
+              ) && (
+                <section className="panel">
+                  <Empty title="No matching bookings">
+                    Requests appear here before project seats are approved.
+                  </Empty>
+                </section>
+              )}
+            </div>
           )}
         </>
       )}
       {a && (
         <Modal
           title={`Application · ${a.reference}`}
-          close={() => setSelected(null)}
+          close={() => {
+            setSelected(null);
+            if (params.has("review"))
+              router.replace(`${path("spaces")}?tab=applications`);
+          }}
           wide
+          className="application-dialog"
         >
           <DeleteRecordButton
             kind="application"

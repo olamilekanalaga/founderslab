@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Modal } from "@/components/ui";
 import { useWorkspace } from "@/components/layout/WorkspaceContext";
 import { COUNTRIES, SECTORS, STAGES, TEAM_SIZES } from "@/lib/catalog";
+import { utcInputValue, utcInputToIso } from "@/lib/dates/utc-input";
 interface Option {
   value: string;
   label: string;
@@ -35,7 +36,7 @@ export default function RecordEditor({
   record?: Record<string, unknown>;
   close: () => void;
 }) {
-  const { state, commit, busy } = useWorkspace();
+  const { state, commit, busy, fieldErrors } = useWorkspace();
   const now = new Date().toISOString();
   const defaults: Record<Resource, Record<string, unknown>> = {
     founder: {
@@ -245,6 +246,8 @@ export default function RecordEditor({
       title={`${record ? "Edit" : "Add"} ${resource === "settings" ? "programme settings" : resource}`}
       close={close}
       wide
+      guardUnsaved
+      className="record-editor"
     >
       <form
         className="record-form"
@@ -254,12 +257,7 @@ export default function RecordEditor({
           const data = { ...values };
           for (const field of sections[resource])
             if (field.type === "datetime-local" && data[field.name]) {
-              const raw = String(data[field.name]);
-              data[field.name] = raw.endsWith("Z")
-                ? raw
-                : new Date(
-                    raw + (raw.length === 16 ? ":00Z" : "Z"),
-                  ).toISOString();
+              data[field.name] = utcInputToIso(String(data[field.name]));
             }
           const ok = await commit({ type: verbs[resource], payload: data });
           if (ok) close();
@@ -271,9 +269,29 @@ export default function RecordEditor({
       >
         {resource === "session" && (
           <p className="form-note span-2">
-            Paste the recording once here. Every connected founder and company
-            will inherit this session link.
+            Enter dates in UTC. London programme time and your local time are
+            shown below. Recording links are shared with connected founder and
+            company records.
           </p>
+        )}
+        {resource === "session" && Boolean(values.startsAt) && (
+          <div className="time-preview span-2">
+            <span>
+              <b>London programme time</b>
+              {new Intl.DateTimeFormat("en-GB", {
+                dateStyle: "medium",
+                timeStyle: "short",
+                timeZone: "Europe/London",
+              }).format(new Date(utcInputToIso(String(values.startsAt))))}
+            </span>
+            <span>
+              <b>Your local time</b>
+              {new Intl.DateTimeFormat("en-GB", {
+                dateStyle: "medium",
+                timeStyle: "short",
+              }).format(new Date(utcInputToIso(String(values.startsAt))))}
+            </span>
+          </div>
         )}
         {resource === "taxonomy" && record && (
           <p className="form-note span-2">
@@ -284,7 +302,7 @@ export default function RecordEditor({
         {sections[resource].map((field) => {
           let value = values[field.name];
           if (field.type === "datetime-local" && value)
-            value = new Date(String(value)).toISOString().slice(0, 16);
+            value = utcInputValue(String(value));
           if (Array.isArray(value) && field.type !== "multi")
             value = value.join(", ");
           return (
@@ -300,9 +318,24 @@ export default function RecordEditor({
                     : ""}
                 </span>
               )}
+              {fieldErrors[field.name] && (
+                <span
+                  className="field-error"
+                  role="alert"
+                  id={`${resource}-${field.name}-error`}
+                >
+                  {fieldErrors[field.name]}
+                </span>
+              )}
               {field.type === "textarea" ? (
                 <textarea
                   aria-label={field.label}
+                  aria-invalid={Boolean(fieldErrors[field.name])}
+                  aria-describedby={
+                    fieldErrors[field.name]
+                      ? `${resource}-${field.name}-error`
+                      : undefined
+                  }
                   rows={3}
                   maxLength={5000}
                   required={field.required}
@@ -312,6 +345,12 @@ export default function RecordEditor({
               ) : field.type === "select" || field.type === "multi" ? (
                 <select
                   aria-label={field.label}
+                  aria-invalid={Boolean(fieldErrors[field.name])}
+                  aria-describedby={
+                    fieldErrors[field.name]
+                      ? `${resource}-${field.name}-error`
+                      : undefined
+                  }
                   disabled={
                     resource === "taxonomy" &&
                     Boolean(record) &&
@@ -350,6 +389,12 @@ export default function RecordEditor({
                 <>
                   <input
                     aria-label={field.label}
+                    aria-invalid={Boolean(fieldErrors[field.name])}
+                    aria-describedby={
+                      fieldErrors[field.name]
+                        ? `${resource}-${field.name}-error`
+                        : undefined
+                    }
                     readOnly={
                       resource === "taxonomy" &&
                       Boolean(record) &&
@@ -365,6 +410,12 @@ export default function RecordEditor({
                 <>
                   <input
                     aria-label={field.label}
+                    aria-invalid={Boolean(fieldErrors[field.name])}
+                    aria-describedby={
+                      fieldErrors[field.name]
+                        ? `${resource}-${field.name}-error`
+                        : undefined
+                    }
                     readOnly={
                       resource === "taxonomy" &&
                       Boolean(record) &&
@@ -402,7 +453,16 @@ export default function RecordEditor({
           </p>
         )}
         <div className="form-actions span-2">
-          <button type="button" className="button" onClick={close}>
+          <button
+            type="button"
+            className="button"
+            onClick={() => {
+              const button = document.querySelector(
+                ".record-editor .modal-heading button",
+              ) as HTMLButtonElement | null;
+              button?.click();
+            }}
+          >
             Cancel
           </button>
           <button className="button primary" disabled={busy} type="submit">

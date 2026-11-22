@@ -29,7 +29,7 @@ export default function BookingEditor({
     ),
     [speakers, setSpeakers] = useState(1);
   return (
-    <Modal title="Create booking request" close={close}>
+    <Modal title="Create booking request" close={close} guardUnsaved>
       <form
         className="stack-form"
         onSubmit={async (e) => {

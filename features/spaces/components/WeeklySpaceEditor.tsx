@@ -21,7 +21,12 @@ export default function WeeklySpaceEditor({
         Edit weekly Space data
       </button>
       {open && (
-        <Modal title="Weekly Space data" close={() => setOpen(false)} wide>
+        <Modal
+          title="Weekly Space data"
+          close={() => setOpen(false)}
+          wide
+          guardUnsaved
+        >
           <p className="weekly-edit-hint">
             The X post, Space links, listeners and time are shared by everyone
             in this Space. Each project has its own attendance counts.

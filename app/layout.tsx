@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./public-experience.css";
+import "./admin-experience.css";
 import localFont from "next/font/local";
 const publicFont = localFont({
   src: "./fonts/geist-latin.ttf",

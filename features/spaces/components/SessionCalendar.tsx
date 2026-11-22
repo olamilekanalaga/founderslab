@@ -21,7 +21,8 @@ export default function SessionCalendar({
       );
       return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
     }),
-    [day, setDay] = useState<number | null>(null);
+    [day, setDay] = useState<number | null>(null),
+    [calendarVisible, setCalendarVisible] = useState(false);
   const rows = sessions
     .filter(
       (v) =>
@@ -44,7 +45,16 @@ export default function SessionCalendar({
   }
   return (
     <div className="spaces-workspace">
-      <aside className="panel calendar-panel">
+      <button
+        className="button calendar-toggle"
+        aria-expanded={calendarVisible}
+        onClick={() => setCalendarVisible((v) => !v)}
+      >
+        {calendarVisible ? "Hide calendar" : "Show calendar"}
+      </button>
+      <aside
+        className={`panel calendar-panel ${calendarVisible ? "is-open" : ""}`}
+      >
         <div className="row-between">
           <button
             className="icon-button"

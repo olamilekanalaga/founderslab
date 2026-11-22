@@ -4,8 +4,14 @@ test("public booking is light, backend-backed and limited to eight Saturdays", a
   page,
 }) => {
   await page.setViewportSize({ width: 393, height: 852 });
+  const availability = page.waitForResponse(
+    (response) =>
+      response.url().includes("/api/public/sessions") &&
+      response.request().method() === "GET",
+  );
   await page.goto("/book?mode=demo");
-  await expect(page.locator(".weekly-date")).toHaveCount(8);
+  expect((await availability).status()).toBe(200);
+  await expect(page.locator(".weekly-date")).toHaveCount(8, { timeout: 15000 });
   await expect(page.locator(".fl-date-panel-heading")).toContainText(
     "7 PM London",
   );

@@ -16,13 +16,28 @@ export default function SpaceManagersSettings() {
     [selected, setSelected] = useState<string[]>([]),
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false),
-    [configured, setConfigured] = useState(false);
+    [configured, setConfigured] = useState<boolean | null>(null),
+    [loading, setLoading] = useState(true),
+    [loadError, setLoadError] = useState("");
   const load = useCallback(async () => {
-    const r = await fetch("/api/space-managers");
-    const data = await r.json();
-    if (!r.ok) throw new Error(data.error);
-    setManagers(data.managers);
-    setConfigured(data.emailConfigured);
+    setLoading(true);
+    setLoadError("");
+    try {
+      const r = await fetch("/api/space-managers", { cache: "no-store" });
+      const data = await r.json();
+      if (!r.ok)
+        throw new Error(data.error || "Unable to load Space Managers.");
+      setManagers(data.managers);
+      setConfigured(data.emailConfigured);
+    } catch (error) {
+      setLoadError(
+        error instanceof Error
+          ? error.message
+          : "Unable to load Space Managers.",
+      );
+    } finally {
+      setLoading(false);
+    }
   }, []);
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -60,21 +75,38 @@ export default function SpaceManagersSettings() {
         Passwordless access to assigned weekly Spaces only.
       </p>
       <>
-        {!configured && (
+        {loading && (
+          <div
+            className="chart-skeleton"
+            role="status"
+            aria-label="Loading Space Managers"
+          />
+        )}
+        {loadError && (
+          <div className="notice" role="alert">
+            <b>Space Managers couldn’t load.</b>
+            <p>{loadError}</p>
+            <button className="button" onClick={() => void load()}>
+              Retry
+            </button>
+          </div>
+        )}
+        {!loading && !loadError && configured === false && (
           <p className="notice">
-            Email delivery is not configured. Set RESEND_API_KEY,
-            MANAGER_EMAIL_FROM and APP_ORIGIN before sending invitations.
+            Email delivery is not connected. Connect the programme’s email
+            service before sending invitations.
           </p>
         )}
         <form
           className="stack-form"
+          hidden={loading || Boolean(loadError)}
           onSubmit={(e) => {
             e.preventDefault();
             void act({ action: "invite", email, sessionIds: selected });
           }}
         >
           <label>
-            Friend’s email
+            Manager’s email
             <input
               type="email"
               required
@@ -105,13 +137,25 @@ export default function SpaceManagersSettings() {
           </fieldset>
           <button
             className="button primary"
-            disabled={busy || !configured || !selected.length}
+            disabled={
+              busy ||
+              loading ||
+              Boolean(loadError) ||
+              !configured ||
+              !selected.length
+            }
           >
             Send invitation email
           </button>
         </form>
         {message && <p role="status">{message}</p>}
-        <div className="table-wrap">
+        <div
+          className="table-wrap"
+          tabIndex={0}
+          role="region"
+          aria-label="Space manager accounts"
+          hidden={loading || Boolean(loadError)}
+        >
           <table>
             <thead>
               <tr>
@@ -201,7 +245,7 @@ export default function SpaceManagersSettings() {
             </tbody>
           </table>
         </div>
-        {!managers.length && (
+        {!loading && !loadError && !managers.length && (
           <p className="muted">No Space Managers invited.</p>
         )}
       </>

@@ -8,7 +8,8 @@
     "deploymentEnabled": {
       "refactor/feature-architecture": false,
       "feature/v4-public-homepage": false,
-      "redesign/public-experience": false
+      "redesign/public-experience": false,
+      "redesign/admin-experience": false
     }
   }
 }

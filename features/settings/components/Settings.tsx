@@ -2,10 +2,11 @@
 import SpaceManagersSettings from "@/features/space-managers/components/SpaceManagersSettings";
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ShieldCheck, Plus, Pencil } from "lucide-react";
 import { useWorkspace } from "@/components/layout/WorkspaceContext";
 import { ROLES, PERMISSIONS } from "@/lib/catalog";
-import { SectionHeading, Status, Avatar, Modal } from "@/components/ui";
+import { SectionHeading, Status, Avatar, Modal, Empty } from "@/components/ui";
 import type { Resource } from "@/components/shared/RecordEditor";
 export default function Settings({
   edit,
@@ -13,15 +14,35 @@ export default function Settings({
   edit: (resource: Resource, record?: Record<string, unknown>) => void;
 }) {
   const { state: s, commit, busy } = useWorkspace(),
-    [tab, setTab] = useState("Admins"),
     [group, setGroup] = useState("Sector"),
     [userId, setUser] = useState<string | null>(null);
+  const params = useSearchParams(),
+    router = useRouter();
+  const requested = params.get("tab") || "Admins";
+  const tab = [
+    "Admins",
+    "Space Managers",
+    "Options",
+    "Programme",
+    "Activity",
+  ].includes(requested)
+    ? requested
+    : "Admins";
+  const setTab = (value: string) =>
+    router.replace(`/settings?tab=${encodeURIComponent(value)}`, {
+      scroll: false,
+    });
   const target = s.users.find((u) => u.id === userId);
   return (
     <>
       <div className="page-heading">
         <div>
+          <span className="page-eyebrow">Workspace preferences</span>
           <h1>Admin settings</h1>
+          <p>
+            Manage programme access, classification options and your team’s
+            activity.
+          </p>
         </div>
       </div>
       <div className="tabs settings-tabs">
@@ -30,6 +51,7 @@ export default function Settings({
             <button
               key={t}
               className={tab === t ? "active" : ""}
+              aria-pressed={tab === t}
               onClick={() => setTab(t)}
             >
               {t}
@@ -38,12 +60,17 @@ export default function Settings({
         )}
       </div>
       {tab === "Space Managers" && <SpaceManagersSettings />}
-      <section className="panel" hidden={tab !== "Admins"}>
+      <section className="panel admin-access" hidden={tab !== "Admins"}>
         <SectionHeading
           title="Admin access"
           detail="Authorised administrators"
         />
-        <div className="table-wrap">
+        <div
+          className="table-wrap"
+          tabIndex={0}
+          role="region"
+          aria-label="Administrator access"
+        >
           <table>
             <thead>
               <tr>
@@ -191,6 +218,12 @@ export default function Settings({
               </div>
             ))}
         </div>
+        {!s.audit.length && (
+          <Empty title="No activity recorded yet">
+            Programme changes will appear here with the actor, action and
+            timestamp.
+          </Empty>
+        )}
       </section>
       {target && (
         <PermissionEditor
@@ -236,7 +269,7 @@ function PermissionEditor({
   const [values, setValues] = useState(permissions),
     [enabled, setEnabled] = useState(active);
   return (
-    <Modal title={`Permissions · ${name}`} close={close}>
+    <Modal title={`Permissions · ${name}`} close={close} guardUnsaved>
       <form
         className="stack-form"
         onSubmit={async (e) => {

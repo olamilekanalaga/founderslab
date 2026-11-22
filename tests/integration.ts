@@ -1,4 +1,6 @@
 /** Isolated PostgreSQL + production HTTP verification. Never resets an existing database. */
+// PostgreSQL timestamp columns store UTC; pg's standalone parser otherwise uses the Windows host timezone.
+process.env.TZ = "UTC";
 import assert from "node:assert/strict";
 import { createHash, randomBytes } from "node:crypto";
 import { spawn, spawnSync } from "node:child_process";
@@ -22,6 +24,8 @@ if (!source)
     "Set TEST_DATABASE_URL to a local PostgreSQL server with database-creation privileges.",
   );
 const url = new URL(source);
+// Make NOW() fixtures agree with UTC timestamp storage on the local Windows PostgreSQL server.
+url.searchParams.set("options", "-c timezone=UTC");
 if (!["localhost", "127.0.0.1", "[::1]"].includes(url.hostname))
   throw new Error("Integration runner only creates databases on localhost.");
 const database = `founders_lab_test_${randomBytes(6).toString("hex")}`;
@@ -1309,6 +1313,7 @@ try {
   try {
     const page = await browser.newPage({
       viewport: { width: 393, height: 852 },
+      timezoneId: "Africa/Lagos",
     });
     const errors: string[] = [];
     page.on("pageerror", (e) => errors.push(e.message));
@@ -1318,7 +1323,10 @@ try {
     await page.getByRole("button", { name: "Sign in", exact: true }).click();
     await page.waitForURL("**/dashboard");
     await page
-      .getByRole("heading", { name: "Overview", exact: true })
+      .getByRole("heading", {
+        name: "A clear view of what’s next.",
+        exact: true,
+      })
       .waitFor();
     await page.goto(origin + "/founders/" + linked.founderId);
     await page
@@ -1352,6 +1360,80 @@ try {
       path: "artifacts/space-manager-settings-mobile.png",
       fullPage: true,
     });
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.goto(origin + "/spaces");
+    await page
+      .getByRole("button", { name: "Create Space", exact: true })
+      .click();
+    await page
+      .getByLabel("Session title", { exact: true })
+      .fill("Admin UTC acceptance");
+    await page
+      .getByLabel("Session starts · UTC", { exact: true })
+      .fill("2030-01-05T19:00");
+    await page
+      .getByLabel("Application deadline · UTC", { exact: true })
+      .fill("2030-01-05T18:00");
+    assert.equal(
+      await page
+        .getByLabel("Session starts · UTC", { exact: true })
+        .inputValue(),
+      "2030-01-05T19:00",
+    );
+    const winterResponse = page.waitForResponse(
+      (r) =>
+        r.url().endsWith("/api/workspace") && r.request().method() === "POST",
+    );
+    await page
+      .getByRole("button", { name: "Save record", exact: true })
+      .click();
+    const winterSave = await winterResponse;
+    assert.equal(winterSave.status(), 200);
+    const winterState = (await winterSave.json()).state as DataState;
+    const utcSession = winterState.sessions.find(
+      (s) => s.title === "Admin UTC acceptance",
+    )!;
+    assert.equal(utcSession.startsAt, "2030-01-05T19:00:00.000Z");
+    await page.goto(origin + "/spaces/" + utcSession.id);
+    await page
+      .getByRole("button", { name: "Edit session & recording", exact: true })
+      .click();
+    assert.equal(
+      await page
+        .getByLabel("Session starts · UTC", { exact: true })
+        .inputValue(),
+      "2030-01-05T19:00",
+    );
+    await page
+      .getByLabel("Session starts · UTC", { exact: true })
+      .fill("2030-06-01T18:00");
+    await page
+      .getByLabel("Application deadline · UTC", { exact: true })
+      .fill("2030-06-01T17:00");
+    const summerResponse = page.waitForResponse(
+      (r) =>
+        r.url().endsWith("/api/workspace") && r.request().method() === "POST",
+    );
+    await page
+      .getByRole("button", { name: "Save record", exact: true })
+      .click();
+    const summerSave = await summerResponse;
+    assert.equal(summerSave.status(), 200);
+    const summerState = (await summerSave.json()).state as DataState;
+    assert.equal(
+      summerState.sessions.find((s) => s.id === utcSession.id)?.startsAt,
+      "2030-06-01T18:00:00.000Z",
+    );
+    const utcRoundTrip = await request("/api/workspace", undefined, admin);
+    assert.equal(
+      utcRoundTrip.data.state.sessions.find(
+        (s: DataState["sessions"][number]) => s.id === utcSession.id,
+      ).startsAt,
+      "2030-06-01T18:00:00.000Z",
+    );
+    pass(
+      "Admin UTC editor creates and updates winter/summer sessions through real UI, HTTP and PostgreSQL without shifting the clock",
+    );
     assert.deepEqual(errors, []);
   } finally {
     await browser.close();

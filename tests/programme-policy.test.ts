@@ -21,11 +21,13 @@ test("current public policy requires approval and makes no founder reward promis
     ["campaign.save", "campaign.assess", "award.save"],
   );
 });
-test("both review branches disable automatic deployment", () => {
+test("review branches disable automatic deployment", () => {
   const config = JSON.parse(readFileSync("vercel.json", "utf8"));
   for (const branch of [
     "refactor/feature-architecture",
     "feature/v4-public-homepage",
+    "redesign/public-experience",
+    "redesign/admin-experience",
   ])
     assert.equal(config.git.deploymentEnabled[branch], false);
 });

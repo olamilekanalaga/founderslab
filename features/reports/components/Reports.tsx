@@ -28,7 +28,12 @@ export default function Reports() {
     <>
       <div className="page-heading">
         <div>
+          <span className="page-eyebrow">Programme insights</span>
           <h1>Reports</h1>
+          <p>
+            Explore your founder records and export a report with the filters
+            you choose.
+          </p>
         </div>
         <div className="heading-actions">
           <button
