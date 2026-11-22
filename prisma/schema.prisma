@@ -187,25 +187,26 @@ model Application {
 }
 
 model Session {
-  spaceData      SpaceData?
-  id             String               @id @default(cuid())
-  title          String
-  startsAt       DateTime
-  timezone       String               @default("Africa/Lagos")
-  host           String
-  capacity       Int                  @default(5)
-  deadline       DateTime
-  status         String               @default("Scheduled")
-  researchStatus String               @default("Not started")
-  liveUrl        String               @default("")
-  postUrl        String               @default("")
-  recordingUrl   String               @default("")
-  notes          String               @default("")
-  participants   SessionParticipant[]
-  bookings       BookingRequest[]
-  research       ResearchRecord[]
-  createdAt      DateTime             @default(now())
-  updatedAt      DateTime             @updatedAt
+  managerAssignments SpaceManagerAssignment[]
+  spaceData          SpaceData?
+  id                 String                   @id @default(cuid())
+  title              String
+  startsAt           DateTime
+  timezone           String                   @default("Africa/Lagos")
+  host               String
+  capacity           Int                      @default(5)
+  deadline           DateTime
+  status             String                   @default("Scheduled")
+  researchStatus     String                   @default("Not started")
+  liveUrl            String                   @default("")
+  postUrl            String                   @default("")
+  recordingUrl       String                   @default("")
+  notes              String                   @default("")
+  participants       SessionParticipant[]
+  bookings           BookingRequest[]
+  research           ResearchRecord[]
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
 }
 
 model SessionParticipant {
@@ -435,4 +436,50 @@ model SpaceTeamAttendance {
   otherTeamCount Int       @default(0)
 
   @@unique([spaceDataId, companyId])
+}
+
+model SpaceManager {
+  id             String                   @id @default(cuid())
+  email          String                   @unique
+  revokedAt      DateTime?
+  verifiedAt     DateTime?
+  lastActivityAt DateTime?
+  createdAt      DateTime                 @default(now())
+  assignments    SpaceManagerAssignment[]
+  links          SpaceManagerLink[]
+  sessions       SpaceManagerSession[]
+}
+
+model SpaceManagerAssignment {
+  managerId String
+  sessionId String
+  manager   SpaceManager @relation(fields: [managerId], references: [id], onDelete: Cascade)
+  session   Session      @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@id([managerId, sessionId])
+}
+
+model SpaceManagerLink {
+  id          String       @id @default(cuid())
+  managerId   String
+  manager     SpaceManager @relation(fields: [managerId], references: [id], onDelete: Cascade)
+  tokenHash   String       @unique
+  expiresAt   DateTime
+  usedAt      DateTime?
+  deliveredAt DateTime?
+  createdAt   DateTime     @default(now())
+
+  @@index([managerId])
+}
+
+model SpaceManagerSession {
+  id        String       @id @default(cuid())
+  managerId String
+  manager   SpaceManager @relation(fields: [managerId], references: [id], onDelete: Cascade)
+  tokenHash String       @unique
+  csrf      String
+  expiresAt DateTime
+  createdAt DateTime     @default(now())
+
+  @@index([managerId])
 }

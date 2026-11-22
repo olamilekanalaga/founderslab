@@ -5513,3 +5513,13 @@ td > b,
 .weekly-selection{border-top:1px solid #e1e2ed;margin-top:26px;padding-top:24px}.weekly-selection-heading{display:flex;justify-content:space-between;align-items:center;gap:12px}.weekly-selection-heading h3{font-size:22px;margin:0}.weekly-selection>p{color:#626b80;font-size:16px;line-height:1.6;margin:12px 0}.weekly-selection .weekly-selection-time{font-size:13px;color:#626b80}.weekly-continue{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:20px;min-height:50px;border-radius:30px;background:#7946d8;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none}.weekly-demo-note{color:#65708a;font-size:12px;margin:20px 0 0}.booking-weekly .calendar-empty-state{background:#faf9ff;border-color:#e1e2ed;color:#25263d}.booking-weekly .calendar-empty-state p{color:#65708a}.booking-weekly .calendar-empty-state a{color:#7040c8}
 @media(max-width:600px){.booking-weekly.panel{padding:18px 14px;border-radius:18px}.weekly-heading{gap:10px;align-items:flex-start}.weekly-heading h2{font-size:23px}.weekly-heading p{font-size:12px}.weekly-status{font-size:10px;padding:5px 8px}.weekly-location{font-size:11px}.weekly-dates{gap:8px}.weekly-date{min-height:122px;border-radius:13px;gap:6px}.weekly-date strong{font-size:14px}.weekly-date>span{font-size:11px}.weekly-date>b{font-size:21px}.weekly-date>small{font-size:11px}.weekly-selection-heading h3{font-size:18px}.weekly-selection>p{font-size:14px}}
 .booking-weekly .weekly-heading h2,.booking-weekly .weekly-selection-heading h3{color:#25263d;font-weight:650}
+
+/* Restricted Space Manager workspace shares the existing light palette. */
+.manager-page { max-width: 760px; margin: 0 auto; padding: 24px 16px 56px; }
+.manager-page > header { padding-bottom: 24px; border-bottom: 1px solid #dedfea; margin-bottom: 24px; }
+.manager-space { margin-top: 20px; }
+.manager-assignments { display: grid; gap: 8px; max-height: 220px; overflow: auto; padding: 8px 0; min-width: 200px; }
+.manager-page fieldset { min-width: 0; border: 1px solid #dedfea; border-radius: 12px; padding: 16px; }
+.manager-page ul { padding-left: 20px; line-height: 1.8; }
+
+.manager-page .button.primary:hover, .space-managers-settings .button.primary:hover { color: #fff; }

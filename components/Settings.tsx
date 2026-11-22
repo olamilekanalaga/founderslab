@@ -1,4 +1,5 @@
 "use client";
+import SpaceManagersSettings from "./SpaceManagersSettings";
 import { useState } from "react";
 import { ShieldCheck, Plus, Pencil } from "lucide-react";
 import { useWorkspace } from "./WorkspaceContext";
@@ -23,16 +24,19 @@ export default function Settings({
         </div>
       </div>
       <div className="tabs settings-tabs">
-        {["Admins", "Options", "Programme", "Activity"].map((t) => (
-          <button
-            key={t}
-            className={tab === t ? "active" : ""}
-            onClick={() => setTab(t)}
-          >
-            {t}
-          </button>
-        ))}
+        {["Admins", "Space Managers", "Options", "Programme", "Activity"].map(
+          (t) => (
+            <button
+              key={t}
+              className={tab === t ? "active" : ""}
+              onClick={() => setTab(t)}
+            >
+              {t}
+            </button>
+          ),
+        )}
       </div>
+      {tab === "Space Managers" && <SpaceManagersSettings />}
       <section className="panel" hidden={tab !== "Admins"}>
         <SectionHeading
           title="Admin access"

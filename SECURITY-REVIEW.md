@@ -31,3 +31,7 @@ Keep BOOTSTRAP_ADMIN_EMAIL configured in Production: it is the continuing allowl
 
 ## Remaining limits
 No MFA, password recovery or automatic security monitoring is integrated. This is an access-control review and regression suite, not a penetration-test certification.
+
+## Restricted Space Manager extension
+
+The later Space Manager implementation preserves the Admin allowlist and Admin authentication handlers above. It adds independent, passwordless email grants, assignment-scoped APIs, hashed one-time links and separate manager sessions. It does not reopen Admin invitations or public signup. See SPACE-MANAGERS.md for the workflow, email configuration, revocation model and verification scope. Real provider delivery and deployed end-to-end manager access remain distinct from the mock-provider local integration results.

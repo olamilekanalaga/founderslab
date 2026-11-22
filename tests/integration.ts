@@ -1,9 +1,11 @@
 /** Isolated PostgreSQL + production HTTP verification. Never resets an existing database. */
 import assert from "node:assert/strict";
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { spawn, spawnSync } from "node:child_process";
+import { createServer } from "node:http";
 import { once } from "node:events";
 import { Client } from "pg";
+import AxeBuilder from "@axe-core/playwright";
 import { chromium } from "@playwright/test";
 import type { DataState } from "../lib/types";
 try {
@@ -26,6 +28,29 @@ await control.query(`CREATE DATABASE "${database}"`);
 url.pathname = `/${database}`;
 const origin = "http://localhost:3100";
 const password = randomBytes(24).toString("base64url");
+const mail: { to: string[]; text: string }[] = [];
+let rejectEmail = false;
+const mailServer = createServer(async (req, res) => {
+  let raw = "";
+  for await (const chunk of req) raw += chunk.toString();
+  mail.push(JSON.parse(raw));
+  res.writeHead(rejectEmail ? 422 : 200, {
+    "Content-Type": "application/json",
+  });
+  res.end(
+    JSON.stringify(
+      rejectEmail
+        ? { error: "Unverified sender" }
+        : { id: crypto.randomUUID() },
+    ),
+  );
+});
+await new Promise<void>((resolve) =>
+  mailServer.listen(0, "127.0.0.1", resolve),
+);
+const mailAddress = mailServer.address();
+if (!mailAddress || typeof mailAddress === "string")
+  throw new Error("Mock email unavailable");
 const env = {
   ...process.env,
   DATABASE_URL: "",
@@ -34,6 +59,10 @@ const env = {
   VERCEL: "0",
   VERCEL_PROJECT_ID: "integration-fixture",
   APP_ORIGIN: origin,
+  RESEND_API_KEY: "isolated-provider-mock",
+  MANAGER_EMAIL_FROM: "Founders Lab <test@example.invalid>",
+  TEST_EMAIL_ENDPOINT: `http://127.0.0.1:${mailAddress.port}`,
+
   BOOTSTRAP_ADMIN_EMAIL: "admin@integration.example.invalid",
   BOOTSTRAP_ADMIN_NAME: "Integration Admin",
   BOOTSTRAP_ADMIN_PASSWORD: password,
@@ -690,6 +719,421 @@ try {
   pass(
     "Only the provisioned administrator can sign in; invitations/signup are disabled and inactive sessions lose access",
   );
+  // Separate passwordless access: the Admin allowlist and credentials remain unchanged.
+  const managerEmail = "manager@integration.example.invalid";
+  const adminManagerRequest = (payload: unknown) =>
+    request("/api/space-managers", payload, admin);
+  assert.equal((await request("/api/space-managers")).status, 401);
+  assert.equal((await request("/api/manager/spaces")).status, 401);
+  assert.equal(
+    (
+      await request("/api/space-managers", {
+        action: "invite",
+        email: managerEmail,
+        sessionIds: [session.id],
+      })
+    ).status,
+    401,
+  );
+  const invite = await adminManagerRequest({
+    action: "invite",
+    email: managerEmail,
+    sessionIds: [session.id],
+  });
+  assert.equal(invite.status, 201, JSON.stringify(invite.data));
+  assert.equal(mail.at(-1)!.to[0], managerEmail);
+  const emailToken = () =>
+    new URL(mail.at(-1)!.text.match(/http[^\s]+/)![0]).hash.split("token=")[1];
+  const firstToken = emailToken();
+  let managerList = (await request("/api/space-managers", undefined, admin))
+    .data.managers;
+  const managerId = managerList.find(
+    (m: { email: string }) => m.email === managerEmail,
+  ).id;
+  assert.equal(
+    managerList.find((m: { id: string }) => m.id === managerId).status,
+    "Pending",
+  );
+  assert.ok(!JSON.stringify(managerList).includes(firstToken));
+  assert.equal(
+    (await adminManagerRequest({ action: "resend", id: managerId })).status,
+    200,
+  );
+  assert.equal(
+    (await request("/api/manager/verify", { token: firstToken })).status,
+    401,
+  );
+  const manager: Jar = { cookie: "", csrf: "" };
+  const activeToken = emailToken();
+  const verified = await request(
+    "/api/manager/verify",
+    { token: activeToken },
+    manager,
+  );
+  assert.equal(verified.status, 200);
+  for (const attribute of ["HttpOnly", "Secure", "SameSite=strict"])
+    assert.ok(
+      verified.headers
+        .get("set-cookie")!
+        .toLowerCase()
+        .includes(attribute.toLowerCase()),
+    );
+  assert.equal(
+    (await request("/api/manager/verify", { token: activeToken })).status,
+    401,
+  );
+  const assigned = await request("/api/manager/spaces", undefined, manager);
+  manager.csrf = assigned.data.csrf;
+  assert.equal(assigned.data.spaces.length, 1);
+  assert.equal(assigned.data.spaces[0].id, session.id);
+  assert.deepEqual(
+    Object.keys(assigned.data.spaces[0]).sort(),
+    [
+      "id",
+      "title",
+      "startsAt",
+      "timezone",
+      "recordingUrl",
+      "postUrl",
+      "participants",
+      "spaceData",
+    ].sort(),
+  );
+  const sharedParticipant = assigned.data.spaces[0].participants[0];
+  assert.deepEqual(Object.keys(sharedParticipant.founder).sort(), [
+    "country",
+    "id",
+    "name",
+  ]);
+  assert.deepEqual(Object.keys(sharedParticipant.company).sort(), [
+    "id",
+    "name",
+  ]);
+  assert.equal((await request("/api/auth/me", undefined, manager)).status, 401);
+  assert.equal(
+    (await request("/api/workspace", undefined, manager)).status,
+    401,
+  );
+  assert.equal(
+    (
+      await request(
+        "/api/workspace",
+        { type: "booking.review", payload: { id: "b1", status: "Approved" } },
+        manager,
+      )
+    ).status,
+    401,
+  );
+  assert.equal(
+    (
+      await request(
+        "/api/space-managers",
+        {
+          action: "invite",
+          email: "other@example.invalid",
+          sessionIds: [session.id],
+        },
+        manager,
+      )
+    ).status,
+    401,
+  );
+  for (const path of [
+    "/dashboard",
+    "/reports",
+    "/campaigns",
+    "/settings",
+    "/companies",
+    "/founders",
+  ]) {
+    assert.equal(
+      (
+        await fetch(origin + path, {
+          headers: { Cookie: manager.cookie },
+          redirect: "manual",
+        })
+      ).status,
+      307,
+      path,
+    );
+  }
+  pass(
+    "Manager invitation email accepted by a mock provider; single-use passwordless login is isolated from Admin routes and redacts contacts",
+  );
+  const managerPayload = {
+    sessionId: session.id,
+    liveListeners: 142,
+    durationMinutes: 135,
+    recordingUrl: "https://x.com/i/spaces/manager-recording",
+    postUrl: "https://x.com/founders/status/123",
+    teams: [
+      {
+        companyId: sharedParticipant.company.id,
+        foundersCount: 2,
+        otherTeamCount: 3,
+      },
+    ],
+  };
+  assert.equal(
+    (await request("/api/manager/save", managerPayload, manager, false)).status,
+    403,
+  );
+  assert.equal(
+    (
+      await request(
+        "/api/manager/save",
+        { ...managerPayload, sessionId: "up1" },
+        manager,
+      )
+    ).status,
+    403,
+  );
+  assert.equal(
+    (
+      await request(
+        "/api/manager/save",
+        { ...managerPayload, notes: "Private overwrite" },
+        manager,
+      )
+    ).status,
+    400,
+  );
+  const managerSave = await request(
+    "/api/manager/save",
+    managerPayload,
+    manager,
+  );
+  assert.equal(managerSave.status, 200, JSON.stringify(managerSave.data));
+  assert.equal(
+    (await request("/api/manager/save", managerPayload, manager)).status,
+    200,
+  );
+  state = (await request("/api/workspace", undefined, admin)).data.state;
+  assert.equal(
+    state.spaceData.filter((r) => r.sessionId === session.id).length,
+    1,
+  );
+  const managedRecord = state.spaceData.find(
+    (r) => r.sessionId === session.id,
+  )!;
+  assert.equal(managedRecord.durationMinutes, 135);
+  assert.equal(managedRecord.liveListeners, 142);
+  assert.equal(managedRecord.notes, "Host attendance count");
+  assert.equal(
+    state.participants.filter((p) => p.sessionId === session.id).length,
+    participants.length,
+  );
+  for (const p of participants) {
+    assert.equal(
+      founderSessions(state, p.founderId).find(
+        (s) => s.session.id === session.id,
+      )?.session.recordingUrl,
+      managerPayload.recordingUrl,
+    );
+    assert.equal(
+      companySessions(state, p.companyId).find((s) => s.id === session.id)
+        ?.postUrl,
+      managerPayload.postUrl,
+    );
+  }
+  assert.equal(
+    (
+      await adminManagerRequest({
+        action: "assign",
+        id: managerId,
+        sessionIds: [],
+      })
+    ).status,
+    200,
+  );
+  assert.equal(
+    (await request("/api/manager/save", managerPayload, manager)).status,
+    403,
+  );
+  assert.equal(
+    (
+      await adminManagerRequest({
+        action: "assign",
+        id: managerId,
+        sessionIds: [session.id],
+      })
+    ).status,
+    200,
+  );
+  pass(
+    "Manager saves reuse one shared Space record, preserve notes/bookings and update participating founder/company profiles; assignment removal applies immediately",
+  );
+  // A rejected provider response never produces a usable authentication link.
+  rejectEmail = true;
+  assert.equal(
+    (await adminManagerRequest({ action: "resend", id: managerId })).status,
+    502,
+  );
+  assert.equal(
+    (await request("/api/manager/verify", { token: emailToken() })).status,
+    401,
+  );
+  rejectEmail = false;
+  assert.equal(
+    (await adminManagerRequest({ action: "resend", id: managerId })).status,
+    200,
+  );
+  const expiredToken = emailToken();
+  const managerPolicyDb = new Client({ connectionString: url.toString() });
+  await managerPolicyDb.connect();
+  await managerPolicyDb.query(
+    `UPDATE "SpaceManagerLink" SET "expiresAt"=NOW()-INTERVAL '1 minute' WHERE "tokenHash"=$1`,
+    [createHash("sha256").update(expiredToken).digest("hex")],
+  );
+  assert.equal(
+    (await request("/api/manager/verify", { token: expiredToken })).status,
+    401,
+  );
+  await managerPolicyDb.query(
+    `UPDATE "SpaceManagerSession" SET "expiresAt"=NOW()-INTERVAL '1 minute' WHERE "managerId"=$1`,
+    [managerId],
+  );
+  assert.equal(
+    (await request("/api/manager/spaces", undefined, manager)).status,
+    401,
+  );
+  await managerPolicyDb.end();
+  assert.equal(
+    (await adminManagerRequest({ action: "resend", id: managerId })).status,
+    200,
+  );
+  const concurrentToken = emailToken();
+  const freshManager: Jar = { cookie: "", csrf: "" };
+  const simultaneous = await Promise.all([
+    request("/api/manager/verify", { token: concurrentToken }, manager),
+    request("/api/manager/verify", { token: concurrentToken }, freshManager),
+  ]);
+  assert.deepEqual(simultaneous.map((r) => r.status).sort(), [200, 401]);
+  if (simultaneous[1].status === 200) manager.cookie = freshManager.cookie;
+  manager.csrf = (
+    await request("/api/manager/spaces", undefined, manager)
+  ).data.csrf;
+  assert.equal(
+    (await adminManagerRequest({ action: "resend", id: managerId })).status,
+    200,
+  );
+  const browserManagerToken = emailToken();
+  const managerBrowser = await chromium.launch({
+    executablePath: "/usr/bin/chromium",
+    headless: true,
+    args: ["--no-sandbox"],
+  });
+  try {
+    const managerContext = await managerBrowser.newContext({
+      viewport: { width: 393, height: 852 },
+    });
+    const page = await managerContext.newPage();
+    await page.goto(origin + "/manager/spaces#token=" + browserManagerToken);
+    await page
+      .getByRole("button", { name: "Continue securely", exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: "Save Space data", exact: true })
+      .waitFor();
+    assert.equal(new URL(page.url()).hash, "");
+    await page.getByLabel("Live listeners", { exact: true }).fill("143");
+    await page
+      .getByRole("button", { name: "Save Space data", exact: true })
+      .click();
+    await page
+      .getByText(
+        "Space data saved. Shared founder and company profiles are updated.",
+      )
+      .waitFor();
+    assert.equal(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+      true,
+    );
+    await page.mouse.move(0, 0);
+    await page.evaluate(() => {
+      if (document.activeElement instanceof HTMLElement)
+        document.activeElement.blur();
+      window.scrollTo(0, 0);
+    });
+    const accessibility = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa"])
+      .analyze();
+    assert.deepEqual(
+      accessibility.violations.map((v) => ({
+        id: v.id,
+        targets: v.nodes.map((n) => n.target),
+      })),
+      [],
+    );
+    await page.screenshot({
+      path: "artifacts/space-manager-mobile.png",
+      fullPage: true,
+    });
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.screenshot({
+      path: "artifacts/space-manager-desktop.png",
+      fullPage: true,
+    });
+  } finally {
+    await managerBrowser.close();
+  }
+  assert.equal(
+    (await adminManagerRequest({ action: "resend", id: managerId })).status,
+    200,
+  );
+  const futureToken = emailToken();
+  const managerCookie = manager.cookie;
+  assert.equal(
+    (await adminManagerRequest({ action: "revoke", id: managerId })).status,
+    200,
+  );
+  assert.equal(
+    (await request("/api/manager/spaces", undefined, manager)).status,
+    401,
+  );
+  assert.equal(
+    (await request("/api/manager/save", managerPayload, manager)).status,
+    401,
+  );
+  assert.equal(
+    (await request("/api/manager/verify", { token: futureToken })).status,
+    401,
+  );
+  assert.equal(
+    (
+      await request("/api/manager/spaces", undefined, {
+        cookie: managerCookie,
+        csrf: "",
+      })
+    ).status,
+    401,
+  );
+  assert.equal(
+    (await adminManagerRequest({ action: "resend", id: managerId })).status,
+    401,
+  );
+  managerList = (await request("/api/space-managers", undefined, admin)).data
+    .managers;
+  assert.equal(
+    managerList.find((m: { id: string }) => m.id === managerId).status,
+    "Revoked",
+  );
+  assert.ok(
+    managerList.find((m: { id: string }) => m.id === managerId).lastActivityAt,
+  );
+  state = (await request("/api/workspace", undefined, admin)).data.state;
+  assert.equal(
+    state.spaceData.find((r) => r.sessionId === session.id)!.liveListeners,
+    143,
+  );
+  assert.ok(state.audit.some((a) => a.action === "manager.revoke"));
+  assert.ok(state.audit.some((a) => a.action === "manager.space.save"));
+  assert.equal((await request("/api/auth/me", undefined, admin)).status, 200);
+  pass(
+    "Light mobile manager workflow saves successfully; provider rejection is honest; revocation rejects active sessions and unused links while preserving edits and Admin access",
+  );
   const research = state.research[0],
     answers = Object.fromEntries(
       state.answers
@@ -783,6 +1227,24 @@ try {
       path: "artifacts/private-founder-mobile.png",
       fullPage: true,
     });
+    await page.goto(origin + "/settings");
+    await page
+      .getByRole("button", { name: "Space Managers", exact: true })
+      .click();
+    await page
+      .getByRole("heading", { name: "Space Managers", exact: true })
+      .waitFor();
+    await page
+      .locator(".space-managers-settings")
+      .getByRole("cell")
+      .filter({ hasText: managerEmail })
+      .first()
+      .waitFor();
+    await page.mouse.move(0, 0);
+    await page.screenshot({
+      path: "artifacts/space-manager-settings-mobile.png",
+      fullPage: true,
+    });
     assert.deepEqual(errors, []);
   } finally {
     await browser.close();
@@ -826,4 +1288,5 @@ try {
   }
   await control.query(`DROP DATABASE "${database}" WITH (FORCE)`);
   await control.end();
+  await new Promise<void>((resolve) => mailServer.close(() => resolve()));
 }

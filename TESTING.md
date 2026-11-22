@@ -43,3 +43,7 @@ The isolated PostgreSQL integration suite runs the exact production preparation 
 UTC checks cover late-Friday/late-Saturday boundaries independently of the original stored timezone, public time selection at 17:00 UTC, and a calendar with no published sessions. The empty calendar explains unavailability and has no enabled date buttons. Existing timestamps are not shifted.
 
 Saturday publishing is tested against both the public eligibility function and isolated PostgreSQL. Production preparation runs repeatedly without duplicate dates; all 12 dates are Saturday 19:00 UTC with capacity five, and a cancelled date stays cancelled on a subsequent release. Calendar browser tests select 19:00 UTC.
+
+## Restricted Space Manager regression
+
+The local PostgreSQL integration runner now also uses a mock transactional email endpoint, never real email. It covers Admin-only invitations, email provider rejection, single-use/expired email links, concurrent link redemption, session expiry, assigned-record boundaries, missing CSRF, contact redaction, manager denial from Admin pages/APIs, shared recording/post inheritance, attendance preservation, mobile saving, revocation, audit retention and continued bootstrap Admin access. Manager and Admin Settings screenshots are captured; the manager mobile form is checked with Axe WCAG A/AA. See SPACE-MANAGERS.md for production email configuration and verification limits.
