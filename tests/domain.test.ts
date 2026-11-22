@@ -698,3 +698,48 @@ test("Saturday eligibility follows UTC rather than the original session timezone
   assert.equal(isSaturday(lateSaturday), true);
   assert.equal(sessionDay(lateSaturday), "2026-12-05");
 });
+
+test("approved Saturday schedule opens future 19:00 UTC dates with five places", async () => {
+  const { saturdaySessions } = await import("../lib/saturday-schedule");
+  const { publicSlotOpen } = await import("../lib/booking");
+  const weeks = saturdaySessions(new Date("2026-11-22T10:00:00Z"));
+  assert.equal(weeks.length, 12);
+  assert.ok(
+    weeks.every((w) =>
+      publicSlotOpen(
+        {
+          ...w,
+          startsAt: w.startsAt.toISOString(),
+          deadline: w.deadline.toISOString(),
+        },
+        w.capacity,
+        Date.parse("2026-11-22T10:00:00Z"),
+      ),
+    ),
+  );
+  assert.equal(weeks[0].startsAt.toISOString(), "2026-11-28T19:00:00.000Z");
+  assert.ok(
+    weeks.every(
+      (w) =>
+        w.startsAt.getUTCDay() === 6 &&
+        w.startsAt.getUTCHours() === 19 &&
+        w.capacity === 5,
+    ),
+  );
+  assert.equal(
+    saturdaySessions(
+      new Date("2026-11-28T18:59:00Z"),
+    )[0].startsAt.toISOString(),
+    "2026-11-28T19:00:00.000Z",
+  );
+  assert.equal(
+    saturdaySessions(
+      new Date("2026-11-28T19:00:00Z"),
+    )[0].startsAt.toISOString(),
+    "2026-12-05T19:00:00.000Z",
+  );
+  assert.equal(
+    saturdaySessions(new Date("2026-11-22T10:00:00Z"))[0].id,
+    weeks[0].id,
+  );
+});

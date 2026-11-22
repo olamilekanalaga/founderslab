@@ -31,6 +31,7 @@ const env = {
   DATABASE_URL: "",
   DATABASE_DATABASE_URL: url.toString(),
   VERCEL_ENV: "production",
+  VERCEL: "0",
   VERCEL_PROJECT_ID: "integration-fixture",
   APP_ORIGIN: origin,
   BOOTSTRAP_ADMIN_EMAIL: "admin@integration.example.invalid",
@@ -93,6 +94,36 @@ try {
   assert.equal(
     (await initialDb.query('SELECT count(*)::int AS n FROM "User"')).rows[0].n,
     1,
+  );
+  const slots = await initialDb.query(
+    'SELECT id,"startsAt",capacity FROM "Session" ORDER BY "startsAt"',
+  );
+  assert.equal(slots.rows.length, 12);
+  assert.ok(
+    slots.rows.every(
+      (row) =>
+        new Date(row.startsAt).getUTCDay() === 6 &&
+        new Date(row.startsAt).getUTCHours() === 19 &&
+        row.capacity === 5,
+    ),
+  );
+  await initialDb.query('UPDATE "Session" SET status=$1 WHERE id=$2', [
+    "Cancelled",
+    slots.rows[0].id,
+  ]);
+  run("scripts/prepare-vercel.ts");
+  assert.equal(
+    (
+      await initialDb.query('SELECT status FROM "Session" WHERE id=$1', [
+        slots.rows[0].id,
+      ])
+    ).rows[0].status,
+    "Cancelled",
+  );
+  assert.equal(
+    (await initialDb.query('SELECT count(*)::int AS n FROM "Session"')).rows[0]
+      .n,
+    12,
   );
   await initialDb.end();
   pass(

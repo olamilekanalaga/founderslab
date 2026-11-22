@@ -1,3 +1,4 @@
+import { saturdaySessions } from "./saturday-schedule";
 import type { DataState } from "./types";
 import {
   defaultSettings,
@@ -434,11 +435,11 @@ export function makeSeed(): DataState {
         "A founder’s distribution playbook",
         "What teams need next",
       ][i],
-      startsAt: at(12, 5 + i * 7, 17),
+      startsAt: at(12, 5 + i * 7, 19),
       timezone: "UTC",
       host: "Ola_Crrypt",
       capacity: 5,
-      deadline: at(12, 4 + i * 7, 17),
+      deadline: at(12, 4 + i * 7, 19),
       status: "Scheduled",
       researchStatus: "Not started",
       liveUrl: "",
@@ -448,6 +449,24 @@ export function makeSeed(): DataState {
       createdAt: at(11, 15),
       updatedAt: at(11, 15),
     });
+  for (const slot of saturdaySessions(new Date("2026-11-22T00:00:00Z"))) {
+    if (
+      s.sessions.some(
+        (session) =>
+          session.startsAt.slice(0, 10) ===
+          slot.startsAt.toISOString().slice(0, 10),
+      )
+    )
+      continue;
+    s.sessions.push({
+      ...slot,
+      id: `demo-${slot.id}`,
+      startsAt: slot.startsAt.toISOString(),
+      deadline: slot.deadline.toISOString(),
+      createdAt: at(11, 15),
+      updatedAt: at(11, 15),
+    });
+  }
   for (let i = 0; i < 6; i++)
     s.bookings.push({
       id: `pending${i}`,

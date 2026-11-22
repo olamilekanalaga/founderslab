@@ -39,8 +39,9 @@ test("demo application, approval, booking and one recording propagate to linked 
   await page.setViewportSize({ width: 393, height: 852 });
   await page.goto("/book?mode=demo");
   await page.getByRole("button", { name: /Saturday, 5 December 2026/ }).click();
-  await page.getByRole("button", { name: /17:00.*places available/ }).click();
-  await page.getByRole("link", { name: "Continue", exact: true }).click();
+  await page
+    .getByRole("link", { name: "View booking details", exact: true })
+    .click();
   await expect(page).toHaveURL(/apply\?session=up1&mode=demo/);
   await expect(page.locator(".selected-booking")).toContainText("5 Dec");
   await field(page, "Founder name", "Sade Fictional");
@@ -421,26 +422,26 @@ test("public booking calendar enables only open Saturdays and disables full date
   });
   await page.goto("/book?mode=demo");
   await expect(
-    page.getByRole("button", { name: /Saturday, 5 December 2026, full/ }),
+    page.getByRole("button", { name: /0\/5 Full.*Saturday, 5 December 2026/ }),
   ).toBeDisabled();
+  await expect(page.locator(".weekly-date")).toHaveCount(12);
   await expect(
     page.getByRole("button", { name: /Friday, 4 December 2026/ }),
-  ).toBeDisabled();
+  ).toHaveCount(0);
   await expect(
-    page.getByRole("button", { name: /Saturday, 5 December 2026, full/ }),
-  ).toContainText("5/5");
+    page.getByRole("button", { name: /0\/5 Full.*Saturday, 5 December 2026/ }),
+  ).toContainText("0/5");
   await expect(
     page.getByRole("button", { name: /Saturday, 12 December 2026/ }),
-  ).toContainText("0/5");
+  ).toContainText("5/5");
   await expect(
     page.getByRole("button", { name: /Saturday, 12 December 2026/ }),
   ).toBeEnabled();
   await page
     .getByRole("button", { name: /Saturday, 12 December 2026/ })
     .click();
-  await page.getByRole("button", { name: /17:00.*places available/ }).click();
   await expect(
-    page.getByRole("link", { name: "Continue", exact: true }),
+    page.getByRole("link", { name: "View booking details", exact: true }),
   ).toHaveAttribute("href", "/apply?session=up2&mode=demo");
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({
@@ -474,6 +475,6 @@ test("empty real-style calendar explains unpublished dates and shows UTC", async
   await expect(page.getByRole("status")).toContainText(
     "No Saturday slots published yet",
   );
-  await expect(page.locator(".booking-intro")).toContainText("UTC / GMT");
-  await expect(page.locator(".booking-days button:enabled")).toHaveCount(0);
+  await expect(page.locator(".weekly-location")).toContainText("UTC / GMT");
+  await expect(page.locator(".weekly-date:enabled")).toHaveCount(0);
 });

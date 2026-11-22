@@ -53,8 +53,10 @@ export function hydrateDemo() {
           if (
             index >= 0 &&
             fresh &&
-            session.startsAt ===
-              `2026-12-${String(4 + index * 7).padStart(2, "0")}T17:00:00.000Z` &&
+            (session.startsAt ===
+              `2026-12-${String(4 + index * 7).padStart(2, "0")}T17:00:00.000Z` ||
+              session.startsAt ===
+                `2026-12-${String(5 + index * 7).padStart(2, "0")}T17:00:00.000Z`) &&
             session.updatedAt === session.createdAt
           )
             return {

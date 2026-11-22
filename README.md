@@ -21,7 +21,7 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000/demo`. No secrets, paid APIs or database are needed. Demo changes persist only in the current browser. **Reset demo** restores fictional fixtures: 50 founders, 50 companies, global country coverage, 10 completed Spaces, four upcoming Saturday sessions and two campaigns.
+Open `http://localhost:3000/demo`. No secrets, paid APIs or database are needed. Demo changes persist only in the current browser. **Reset demo** restores fictional fixtures: 50 founders, 50 companies, global country coverage, 10 completed Spaces, twelve upcoming Saturday sessions and two campaigns.
 
 Public booking: `/book?mode=demo`. Private demo approvals: `/demo/spaces?tab=applications` and `/demo/spaces?tab=bookings`.
 
@@ -42,13 +42,13 @@ Migration uses the checked-in PostgreSQL runner (`npm run db:migrate`), not Pris
 
 ## Founder booking flow
 
-1. Open the month calendar at `/book`.
-2. Choose an available published Saturday, then a time.
+1. Open the 12-week calendar at `/book`.
+2. Choose an available Saturday week card at 19:00 UTC.
 3. Continue to the founder questions with that session attached.
 4. Submit the application and pending booking together.
 5. An administrator approves/declines the application, then approves/waitlists/declines the booking under Founder Spaces.
 
-Only future Saturday sessions with an open deadline and remaining approved capacity can be selected. Date cells show booked project places/capacity (0/5, 3/5, 5/5 Full). Full dates are disabled. Multiple speakers from one project count as one project seat. Pending requests do not reserve confirmed seats. Server-side session row locks protect approval capacity and recheck availability when public submissions arrive.
+Only future Saturday sessions with an open deadline and remaining approved capacity can be selected. Week cards show remaining places/capacity (5/5 available, 3/5 available, 0/5 Full). Full dates are disabled. Multiple speakers from one project count as one project seat. Pending requests do not reserve confirmed seats. Server-side session row locks protect approval capacity and recheck availability when public submissions arrive.
 
 Confirmation links use random, expiring capabilities and reveal only the submitting project's status. The public calendar exposes no founder identities or private session notes. Automatic email/Telegram notifications are not configured.
 
@@ -100,3 +100,9 @@ Vercel uses `npm run build:vercel` to prepare the connected production database 
 Production turns off the public Admin demo and browser-local demo forms. A supported prefixed Neon connection is resolved on the server; connection values never reach the browser. Readiness is available at `/api/health`. See DEPLOYMENT.md for direct versus pooled connections and initial setup.
 
 Booking date eligibility and time display use UTC/GMT throughout the public calendar, selected session, confirmation, weekly profiles and Admin session list. Existing timestamps are preserved; 18:00 Lagos displays as 17:00 UTC. New session editors default to UTC. Empty production databases have no fictional published sessions: the calendar explains that grey dates are unpublished/unavailable, and only real published Saturdays become selectable. UK daylight-saving time is not applied to this explicit UTC schedule.
+
+## Approved recurring Saturday programme
+
+Production preparation publishes a rolling 12-week window of real Saturday sessions at **19:00 UTC**, capacity **five project places**, as requested by the programme host. Booking stays open until the start time; requests still require Admin approval. The publisher uses deterministic date IDs and a transaction lock. It preserves existing sessions on each date, including cancellations and changed capacities, and never resets bookings or reopens full sessions. Every deployment extends the window as needed. The public booking page is titled Founders Lab and labels the time United Kingdom, London — UTC / GMT (fixed UTC).
+
+The booking calendar follows the supplied dark weekly-card design: three columns, four rows, numbered Week 1–12, selected-week details and a View booking details action leading to the founder questions. Counts mean places available; a fully booked week has 0/5 and is disabled. The hosted publisher verifies newly created dates through the live public booking API before the release continues.

@@ -1,5 +1,5 @@
 export const BOOKING_TIME_ZONE = "UTC";
-export const BOOKING_TIME_LABEL = "UTC / GMT";
+export const BOOKING_TIME_LABEL = "United Kingdom, London — UTC / GMT";
 export interface PublicSession {
   id: string;
   title: string;

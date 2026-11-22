@@ -813,7 +813,7 @@ export function BookingPage({
         <div className="booking-page-heading">
           <div>
             <span className="eyebrow">BOOK YOUR CONVERSATION</span>
-            <h1>Choose your Saturday.</h1>
+            <h1>Founders Lab</h1>
           </div>
           {allowDemo && (
             <DemoModeControl
