@@ -177,13 +177,6 @@ export async function assignedSpaces(managerId: string) {
               liveListeners: true,
               durationMinutes: true,
               submittedAt: true,
-              teams: {
-                select: {
-                  companyId: true,
-                  foundersCount: true,
-                  otherTeamCount: true,
-                },
-              },
             },
           },
         },

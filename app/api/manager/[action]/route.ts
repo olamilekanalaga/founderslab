@@ -43,7 +43,6 @@ const saveSchema = schemas["space-data.save"]
     durationMinutes: true,
     recordingUrl: true,
     postUrl: true,
-    teams: true,
   })
   .strict();
 export async function POST(
@@ -147,8 +146,6 @@ export async function POST(
     }
     if (action !== "save") return json({ error: "Not found" }, 404);
     const p = saveSchema.parse(await body(request));
-    if (new Set(p.teams.map((t) => t.companyId)).size !== p.teams.length)
-      throw new DomainError("Duplicate attendance project.");
     await db().$transaction(async (tx) => {
       const manager = await lockManager(tx, session.managerId);
       await lockProgramme(tx);
@@ -168,19 +165,6 @@ export async function POST(
       if (!assignment)
         throw new DomainError("This Space is not assigned to you.", 403);
       await tx.$queryRaw`SELECT id FROM "Session" WHERE id = ${p.sessionId} FOR UPDATE`;
-      const participants = await tx.sessionParticipant.findMany({
-        where: { sessionId: p.sessionId, attendance: { not: "Cancelled" } },
-        select: { companyId: true },
-      });
-      if (
-        p.teams.some(
-          (t) => !participants.some((a) => a.companyId === t.companyId),
-        )
-      )
-        throw new DomainError(
-          "Attendance must belong to participating projects.",
-          403,
-        );
       if (p.submit) {
         const event = await tx.session.findUniqueOrThrow({
           where: { id: p.sessionId },
@@ -189,15 +173,9 @@ export async function POST(
           throw new DomainError(
             "Attendance can only be submitted after the Space starts.",
           );
-        if (
-          p.liveListeners === null ||
-          p.durationMinutes === null ||
-          participants.some(
-            (a) => !p.teams.some((t) => t.companyId === a.companyId),
-          )
-        )
+        if (p.liveListeners === null || p.durationMinutes === null)
           throw new DomainError(
-            "Enter listeners, duration and attendance for every participating project.",
+            "Enter listeners and duration before submitting the Space report.",
           );
       }
       await tx.session.update({
@@ -230,20 +208,6 @@ export async function POST(
           where: { id: record.id },
           data: { submittedAt: new Date(), submittedBy: manager.email },
         });
-      for (const team of p.teams)
-        await tx.spaceTeamAttendance.upsert({
-          where: {
-            spaceDataId_companyId: {
-              spaceDataId: record.id,
-              companyId: team.companyId,
-            },
-          },
-          create: { ...team, spaceDataId: record.id },
-          update: {
-            foundersCount: team.foundersCount,
-            otherTeamCount: team.otherTeamCount,
-          },
-        });
       if (p.submit) await ensureProgrammeWindow(tx);
       await tx.spaceManager.update({
         where: { id: manager.id },
@@ -255,7 +219,7 @@ export async function POST(
           action: "manager.space.save",
           entityId: p.sessionId,
           detail:
-            "Updated assigned Space attendance, audience, duration and shared links.",
+            "Updated assigned Space audience, duration and shared links; team attendance preserved.",
         },
       });
     });

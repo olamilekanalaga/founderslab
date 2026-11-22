@@ -27,7 +27,7 @@ export default function Overview({ addFounder }: { addFounder: () => void }) {
     .filter((v) => v.status === "Scheduled")
     .toSorted((a, b) => a.startsAt.localeCompare(b.startsAt));
   const totals = spaceTotals(s);
-  const [metric, setMetric] = useState<SpaceMetric>("founders");
+  const [metric, setMetric] = useState<SpaceMetric>("listeners");
   const chart = spaceGrowth(s, metric);
   const metrics = [
     {

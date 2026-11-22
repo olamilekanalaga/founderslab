@@ -909,13 +909,6 @@ try {
     durationMinutes: 135,
     recordingUrl: "https://x.com/i/spaces/manager-recording",
     postUrl: "https://x.com/founders/status/123",
-    teams: [
-      {
-        companyId: sharedParticipant.company.id,
-        foundersCount: 2,
-        otherTeamCount: 3,
-      },
-    ],
   };
   assert.equal(
     (await request("/api/manager/save", managerPayload, manager, false)).status,
@@ -951,6 +944,23 @@ try {
     ).status,
     400,
   );
+  assert.equal(
+    (
+      await request(
+        "/api/manager/save",
+        {
+          ...managerPayload,
+          teams: [{ companyId: "c1", foundersCount: 99, otherTeamCount: 99 }],
+        },
+        manager,
+      )
+    ).status,
+    400,
+  );
+  const attendanceBefore = JSON.stringify(
+    (await request("/api/workspace", undefined, admin)).data.state
+      .spaceAttendance,
+  );
   const managerSave = await request(
     "/api/manager/save",
     managerPayload,
@@ -970,6 +980,7 @@ try {
     (r) => r.sessionId === session.id,
   )!;
   assert.equal(managedRecord.durationMinutes, 135);
+  assert.equal(JSON.stringify(state.spaceAttendance), attendanceBefore);
   assert.equal(managedRecord.liveListeners, 142);
   assert.equal(managedRecord.notes, "Host attendance count");
   assert.equal(
@@ -1089,6 +1100,14 @@ try {
       .getByRole("button", { name: "Save Space data", exact: true })
       .waitFor();
     assert.equal(new URL(page.url()).hash, "");
+    assert.equal(
+      await page.getByText("Founders attended", { exact: true }).count(),
+      0,
+    );
+    assert.equal(
+      await page.getByText("Other team members", { exact: true }).count(),
+      0,
+    );
     await page.getByLabel("Live listeners", { exact: true }).fill("143");
     await page
       .getByRole("button", { name: "Save Space data", exact: true })
@@ -1358,7 +1377,10 @@ try {
     notes: "Actual attendance",
     teams: [{ companyId: "c1", foundersCount: 1, otherTeamCount: 0 }],
   });
-  await command("space-data.save", attendance(cycleIds[0], false));
+  await command("space-data.save", {
+    ...attendance(cycleIds[0], false),
+    teams: [],
+  });
   assert.equal(
     (
       await cycleDb.query(
@@ -1397,9 +1419,10 @@ try {
     true,
   );
   void ignoredNotes;
+  const { teams: ignoredTeams, ...cycleReport } = managerAttendance;
+  void ignoredTeams;
   assert.equal(
-    (await request("/api/manager/save", managerAttendance, cycleManager))
-      .status,
+    (await request("/api/manager/save", cycleReport, cycleManager)).status,
     200,
   );
   await command("space-data.save", attendance(cycleIds[0], true));

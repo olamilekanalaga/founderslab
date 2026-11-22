@@ -16,11 +16,6 @@ type Space = {
     liveListeners: number | null;
     durationMinutes: number | null;
     submittedAt: string | null;
-    teams: {
-      companyId: string;
-      foundersCount: number;
-      otherTeamCount: number;
-    }[];
   };
 };
 export default function ManagerSpaces() {
@@ -240,21 +235,6 @@ function SpaceEditor({
     ),
     [recording, setRecording] = useState(space.recordingUrl),
     [post, setPost] = useState(space.postUrl);
-  const companies = [
-    ...new Map(
-      space.participants.map((p) => [p.company.id, p.company]),
-    ).values(),
-  ];
-  const [teams, setTeams] = useState(() =>
-    companies.map((c) => {
-      const existing = space.spaceData?.teams.find((t) => t.companyId === c.id);
-      return {
-        companyId: c.id,
-        foundersCount: existing?.foundersCount.toString() ?? "",
-        otherTeamCount: existing?.otherTeamCount.toString() ?? "",
-      };
-    }),
-  );
   return (
     <section className="panel padded manager-space">
       <h2>{space.title}</h2>
@@ -279,13 +259,6 @@ function SpaceEditor({
                 : Number(hours || 0) * 60 + Number(minutes || 0),
             recordingUrl: recording,
             postUrl: post,
-            teams: teams
-              .filter((t) => t.foundersCount !== "" && t.otherTeamCount !== "")
-              .map((t) => ({
-                ...t,
-                foundersCount: Number(t.foundersCount || 0),
-                otherTeamCount: Number(t.otherTeamCount || 0),
-              })),
           });
         }}
       >
@@ -349,37 +322,6 @@ function SpaceEditor({
             </li>
           ))}
         </ul>
-        {teams.map((team, i) => (
-          <fieldset key={team.companyId}>
-            <legend>
-              {companies.find((c) => c.id === team.companyId)?.name}
-            </legend>
-            <div className="two-grid">
-              {(["foundersCount", "otherTeamCount"] as const).map((key) => (
-                <label key={key}>
-                  {key === "foundersCount"
-                    ? "Founders attended"
-                    : "Other team members"}
-                  <input
-                    type="number"
-                    min="0"
-                    max="100000"
-                    step="1"
-                    value={team[key]}
-                    placeholder="Not recorded"
-                    onChange={(e) =>
-                      setTeams((rows) =>
-                        rows.map((r, j) =>
-                          j === i ? { ...r, [key]: e.target.value } : r,
-                        ),
-                      )
-                    }
-                  />
-                </label>
-              ))}
-            </div>
-          </fieldset>
-        ))}
         <button className="button" name="intent" value="draft" disabled={busy}>
           {busy ? "Saving…" : "Save Space data"}
         </button>

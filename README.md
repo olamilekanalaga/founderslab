@@ -36,7 +36,7 @@ The calendar shows **eight Saturdays as two four-week cycles**, with the number 
 
 ## Attendance-gated calendar
 
-Admin and assigned Space Managers can save drafts and explicitly **Submit attendance**. A final submission requires listeners, duration and attendance for every participating project; zero counts are valid. Future sessions cannot be submitted. A distinct session counts once regardless of later edits.
+Admin and assigned Space Managers can save drafts and explicitly **Submit attendance**. The manager form contains only listener count, duration (hours/minutes), X recording URL and weekly X post URL. A manager’s final report requires listener count and duration; zero counts are valid. Detailed founder/team attendance remains Admin-only and existing records are preserved. Future sessions cannot be submitted. A distinct session counts once regardless of later edits.
 
 When all four Spaces in the oldest cycle have submitted attendance, that cycle leaves the public calendar and the next four Saturdays are opened. The public window remains eight weeks. The calendar does not advance merely because time passes. Completed sessions, submissions, bookings, founders, recording links and audit logs remain in private history; no historical records are deleted. Existing sessions are reused by London date and their bookings/capacities are preserved.
 
@@ -45,7 +45,7 @@ New booking requests outside the active season are rejected by the server, inclu
 ## Private access
 
 - `/signin` → `/dashboard`: only the active Admin matching `BOOTSTRAP_ADMIN_EMAIL` can sign in. No default password or public administrator creation endpoint exists.
-- `/manager/spaces`: separately invited, passwordless Space Managers can edit only assigned attendance, duration and X links. They cannot access the Admin dashboard or founder contacts. See [SPACE-MANAGERS.md](SPACE-MANAGERS.md).
+- `/manager/spaces`: separately invited, passwordless Space Managers can edit only assigned listener totals, duration and X links. They cannot access the Admin dashboard or founder contacts. See [SPACE-MANAGERS.md](SPACE-MANAGERS.md).
 - Admin: Founder Spaces → Applications / Bookings to review requests. Founder/company profiles share their associated weekly session data and recording links. Reports and charts derive from stored records.
 
 ## Monthly winner and permanent deletion

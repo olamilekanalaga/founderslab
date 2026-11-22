@@ -51,3 +51,7 @@ Knowing neither an email address nor password is not a guarantee against comprom
 ## Monthly winner and deletion controls
 
 Monthly winner selection and permanent record deletion require the existing Admin session, the appropriate permission and CSRF/origin checks. Managers and anonymous requests are rejected. A winner must belong to a Space in the selected London-calendar month; the unique monthly campaign/award relationship permits one winner. No payments are executed. Deletion requires the literal DELETE confirmation, runs transactionally, removes owned linked records and confirmation capabilities, and preserves shared sessions and companies used by other founders. The deletion audit records only an anonymised operation without retaining the removed founder's personal fields. These protections are covered by local database and mobile browser tests.
+
+## Manager report scope narrowed
+
+Following the owner's clarification, managers can now edit only listeners, duration, recording URL and weekly post URL. Team-attendance fields are removed from the manager response and form, and direct team-edit payloads are rejected by the strict server schema. Existing attendance and private notes are preserved. Final manager reports can complete a programme week without detailed team counts. Admin authentication/allowlist and assigned-session/revocation controls are unchanged.

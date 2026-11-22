@@ -17,8 +17,8 @@ No email provider plan or API subscription was purchased. Configure your own pro
 1. Admin Settings → Space Managers. Enter the friend's email, select their weekly Spaces, and send the invitation.
 2. The email links to `/manager/spaces` with a 15-minute, single-use token in the fragment. It is removed from browser history on opening; the manager explicitly continues to verify mailbox access. Merely opening the page does not consume the link.
 3. Verification issues a separate HTTP-only, production-Secure, SameSite=Strict session lasting eight hours. No password, public signup or founder account is created.
-4. The manager sees only assigned session titles/dates, participating founder names/countries and company names, plus the allowed numeric fields and shared recording/post links. No contacts, private notes, booking approvals, research, reports or awards are returned.
-5. Attendance edits upsert the existing company/week rows; session totals and links reuse the existing SpaceData and Session records. Omitted attendance rows and private notes are preserved. Booking associations and session participants are not changed.
+4. The manager sees only assigned session titles/dates, participating founder names/countries and company names, plus exactly four report inputs: listener count, duration (hours/minutes), recording URL and weekly X post URL. Detailed founder/team attendance is not shown or editable. No contacts, private notes, booking approvals, research, reports or awards are returned.
+5. Manager edits reuse the existing SpaceData and Session records for listener totals, duration and X links. Founder/team attendance rows, private notes, booking associations and session participants are preserved; managers cannot change them.
 6. Admin can replace assignments, resend a new email link, inspect last activity or revoke access. Resending invalidates old links. Revocation is terminal for that manager record: it invalidates sessions and unused links immediately while retaining edits and audit history. Revoked records cannot be silently reactivated by resending.
 7. A manager can request another short-lived link from `/manager/spaces` after session expiry. Requests are rate-limited; no link is issued for unknown or revoked emails. Managers can sign out independently of the Admin session.
 
@@ -33,3 +33,7 @@ Every manager save rechecks the active session and assignment under a manager-ro
 Integration tests use an isolated local PostgreSQL database and an HTTP mock of the transactional email provider. They test provider acceptance/rejection, single-use and expired links, session expiry, simultaneous link use, assignment boundaries, contact redaction, browser saving, profile inheritance, Admin rejection, immediate revocation and audit preservation. Screenshots show the light manager workspace at iPhone and desktop sizes.
 
 These tests do not prove real email delivery. Production email sending and the deployed manager journey require working provider configuration and an actual invited mailbox. No real invitations were sent during testing. Existing network/project-access restrictions may prevent this workspace from testing the live site; deployment success is reported separately from live end-to-end verification.
+
+## Four-field report clarification
+
+Managers can submit a completed report after the Space starts with listener count and duration; recording/post URLs can be updated when available. They are not required to enter team counts. A completed report counts once toward the four-Space cycle. The Admin Overview defaults to listener growth so these reports update its primary chart. The manager API rejects team-attendance payloads even if sent directly.

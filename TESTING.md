@@ -15,3 +15,5 @@ The integration runner creates a random local-only PostgreSQL database and passw
 Screenshots are captured at iPhone (393 × 852) and desktop dimensions. No claim of production end-to-end security or real email delivery is made: this workspace's direct live requests are blocked by its network proxy. See SECURITY-REVIEW.md.
 
 Monthly winner tests cover month-scoped participants, one winner after reselection, no assessment requirement and Admin-only CSRF checks. Deletion tests exercise the mobile confirmation flow, declined applications, approved founders, revoked confirmation links, removal of owned company/application/booking data and preservation of shared sessions.
+
+Manager scope regression also asserts that no team-count inputs appear, direct team-edit requests return 400, existing attendance is unchanged, and a report containing only listener/duration totals and links can complete an assigned past Space.
