@@ -159,7 +159,9 @@ function Shell({ section, id }: { section: Section; id?: string }) {
   const companies = needle
     ? s.companies
         .filter((c) =>
-          `${c.name} ${c.description}`.toLowerCase().includes(needle),
+          `${c.name} ${c.xHandle || ""} ${c.description}`
+            .toLowerCase()
+            .includes(needle),
         )
         .slice(0, 5)
     : [];
