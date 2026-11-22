@@ -1,0 +1,1275 @@
+{
+  "files": [
+    ".env.example",
+    ".gitignore",
+    "AGENTS.md",
+    "DEPLOYMENT.md",
+    "README.md",
+    "SECURITY-REVIEW.md",
+    "SPACE-MANAGERS.md",
+    "TESTING.md",
+    "app/(private)/[section]/[id]/page.tsx",
+    "app/(private)/[section]/page.tsx",
+    "app/api/auth/[action]/route.ts",
+    "app/api/health/route.ts",
+    "app/api/manager/[action]/route.ts",
+    "app/api/monthly-winner/route.ts",
+    "app/api/public/[action]/route.ts",
+    "app/api/records/route.ts",
+    "app/api/space-managers/route.ts",
+    "app/api/workspace/route.ts",
+    "app/apply/page.tsx",
+    "app/book/page.tsx",
+    "app/confirmation/page.tsx",
+    "app/demo/[[...path]]/page.tsx",
+    "app/error.tsx",
+    "app/globals.css",
+    "app/icon.svg",
+    "app/invite/page.tsx",
+    "app/layout.tsx",
+    "app/manager/spaces/page.tsx",
+    "app/not-found.tsx",
+    "app/page.tsx",
+    "app/signin/page.tsx",
+    "app/terms/page.tsx",
+    "artifacts/README.md",
+    "artifacts/application-desktop.png",
+    "artifacts/application-mobile.png",
+    "artifacts/booking-desktop.png",
+    "artifacts/booking-eight-weeks-mobile.png",
+    "artifacts/booking-mobile.png",
+    "artifacts/manager-signin-desktop.png",
+    "artifacts/manager-signin-mobile.png",
+    "artifacts/monthly-winner-mobile.png",
+    "artifacts/private-founder-mobile.png",
+    "artifacts/signin-desktop.png",
+    "artifacts/signin-mobile.png",
+    "artifacts/space-manager-desktop.png",
+    "artifacts/space-manager-mobile.png",
+    "artifacts/space-manager-settings-mobile.png",
+    "components/AuthScreen.tsx",
+    "components/BrandMark.tsx",
+    "components/Campaigns.tsx",
+    "components/Charts.tsx",
+    "components/DeleteRecordButton.tsx",
+    "components/Directory.tsx",
+    "components/FounderSpaces.tsx",
+    "components/ManagerSpaces.tsx",
+    "components/Overview.tsx",
+    "components/PrivateWorkspace.tsx",
+    "components/PublicBookingCalendar.tsx",
+    "components/PublicHeader.tsx",
+    "components/PublicPages.tsx",
+    "components/RecordEditor.tsx",
+    "components/Reports.tsx",
+    "components/SessionCalendar.tsx",
+    "components/SessionTime.tsx",
+    "components/Settings.tsx",
+    "components/SpaceManagersSettings.tsx",
+    "components/Spaces.tsx",
+    "components/WeeklySpaceEditor.tsx",
+    "components/Workspace.tsx",
+    "components/WorkspaceContext.tsx",
+    "components/ui.tsx",
+    "compose.yaml",
+    "eslint.config.mjs",
+    "lib/auth.ts",
+    "lib/booking.ts",
+    "lib/catalog.ts",
+    "lib/db.ts",
+    "lib/design.ts",
+    "lib/domain.ts",
+    "lib/export.ts",
+    "lib/form-errors.ts",
+    "lib/http.ts",
+    "lib/programme-window.ts",
+    "lib/saturday-schedule.ts",
+    "lib/sections.ts",
+    "lib/seed.ts",
+    "lib/selectors.ts",
+    "lib/server-env.ts",
+    "lib/space-data.ts",
+    "lib/space-managers.ts",
+    "lib/types.ts",
+    "lib/validation.ts",
+    "next-env.d.ts",
+    "next.config.ts",
+    "package-lock.json",
+    "package.json",
+    "playwright.config.ts",
+    "postcss.config.mjs",
+    "prisma.config.ts",
+    "prisma/README.md",
+    "prisma/migrations/202611200001_initial/migration.sql",
+    "prisma/migrations/202611210002_space_data/migration.sql",
+    "prisma/migrations/202611210003_shared_weekly_post/migration.sql",
+    "prisma/migrations/202611220001_space_managers/migration.sql",
+    "prisma/migrations/202611220002_programme_cycles/migration.sql",
+    "prisma/migrations/202611220003_session_name/migration.sql",
+    "prisma/schema.prisma",
+    "scripts/admin.ts",
+    "scripts/check-client-secrets.ts",
+    "scripts/migrate.ts",
+    "scripts/prepare-vercel.ts",
+    "scripts/publish-saturdays.ts",
+    "scripts/screenshots.ts",
+    "scripts/seed.ts",
+    "tests/domain.test.ts",
+    "tests/e2e/access.spec.ts",
+    "tests/form-errors.test.ts",
+    "tests/integration.ts",
+    "tests/server-env.test.ts",
+    "tsconfig.json",
+    "vercel.json"
+  ],
+  "modules": [
+    {
+      "file": "app/(private)/[section]/[id]/page.tsx",
+      "lines": 12,
+      "dependencies": [
+        "components/PrivateWorkspace.tsx"
+      ]
+    },
+    {
+      "file": "app/(private)/[section]/page.tsx",
+      "lines": 10,
+      "dependencies": [
+        "components/PrivateWorkspace.tsx"
+      ]
+    },
+    {
+      "file": "app/api/auth/[action]/route.ts",
+      "lines": 70,
+      "dependencies": [
+        "lib/http.ts",
+        "lib/db.ts",
+        "lib/auth.ts",
+        "lib/domain.ts"
+      ]
+    },
+    {
+      "file": "app/api/health/route.ts",
+      "lines": 31,
+      "dependencies": [
+        "lib/db.ts",
+        "lib/server-env.ts"
+      ]
+    },
+    {
+      "file": "app/api/manager/[action]/route.ts",
+      "lines": 230,
+      "dependencies": [
+        "lib/programme-window.ts",
+        "lib/db.ts",
+        "lib/http.ts",
+        "lib/auth.ts",
+        "lib/domain.ts",
+        "lib/validation.ts",
+        "lib/space-managers.ts"
+      ]
+    },
+    {
+      "file": "app/api/monthly-winner/route.ts",
+      "lines": 88,
+      "dependencies": [
+        "lib/auth.ts",
+        "lib/db.ts",
+        "lib/http.ts",
+        "lib/domain.ts",
+        "lib/saturday-schedule.ts"
+      ]
+    },
+    {
+      "file": "app/api/public/[action]/route.ts",
+      "lines": 320,
+      "dependencies": [
+        "lib/programme-window.ts",
+        "lib/booking.ts",
+        "lib/db.ts",
+        "lib/http.ts",
+        "lib/auth.ts",
+        "lib/validation.ts",
+        "lib/domain.ts",
+        "lib/catalog.ts"
+      ]
+    },
+    {
+      "file": "app/api/records/route.ts",
+      "lines": 142,
+      "dependencies": [
+        "lib/auth.ts",
+        "lib/db.ts",
+        "lib/http.ts",
+        "lib/domain.ts",
+        "lib/programme-window.ts"
+      ]
+    },
+    {
+      "file": "app/api/space-managers/route.ts",
+      "lines": 167,
+      "dependencies": [
+        "lib/auth.ts",
+        "lib/http.ts",
+        "lib/db.ts",
+        "lib/domain.ts",
+        "lib/space-managers.ts"
+      ]
+    },
+    {
+      "file": "app/api/workspace/route.ts",
+      "lines": 80,
+      "dependencies": [
+        "lib/http.ts",
+        "lib/db.ts",
+        "lib/auth.ts",
+        "lib/catalog.ts",
+        "lib/domain.ts",
+        "lib/validation.ts"
+      ]
+    },
+    {
+      "file": "app/apply/page.tsx",
+      "lines": 11,
+      "dependencies": [
+        "lib/server-env.ts",
+        "components/PublicPages.tsx"
+      ]
+    },
+    {
+      "file": "app/book/page.tsx",
+      "lines": 11,
+      "dependencies": [
+        "lib/server-env.ts",
+        "components/PublicPages.tsx"
+      ]
+    },
+    {
+      "file": "app/confirmation/page.tsx",
+      "lines": 4,
+      "dependencies": [
+        "components/PublicPages.tsx"
+      ]
+    },
+    {
+      "file": "app/demo/[[...path]]/page.tsx",
+      "lines": 2,
+      "dependencies": []
+    },
+    {
+      "file": "app/error.tsx",
+      "lines": 26,
+      "dependencies": []
+    },
+    {
+      "file": "app/invite/page.tsx",
+      "lines": 4,
+      "dependencies": []
+    },
+    {
+      "file": "app/layout.tsx",
+      "lines": 23,
+      "dependencies": []
+    },
+    {
+      "file": "app/manager/spaces/page.tsx",
+      "lines": 5,
+      "dependencies": [
+        "components/ManagerSpaces.tsx"
+      ]
+    },
+    {
+      "file": "app/not-found.tsx",
+      "lines": 17,
+      "dependencies": []
+    },
+    {
+      "file": "app/page.tsx",
+      "lines": 4,
+      "dependencies": []
+    },
+    {
+      "file": "app/signin/page.tsx",
+      "lines": 6,
+      "dependencies": [
+        "lib/server-env.ts",
+        "components/AuthScreen.tsx"
+      ]
+    },
+    {
+      "file": "app/terms/page.tsx",
+      "lines": 4,
+      "dependencies": [
+        "components/PublicPages.tsx"
+      ]
+    },
+    {
+      "file": "components/AuthScreen.tsx",
+      "lines": 103,
+      "dependencies": [
+        "components/BrandMark.tsx"
+      ]
+    },
+    {
+      "file": "components/BrandMark.tsx",
+      "lines": 23,
+      "dependencies": []
+    },
+    {
+      "file": "components/Campaigns.tsx",
+      "lines": 109,
+      "dependencies": [
+        "components/WorkspaceContext.tsx",
+        "lib/saturday-schedule.ts"
+      ]
+    },
+    {
+      "file": "components/Charts.tsx",
+      "lines": 207,
+      "dependencies": [
+        "lib/design.ts"
+      ]
+    },
+    {
+      "file": "components/DeleteRecordButton.tsx",
+      "lines": 77,
+      "dependencies": [
+        "components/WorkspaceContext.tsx",
+        "components/ui.tsx"
+      ]
+    },
+    {
+      "file": "components/Directory.tsx",
+      "lines": 528,
+      "dependencies": [
+        "components/WorkspaceContext.tsx",
+        "components/ui.tsx",
+        "lib/space-data.ts",
+        "components/DeleteRecordButton.tsx",
+        "components/FounderSpaces.tsx",
+        "lib/selectors.ts"
+      ]
+    },
+    {
+      "file": "components/FounderSpaces.tsx",
+      "lines": 192,
+      "dependencies": [
+        "components/WorkspaceContext.tsx",
+        "lib/space-data.ts",
+        "lib/selectors.ts",
+        "components/ui.tsx",
+        "components/WeeklySpaceEditor.tsx"
+      ]
+    },
+    {
+      "file": "components/ManagerSpaces.tsx",
+      "lines": 341,
+      "dependencies": []
+    },
+    {
+      "file": "components/Overview.tsx",
+      "lines": 213,
+      "dependencies": [
+        "components/WorkspaceContext.tsx",
+        "lib/selectors.ts",
+        "lib/space-data.ts",
+        "components/ui.tsx",
+        "components/Charts.tsx"
+      ]
+    },
+    {
+      "file": "components/PrivateWorkspace.tsx",
+      "lines": 53,
+      "dependencies": [
+        "lib/auth.ts",
+        "lib/db.ts",
+        "lib/domain.ts",
+        "lib/types.ts",
+        "lib/sections.ts",
+        "components/Workspace.tsx"
+      ]
+    },
+    {
+      "file": "components/PublicBookingCalendar.tsx",
+      "lines": 136,
+      "dependencies": [
+        "lib/booking.ts",
+        "components/SessionTime.tsx"
+      ]
+    },
+    {
+      "file": "components/PublicHeader.tsx",
+      "lines": 31,
+      "dependencies": [
+        "components/BrandMark.tsx"
+      ]
+    },
+    {
+      "file": "components/PublicPages.tsx",
+      "lines": 676,
+      "dependencies": [
+        "components/PublicHeader.tsx",
+        "components/SessionTime.tsx",
+        "components/PublicBookingCalendar.tsx",
+        "lib/booking.ts",
+        "lib/catalog.ts",
+        "lib/form-errors.ts",
+        "lib/validation.ts",
+        "components/ui.tsx"
+      ]
+    },
+    {
+      "file": "components/RecordEditor.tsx",
+      "lines": 416,
+      "dependencies": [
+        "components/ui.tsx",
+        "components/WorkspaceContext.tsx",
+        "lib/catalog.ts"
+      ]
+    },
+    {
+      "file": "components/Reports.tsx",
+      "lines": 199,
+      "dependencies": [
+        "components/WorkspaceContext.tsx",
+        "lib/selectors.ts",
+        "lib/export.ts",
+        "components/ui.tsx",
+        "components/Charts.tsx"
+      ]
+    },
+    {
+      "file": "components/SessionCalendar.tsx",
+      "lines": 181,
+      "dependencies": [
+        "components/WorkspaceContext.tsx",
+        "components/ui.tsx",
+        "lib/domain.ts",
+        "lib/selectors.ts"
+      ]
+    },
+    {
+      "file": "components/SessionTime.tsx",
+      "lines": 33,
+      "dependencies": [
+        "lib/saturday-schedule.ts"
+      ]
+    },
+    {
+      "file": "components/Settings.tsx",
+      "lines": 271,
+      "dependencies": [
+        "components/SpaceManagersSettings.tsx",
+        "components/WorkspaceContext.tsx",
+        "lib/catalog.ts",
+        "components/ui.tsx"
+      ]
+    },
+    {
+      "file": "components/SpaceManagersSettings.tsx",
+      "lines": 210,
+      "dependencies": [
+        "components/WorkspaceContext.tsx"
+      ]
+    },
+    {
+      "file": "components/Spaces.tsx",
+      "lines": 601,
+      "dependencies": [
+        "components/WorkspaceContext.tsx",
+        "components/ui.tsx",
+        "lib/space-data.ts",
+        "lib/domain.ts",
+        "lib/selectors.ts",
+        "lib/catalog.ts",
+        "components/SessionTime.tsx",
+        "components/DeleteRecordButton.tsx",
+        "components/WeeklySpaceEditor.tsx",
+        "components/SessionCalendar.tsx"
+      ]
+    },
+    {
+      "file": "components/WeeklySpaceEditor.tsx",
+      "lines": 378,
+      "dependencies": [
+        "components/WorkspaceContext.tsx",
+        "components/ui.tsx",
+        "lib/selectors.ts"
+      ]
+    },
+    {
+      "file": "components/Workspace.tsx",
+      "lines": 285,
+      "dependencies": [
+        "components/BrandMark.tsx",
+        "lib/catalog.ts",
+        "lib/sections.ts",
+        "components/WorkspaceContext.tsx",
+        "components/ui.tsx",
+        "components/RecordEditor.tsx",
+        "components/Overview.tsx",
+        "components/Directory.tsx",
+        "components/Spaces.tsx",
+        "components/Reports.tsx",
+        "components/Campaigns.tsx",
+        "components/Settings.tsx"
+      ]
+    },
+    {
+      "file": "components/WorkspaceContext.tsx",
+      "lines": 78,
+      "dependencies": [
+        "lib/form-errors.ts"
+      ]
+    },
+    {
+      "file": "components/ui.tsx",
+      "lines": 182,
+      "dependencies": []
+    },
+    {
+      "file": "eslint.config.mjs",
+      "lines": 13,
+      "dependencies": []
+    },
+    {
+      "file": "lib/auth.ts",
+      "lines": 128,
+      "dependencies": [
+        "lib/server-env.ts",
+        "lib/db.ts",
+        "lib/domain.ts"
+      ]
+    },
+    {
+      "file": "lib/booking.ts",
+      "lines": 46,
+      "dependencies": [
+        "lib/saturday-schedule.ts"
+      ]
+    },
+    {
+      "file": "lib/catalog.ts",
+      "lines": 194,
+      "dependencies": []
+    },
+    {
+      "file": "lib/db.ts",
+      "lines": 268,
+      "dependencies": [
+        "lib/programme-window.ts",
+        "lib/server-env.ts",
+        "lib/catalog.ts",
+        "lib/domain.ts",
+        "lib/validation.ts"
+      ]
+    },
+    {
+      "file": "lib/design.ts",
+      "lines": 12,
+      "dependencies": []
+    },
+    {
+      "file": "lib/domain.ts",
+      "lines": 839,
+      "dependencies": [
+        "lib/booking.ts",
+        "lib/catalog.ts",
+        "lib/validation.ts"
+      ]
+    },
+    {
+      "file": "lib/export.ts",
+      "lines": 97,
+      "dependencies": [
+        "lib/selectors.ts"
+      ]
+    },
+    {
+      "file": "lib/form-errors.ts",
+      "lines": 33,
+      "dependencies": []
+    },
+    {
+      "file": "lib/http.ts",
+      "lines": 52,
+      "dependencies": [
+        "lib/domain.ts"
+      ]
+    },
+    {
+      "file": "lib/programme-window.ts",
+      "lines": 113,
+      "dependencies": [
+        "lib/saturday-schedule.ts",
+        "lib/domain.ts"
+      ]
+    },
+    {
+      "file": "lib/saturday-schedule.ts",
+      "lines": 106,
+      "dependencies": []
+    },
+    {
+      "file": "lib/sections.ts",
+      "lines": 15,
+      "dependencies": []
+    },
+    {
+      "file": "lib/seed.ts",
+      "lines": 641,
+      "dependencies": [
+        "lib/saturday-schedule.ts",
+        "lib/catalog.ts"
+      ]
+    },
+    {
+      "file": "lib/selectors.ts",
+      "lines": 140,
+      "dependencies": []
+    },
+    {
+      "file": "lib/server-env.ts",
+      "lines": 32,
+      "dependencies": []
+    },
+    {
+      "file": "lib/space-data.ts",
+      "lines": 134,
+      "dependencies": []
+    },
+    {
+      "file": "lib/space-managers.ts",
+      "lines": 189,
+      "dependencies": [
+        "lib/db.ts",
+        "lib/domain.ts",
+        "lib/auth.ts"
+      ]
+    },
+    {
+      "file": "lib/types.ts",
+      "lines": 122,
+      "dependencies": []
+    },
+    {
+      "file": "lib/validation.ts",
+      "lines": 322,
+      "dependencies": [
+        "lib/catalog.ts"
+      ]
+    },
+    {
+      "file": "next-env.d.ts",
+      "lines": 7,
+      "dependencies": []
+    },
+    {
+      "file": "next.config.ts",
+      "lines": 24,
+      "dependencies": []
+    },
+    {
+      "file": "playwright.config.ts",
+      "lines": 17,
+      "dependencies": []
+    },
+    {
+      "file": "postcss.config.mjs",
+      "lines": 2,
+      "dependencies": []
+    },
+    {
+      "file": "prisma.config.ts",
+      "lines": 20,
+      "dependencies": []
+    },
+    {
+      "file": "scripts/admin.ts",
+      "lines": 28,
+      "dependencies": [
+        "lib/db.ts",
+        "lib/auth.ts"
+      ]
+    },
+    {
+      "file": "scripts/check-client-secrets.ts",
+      "lines": 44,
+      "dependencies": []
+    },
+    {
+      "file": "scripts/migrate.ts",
+      "lines": 51,
+      "dependencies": [
+        "lib/server-env.ts"
+      ]
+    },
+    {
+      "file": "scripts/prepare-vercel.ts",
+      "lines": 52,
+      "dependencies": [
+        "lib/server-env.ts"
+      ]
+    },
+    {
+      "file": "scripts/publish-saturdays.ts",
+      "lines": 14,
+      "dependencies": [
+        "lib/db.ts",
+        "lib/programme-window.ts"
+      ]
+    },
+    {
+      "file": "scripts/screenshots.ts",
+      "lines": 35,
+      "dependencies": []
+    },
+    {
+      "file": "scripts/seed.ts",
+      "lines": 54,
+      "dependencies": [
+        "lib/db.ts",
+        "lib/seed.ts"
+      ]
+    },
+    {
+      "file": "tests/domain.test.ts",
+      "lines": 857,
+      "dependencies": [
+        "lib/seed.ts",
+        "lib/domain.ts",
+        "lib/selectors.ts",
+        "lib/export.ts",
+        "lib/validation.ts",
+        "lib/catalog.ts",
+        "lib/space-data.ts",
+        "lib/space-data.ts",
+        "lib/domain.ts",
+        "lib/booking.ts",
+        "lib/space-data.ts",
+        "lib/booking.ts",
+        "lib/saturday-schedule.ts",
+        "lib/booking.ts",
+        "lib/saturday-schedule.ts",
+        "lib/booking.ts",
+        "lib/saturday-schedule.ts"
+      ]
+    },
+    {
+      "file": "tests/e2e/access.spec.ts",
+      "lines": 65,
+      "dependencies": []
+    },
+    {
+      "file": "tests/form-errors.test.ts",
+      "lines": 27,
+      "dependencies": [
+        "lib/validation.ts",
+        "lib/form-errors.ts"
+      ]
+    },
+    {
+      "file": "tests/integration.ts",
+      "lines": 1822,
+      "dependencies": [
+        "lib/saturday-schedule.ts",
+        "lib/domain.ts",
+        "lib/auth.ts",
+        "lib/selectors.ts"
+      ]
+    },
+    {
+      "file": "tests/server-env.test.ts",
+      "lines": 23,
+      "dependencies": [
+        "lib/server-env.ts"
+      ]
+    }
+  ],
+  "cycles": [],
+  "classification": [
+    {
+      "path": ".env.example",
+      "responsibility": "Tooling / framework / development configuration"
+    },
+    {
+      "path": ".gitignore",
+      "responsibility": "Tooling / framework / development configuration"
+    },
+    {
+      "path": "AGENTS.md",
+      "responsibility": "Documentation / agent instructions"
+    },
+    {
+      "path": "DEPLOYMENT.md",
+      "responsibility": "Documentation / agent instructions"
+    },
+    {
+      "path": "README.md",
+      "responsibility": "Documentation / agent instructions"
+    },
+    {
+      "path": "SECURITY-REVIEW.md",
+      "responsibility": "Documentation / agent instructions"
+    },
+    {
+      "path": "SPACE-MANAGERS.md",
+      "responsibility": "Documentation / agent instructions"
+    },
+    {
+      "path": "TESTING.md",
+      "responsibility": "Documentation / agent instructions"
+    },
+    {
+      "path": "app/(private)/[section]/[id]/page.tsx",
+      "responsibility": "Private Admin routing"
+    },
+    {
+      "path": "app/(private)/[section]/page.tsx",
+      "responsibility": "Private Admin routing"
+    },
+    {
+      "path": "app/api/auth/[action]/route.ts",
+      "responsibility": "API routing and server request handlers"
+    },
+    {
+      "path": "app/api/health/route.ts",
+      "responsibility": "API routing and server request handlers"
+    },
+    {
+      "path": "app/api/manager/[action]/route.ts",
+      "responsibility": "API routing and server request handlers"
+    },
+    {
+      "path": "app/api/monthly-winner/route.ts",
+      "responsibility": "API routing and server request handlers"
+    },
+    {
+      "path": "app/api/public/[action]/route.ts",
+      "responsibility": "API routing and server request handlers"
+    },
+    {
+      "path": "app/api/records/route.ts",
+      "responsibility": "API routing and server request handlers"
+    },
+    {
+      "path": "app/api/space-managers/route.ts",
+      "responsibility": "API routing and server request handlers"
+    },
+    {
+      "path": "app/api/workspace/route.ts",
+      "responsibility": "API routing and server request handlers"
+    },
+    {
+      "path": "app/apply/page.tsx",
+      "responsibility": "Public routing / global UI / intentional 404 routes"
+    },
+    {
+      "path": "app/book/page.tsx",
+      "responsibility": "Public routing / global UI / intentional 404 routes"
+    },
+    {
+      "path": "app/confirmation/page.tsx",
+      "responsibility": "Public routing / global UI / intentional 404 routes"
+    },
+    {
+      "path": "app/demo/[[...path]]/page.tsx",
+      "responsibility": "Public routing / global UI / intentional 404 routes"
+    },
+    {
+      "path": "app/error.tsx",
+      "responsibility": "Public routing / global UI / intentional 404 routes"
+    },
+    {
+      "path": "app/globals.css",
+      "responsibility": "Tooling / framework / development configuration"
+    },
+    {
+      "path": "app/icon.svg",
+      "responsibility": "Tooling / framework / development configuration"
+    },
+    {
+      "path": "app/invite/page.tsx",
+      "responsibility": "Public routing / global UI / intentional 404 routes"
+    },
+    {
+      "path": "app/layout.tsx",
+      "responsibility": "Public routing / global UI / intentional 404 routes"
+    },
+    {
+      "path": "app/manager/spaces/page.tsx",
+      "responsibility": "Space Manager routing"
+    },
+    {
+      "path": "app/not-found.tsx",
+      "responsibility": "Public routing / global UI / intentional 404 routes"
+    },
+    {
+      "path": "app/page.tsx",
+      "responsibility": "Public routing / global UI / intentional 404 routes"
+    },
+    {
+      "path": "app/signin/page.tsx",
+      "responsibility": "Public routing / global UI / intentional 404 routes"
+    },
+    {
+      "path": "app/terms/page.tsx",
+      "responsibility": "Public routing / global UI / intentional 404 routes"
+    },
+    {
+      "path": "artifacts/README.md",
+      "responsibility": "Tests / visual QA"
+    },
+    {
+      "path": "artifacts/application-desktop.png",
+      "responsibility": "Tests / visual QA"
+    },
+    {
+      "path": "artifacts/application-mobile.png",
+      "responsibility": "Tests / visual QA"
+    },
+    {
+      "path": "artifacts/booking-desktop.png",
+      "responsibility": "Tests / visual QA"
+    },
+    {
+      "path": "artifacts/booking-eight-weeks-mobile.png",
+      "responsibility": "Tests / visual QA"
+    },
+    {
+      "path": "artifacts/booking-mobile.png",
+      "responsibility": "Tests / visual QA"
+    },
+    {
+      "path": "artifacts/manager-signin-desktop.png",
+      "responsibility": "Tests / visual QA"
+    },
+    {
+      "path": "artifacts/manager-signin-mobile.png",
+      "responsibility": "Tests / visual QA"
+    },
+    {
+      "path": "artifacts/monthly-winner-mobile.png",
+      "responsibility": "Tests / visual QA"
+    },
+    {
+      "path": "artifacts/private-founder-mobile.png",
+      "responsibility": "Tests / visual QA"
+    },
+    {
+      "path": "artifacts/signin-desktop.png",
+      "responsibility": "Tests / visual QA"
+    },
+    {
+      "path": "artifacts/signin-mobile.png",
+      "responsibility": "Tests / visual QA"
+    },
+    {
+      "path": "artifacts/space-manager-desktop.png",
+      "responsibility": "Tests / visual QA"
+    },
+    {
+      "path": "artifacts/space-manager-mobile.png",
+      "responsibility": "Tests / visual QA"
+    },
+    {
+      "path": "artifacts/space-manager-settings-mobile.png",
+      "responsibility": "Tests / visual QA"
+    },
+    {
+      "path": "components/AuthScreen.tsx",
+      "responsibility": "Private Admin frontend / feature UI"
+    },
+    {
+      "path": "components/BrandMark.tsx",
+      "responsibility": "Shared UI"
+    },
+    {
+      "path": "components/Campaigns.tsx",
+      "responsibility": "Private Admin frontend / feature UI"
+    },
+    {
+      "path": "components/Charts.tsx",
+      "responsibility": "Shared UI"
+    },
+    {
+      "path": "components/DeleteRecordButton.tsx",
+      "responsibility": "Private Admin frontend / feature UI"
+    },
+    {
+      "path": "components/Directory.tsx",
+      "responsibility": "Private Admin frontend / feature UI"
+    },
+    {
+      "path": "components/FounderSpaces.tsx",
+      "responsibility": "Private Admin frontend / feature UI"
+    },
+    {
+      "path": "components/ManagerSpaces.tsx",
+      "responsibility": "Space Manager frontend / Admin management UI"
+    },
+    {
+      "path": "components/Overview.tsx",
+      "responsibility": "Private Admin frontend / feature UI"
+    },
+    {
+      "path": "components/PrivateWorkspace.tsx",
+      "responsibility": "Layout / cross-feature composition"
+    },
+    {
+      "path": "components/PublicBookingCalendar.tsx",
+      "responsibility": "Public frontend (mixed application/booking/confirmation/terms)"
+    },
+    {
+      "path": "components/PublicHeader.tsx",
+      "responsibility": "Layout / cross-feature composition"
+    },
+    {
+      "path": "components/PublicPages.tsx",
+      "responsibility": "Public frontend (mixed application/booking/confirmation/terms)"
+    },
+    {
+      "path": "components/RecordEditor.tsx",
+      "responsibility": "Private Admin frontend / feature UI"
+    },
+    {
+      "path": "components/Reports.tsx",
+      "responsibility": "Private Admin frontend / feature UI"
+    },
+    {
+      "path": "components/SessionCalendar.tsx",
+      "responsibility": "Private Admin frontend / feature UI"
+    },
+    {
+      "path": "components/SessionTime.tsx",
+      "responsibility": "Shared UI"
+    },
+    {
+      "path": "components/Settings.tsx",
+      "responsibility": "Private Admin frontend / feature UI"
+    },
+    {
+      "path": "components/SpaceManagersSettings.tsx",
+      "responsibility": "Space Manager frontend / Admin management UI"
+    },
+    {
+      "path": "components/Spaces.tsx",
+      "responsibility": "Private Admin frontend / feature UI"
+    },
+    {
+      "path": "components/WeeklySpaceEditor.tsx",
+      "responsibility": "Private Admin frontend / feature UI"
+    },
+    {
+      "path": "components/Workspace.tsx",
+      "responsibility": "Layout / cross-feature composition"
+    },
+    {
+      "path": "components/WorkspaceContext.tsx",
+      "responsibility": "Layout / cross-feature composition"
+    },
+    {
+      "path": "components/ui.tsx",
+      "responsibility": "Shared UI"
+    },
+    {
+      "path": "compose.yaml",
+      "responsibility": "Tooling / framework / development configuration"
+    },
+    {
+      "path": "eslint.config.mjs",
+      "responsibility": "Tooling / framework / development configuration"
+    },
+    {
+      "path": "lib/auth.ts",
+      "responsibility": "Authentication / server security configuration"
+    },
+    {
+      "path": "lib/booking.ts",
+      "responsibility": "Browser-safe scheduling / timezone / attendance calculations"
+    },
+    {
+      "path": "lib/catalog.ts",
+      "responsibility": "Shared types / validation / policy catalog"
+    },
+    {
+      "path": "lib/db.ts",
+      "responsibility": "Database access / persistence / command execution"
+    },
+    {
+      "path": "lib/design.ts",
+      "responsibility": "Shared UI design tokens"
+    },
+    {
+      "path": "lib/domain.ts",
+      "responsibility": "Pure domain policy, queries and test-only helpers"
+    },
+    {
+      "path": "lib/export.ts",
+      "responsibility": "Reporting / exports / data selectors"
+    },
+    {
+      "path": "lib/form-errors.ts",
+      "responsibility": "Shared types / validation / policy catalog"
+    },
+    {
+      "path": "lib/http.ts",
+      "responsibility": "Server HTTP response / error adapter"
+    },
+    {
+      "path": "lib/programme-window.ts",
+      "responsibility": "Database-backed scheduling service"
+    },
+    {
+      "path": "lib/saturday-schedule.ts",
+      "responsibility": "Browser-safe scheduling / timezone / attendance calculations"
+    },
+    {
+      "path": "lib/sections.ts",
+      "responsibility": "Shared types / validation / policy catalog"
+    },
+    {
+      "path": "lib/seed.ts",
+      "responsibility": "Test fixtures and default taxonomy source (localhost fixtures only)"
+    },
+    {
+      "path": "lib/selectors.ts",
+      "responsibility": "Reporting / exports / data selectors"
+    },
+    {
+      "path": "lib/server-env.ts",
+      "responsibility": "Authentication / server security configuration"
+    },
+    {
+      "path": "lib/space-data.ts",
+      "responsibility": "Browser-safe scheduling / timezone / attendance calculations"
+    },
+    {
+      "path": "lib/space-managers.ts",
+      "responsibility": "Manager authentication / email / assignment services"
+    },
+    {
+      "path": "lib/types.ts",
+      "responsibility": "Shared types / validation / policy catalog"
+    },
+    {
+      "path": "lib/validation.ts",
+      "responsibility": "Shared types / validation / policy catalog"
+    },
+    {
+      "path": "next-env.d.ts",
+      "responsibility": "Tooling / framework / development configuration"
+    },
+    {
+      "path": "next.config.ts",
+      "responsibility": "Tooling / framework / development configuration"
+    },
+    {
+      "path": "package-lock.json",
+      "responsibility": "Tooling / framework / development configuration"
+    },
+    {
+      "path": "package.json",
+      "responsibility": "Tooling / framework / development configuration"
+    },
+    {
+      "path": "playwright.config.ts",
+      "responsibility": "Tooling / framework / development configuration"
+    },
+    {
+      "path": "postcss.config.mjs",
+      "responsibility": "Tooling / framework / development configuration"
+    },
+    {
+      "path": "prisma.config.ts",
+      "responsibility": "Tooling / framework / development configuration"
+    },
+    {
+      "path": "prisma/README.md",
+      "responsibility": "Database schema / immutable migrations"
+    },
+    {
+      "path": "prisma/migrations/202611200001_initial/migration.sql",
+      "responsibility": "Database schema / immutable migrations"
+    },
+    {
+      "path": "prisma/migrations/202611210002_space_data/migration.sql",
+      "responsibility": "Database schema / immutable migrations"
+    },
+    {
+      "path": "prisma/migrations/202611210003_shared_weekly_post/migration.sql",
+      "responsibility": "Database schema / immutable migrations"
+    },
+    {
+      "path": "prisma/migrations/202611220001_space_managers/migration.sql",
+      "responsibility": "Database schema / immutable migrations"
+    },
+    {
+      "path": "prisma/migrations/202611220002_programme_cycles/migration.sql",
+      "responsibility": "Database schema / immutable migrations"
+    },
+    {
+      "path": "prisma/migrations/202611220003_session_name/migration.sql",
+      "responsibility": "Database schema / immutable migrations"
+    },
+    {
+      "path": "prisma/schema.prisma",
+      "responsibility": "Database schema / immutable migrations"
+    },
+    {
+      "path": "scripts/admin.ts",
+      "responsibility": "CLI scripts / deployment lifecycle"
+    },
+    {
+      "path": "scripts/check-client-secrets.ts",
+      "responsibility": "CLI scripts / deployment lifecycle"
+    },
+    {
+      "path": "scripts/migrate.ts",
+      "responsibility": "CLI scripts / deployment lifecycle"
+    },
+    {
+      "path": "scripts/prepare-vercel.ts",
+      "responsibility": "CLI scripts / deployment lifecycle"
+    },
+    {
+      "path": "scripts/publish-saturdays.ts",
+      "responsibility": "CLI scripts / deployment lifecycle"
+    },
+    {
+      "path": "scripts/screenshots.ts",
+      "responsibility": "CLI scripts / deployment lifecycle"
+    },
+    {
+      "path": "scripts/seed.ts",
+      "responsibility": "CLI scripts / deployment lifecycle"
+    },
+    {
+      "path": "tests/domain.test.ts",
+      "responsibility": "Tests (including ordered integration workflow)"
+    },
+    {
+      "path": "tests/e2e/access.spec.ts",
+      "responsibility": "Tests (including ordered integration workflow)"
+    },
+    {
+      "path": "tests/form-errors.test.ts",
+      "responsibility": "Tests (including ordered integration workflow)"
+    },
+    {
+      "path": "tests/integration.ts",
+      "responsibility": "Tests (including ordered integration workflow)"
+    },
+    {
+      "path": "tests/server-env.test.ts",
+      "responsibility": "Tests (including ordered integration workflow)"
+    },
+    {
+      "path": "tsconfig.json",
+      "responsibility": "Tooling / framework / development configuration"
+    },
+    {
+      "path": "vercel.json",
+      "responsibility": "Tooling / framework / development configuration"
+    }
+  ]
+}
