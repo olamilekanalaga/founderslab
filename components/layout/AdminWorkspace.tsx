@@ -9,7 +9,6 @@ import {
   Building2,
   Mic2,
   ChartNoAxesCombined,
-  Settings as SettingsIcon,
   Search,
   Menu,
   ChevronRight,
@@ -27,6 +26,7 @@ import {
 } from "@/components/layout/WorkspaceContext";
 import { Modal, Empty } from "@/components/ui";
 import RecordEditor, { type Resource } from "@/components/shared/RecordEditor";
+import Operations from "@/features/bd-partners/Operations";
 import Overview from "@/features/programme/components/Overview";
 import Directory from "@/features/directory/components/Directory";
 import Spaces from "@/features/spaces/components/Spaces";
@@ -37,9 +37,8 @@ const navigation = [
   { id: "dashboard", label: "Overview", icon: LayoutDashboard },
   { id: "founders", label: "Founders", icon: Users },
   { id: "companies", label: "Companies", icon: Building2 },
-  { id: "spaces", label: "Founder Spaces", icon: Mic2 },
+  { id: "operations", label: "Admin operations", icon: Mic2 },
   { id: "reports", label: "Reports", icon: ChartNoAxesCombined },
-  { id: "settings", label: "Settings", icon: SettingsIcon },
 ] as const;
 export default function Workspace(props: {
   section: Section;
@@ -91,7 +90,7 @@ function Shell({ section, id }: { section: Section; id?: string }) {
         >
           <Icon size={18} strokeWidth={1.7} />
           <span>{label}</span>
-          {navId === "spaces" &&
+          {navId === "operations" &&
             s.applications.some((a) => a.status === "Pending") && (
               <small>
                 {s.applications.filter((a) => a.status === "Pending").length}
@@ -104,7 +103,11 @@ function Shell({ section, id }: { section: Section; id?: string }) {
   const title =
     section === "campaigns"
       ? "Founder award archive"
-      : navigation.find((n) => n.id === section)?.label;
+      : section === "settings"
+        ? "Settings"
+        : section === "spaces"
+          ? "Founder Spaces"
+          : navigation.find((n) => n.id === section)?.label;
   const can = viewer.permissions.includes(SECTION_PERMISSIONS[section]);
   return (
     <div className="app-shell">
@@ -211,6 +214,8 @@ function Shell({ section, id }: { section: Section; id?: string }) {
             <Overview addFounder={() => edit("founder")} />
           ) : section === "founders" || section === "companies" ? (
             <Directory kind={section} id={id} edit={edit} />
+          ) : section === "operations" ? (
+            <Operations />
           ) : section === "spaces" ? (
             <Spaces id={id} edit={edit} />
           ) : section === "reports" ? (
