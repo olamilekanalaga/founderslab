@@ -1,7 +1,6 @@
 "use client";
 import SpaceManagersSettings from "@/features/space-managers/components/SpaceManagersSettings";
 import { useState } from "react";
-import Link from "next/link";
 import { ShieldCheck, Plus, Pencil } from "lucide-react";
 import { useWorkspace } from "@/components/layout/WorkspaceContext";
 import { ROLES, PERMISSIONS } from "@/lib/catalog";
@@ -25,17 +24,15 @@ export default function Settings({
         </div>
       </div>
       <div className="tabs settings-tabs">
-        {["Admins", "Space Managers", "Options", "Programme", "Activity"].map(
-          (t) => (
-            <button
-              key={t}
-              className={tab === t ? "active" : ""}
-              onClick={() => setTab(t)}
-            >
-              {t}
-            </button>
-          ),
-        )}
+        {["Admins", "Space Managers", "Options", "Activity"].map((t) => (
+          <button
+            key={t}
+            className={tab === t ? "active" : ""}
+            onClick={() => setTab(t)}
+          >
+            {t}
+          </button>
+        ))}
       </div>
       {tab === "Space Managers" && <SpaceManagersSettings />}
       <section className="panel" hidden={tab !== "Admins"}>
@@ -84,52 +81,6 @@ export default function Settings({
           </table>
         </div>
       </section>
-      <div className="two-grid" hidden={tab !== "Programme"}>
-        <section className="panel padded">
-          <div className="row-between">
-            <h2>Programme defaults</h2>
-            <button
-              className="icon-button"
-              aria-label="Edit programme settings"
-              onClick={() =>
-                edit(
-                  "settings",
-                  s.settings as unknown as Record<string, unknown>,
-                )
-              }
-            >
-              <Pencil size={16} />
-            </button>
-          </div>
-          <dl className="facts">
-            <div>
-              <dt>Founder-project seats per Space</dt>
-              <dd>{s.settings.capacity}</dd>
-            </div>
-            <div>
-              <dt>Monthly founder target</dt>
-              <dd>{s.settings.campaignTarget}</dd>
-            </div>
-            <div>
-              <dt>Historical award setting (inactive)</dt>
-              <dd>{s.settings.awardAmount}</dd>
-            </div>
-            <div>
-              <dt>Retention review policy</dt>
-              <dd>{s.settings.retentionDays} days</dd>
-            </div>
-          </dl>
-          <p>
-            <Link className="text-link" href="/campaigns">
-              View historical founder award archive
-            </Link>
-          </p>
-          <p className="form-note">
-            Policy settings do not delete records automatically. Review
-            retention and privacy requests with the programme administrator.
-          </p>
-        </section>
-      </div>
       <section className="panel" hidden={tab !== "Options"}>
         <SectionHeading
           title="Company options"
