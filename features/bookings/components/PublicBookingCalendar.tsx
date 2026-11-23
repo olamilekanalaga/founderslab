@@ -195,7 +195,7 @@ export default function PublicBookingCalendar({
             <dd>
               {chosen
                 ? `${chosen.capacity} founder-project seats`
-                : "Five founder-project seats"}
+                : "Four founder-project seats"}
             </dd>
           </div>
           <div>

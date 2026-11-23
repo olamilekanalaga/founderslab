@@ -197,7 +197,7 @@ try {
       (row) =>
         new Date(row.startsAt).getUTCDay() === 6 &&
         isLondonProgrammeTime(row.startsAt) &&
-        row.capacity === 5,
+        row.capacity === 4,
     ),
   );
   await initialDb.query('UPDATE "Session" SET status=$1 WHERE id=$2', [

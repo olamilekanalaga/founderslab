@@ -254,7 +254,7 @@ export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
             )}
             <span className="muted">
               {tab === "sessions"
-                ? "Default capacity: five founder projects, not five speakers."
+                ? "Default capacity: four founder projects, not five speakers."
                 : tab === "bookings"
                   ? "Requests need approval; a pending request does not reserve a seat."
                   : "Review founder applications and booking requests."}

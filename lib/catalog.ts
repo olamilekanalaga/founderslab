@@ -134,7 +134,7 @@ export const ROLES: Record<string, { name: string; permissions: string[] }> = {
 };
 export const defaultSettings = {
   countryOptions: COUNTRIES,
-  capacity: 5,
+  capacity: 4,
   retentionDays: 365,
   campaignTarget: 20,
   // Historical compatibility only. Not published or offered by the current programme.
