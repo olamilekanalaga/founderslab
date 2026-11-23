@@ -23,18 +23,27 @@ import WeeklySpaceEditor from "@/features/spaces/components/WeeklySpaceEditor";
 import SessionList from "@/features/spaces/components/SessionList";
 import type { Resource } from "@/components/shared/RecordEditor";
 type Editor = (resource: Resource, record?: Record<string, unknown>) => void;
-export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
+export type SpaceTab = "sessions" | "applications" | "bookings";
+export default function Spaces({
+  id,
+  edit,
+  embedded,
+}: {
+  id?: string;
+  edit: Editor;
+  embedded?: { tab: SpaceTab; onChange: (tab: SpaceTab) => void };
+}) {
   const { state: s, viewer, path, commit, busy } = useWorkspace(),
     router = useRouter(),
     params = useSearchParams();
-  const tab = params.get("tab") || "sessions";
+  const tab = embedded?.tab ?? (params.get("tab") || "sessions");
   const [selected, setSelected] = useState<string | null>(null),
     [booking, setBooking] = useState(false),
     [filter, setFilter] = useState("All");
   const a = s.applications.find((v) => v.id === selected),
     can = viewer.permissions.includes("booking.write");
   const session = s.sessions.find((v) => v.id === id);
-  const bookingSessionId = params.get("session");
+  const bookingSessionId = embedded ? null : params.get("session");
   const visibleBookings = s.bookings.filter(
     (b) =>
       (!bookingSessionId || b.sessionId === bookingSessionId) &&
@@ -210,7 +219,10 @@ export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
               <button
                 key={value}
                 className={tab === value ? "active" : ""}
-                onClick={() => router.replace(`${path("spaces")}?tab=${value}`)}
+                onClick={() => {
+                  if (embedded) embedded.onChange(value as SpaceTab);
+                  else router.replace(`${path("spaces")}?tab=${value}`);
+                }}
               >
                 {label}
                 {value === "applications" && (

@@ -2136,10 +2136,27 @@ try {
     await page
       .getByRole("heading", { name: "BD Integration Partner" })
       .waitFor();
+    const review = page.getByRole("button", {
+      name: "Review founder applications",
+    });
+    await review.click();
     await page
-      .getByRole("link", { name: "Review founder applications" })
+      .getByRole("columnheader", { name: "Founder / company" })
       .waitFor();
-    await page.getByRole("link", { name: "Enter Space data" }).waitFor();
+    assert.equal(new URL(page.url()).pathname, "/operations");
+    assert.equal(
+      await page
+        .getByRole("heading", { name: "Register a BD partner" })
+        .isVisible(),
+      false,
+    );
+    const bookings = page.getByRole("button", { name: "Manage bookings" });
+    await bookings.click();
+    await page.getByRole("columnheader", { name: "Booking status" }).waitFor();
+    await page.getByRole("button", { name: "BD details" }).click();
+    await page
+      .getByRole("heading", { name: "Register a BD partner" })
+      .waitFor();
     const payOption = await page
       .getByLabel("Reward cycle")
       .locator("option")

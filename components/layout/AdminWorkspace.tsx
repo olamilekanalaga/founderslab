@@ -215,7 +215,7 @@ function Shell({ section, id }: { section: Section; id?: string }) {
           ) : section === "founders" || section === "companies" ? (
             <Directory kind={section} id={id} edit={edit} />
           ) : section === "operations" ? (
-            <Operations />
+            <Operations edit={edit} />
           ) : section === "spaces" ? (
             <Spaces id={id} edit={edit} />
           ) : section === "reports" ? (
