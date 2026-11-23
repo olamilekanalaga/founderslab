@@ -76,7 +76,7 @@ const env = {
   BOOTSTRAP_ADMIN_EMAIL: "admin@integration.example.invalid",
   BOOTSTRAP_ADMIN_NAME: "Integration Admin",
   BOOTSTRAP_ADMIN_PASSWORD: password,
-  BD_BANK_ENCRYPTION_KEY: randomBytes(32).toString("base64"),
+  BD_BANK_ENCRYPTION_KEY: "",
   NODE_ENV: "production" as const,
 };
 let server: ReturnType<typeof spawn> | undefined;
@@ -2016,13 +2016,15 @@ try {
   const bdDb = new Client({ connectionString: url.toString() });
   await bdDb.connect();
   try {
-    const ciphertext = (
+    const storedBankDetails = (
       await bdDb.query('SELECT "bankDetails" FROM "BdPartner" WHERE id=$1', [
         partner.id,
       ])
     ).rows[0].bankDetails;
-    assert.ok(ciphertext.startsWith("v1:"));
-    assert.ok(!ciphertext.includes(registerPartner.accountNumber));
+    assert.equal(
+      JSON.parse(storedBankDetails).accountNumber,
+      registerPartner.accountNumber,
+    );
     const {
       rows: [candidate],
     } = await bdDb.query(

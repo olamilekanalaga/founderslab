@@ -1,10 +1,5 @@
 import "server-only";
-import {
-  createCipheriv,
-  createDecipheriv,
-  randomBytes,
-  randomUUID,
-} from "node:crypto";
+import { createDecipheriv, randomUUID } from "node:crypto";
 import { z } from "zod";
 import { requireViewer, requireCsrf } from "@/server/auth";
 import { db } from "@/server/db";
@@ -43,27 +38,15 @@ const command = z.discriminatedUnion("action", [
 function bankKey() {
   const key = Buffer.from(process.env.BD_BANK_ENCRYPTION_KEY || "", "base64");
   if (key.length !== 32)
-    throw new DomainError("Bank detail encryption is not configured.", 503);
+    throw new DomainError(
+      "The original key is required to read this encrypted bank record.",
+      503,
+    );
   return key;
 }
 
-function encryptBankDetails(details: object) {
-  const key = bankKey();
-  const nonce = randomBytes(12);
-  const cipher = createCipheriv("aes-256-gcm", key, nonce);
-  const ciphertext = Buffer.concat([
-    cipher.update(JSON.stringify(details), "utf8"),
-    cipher.final(),
-  ]);
-  return [
-    "v1",
-    nonce.toString("base64"),
-    cipher.getAuthTag().toString("base64"),
-    ciphertext.toString("base64"),
-  ].join(":");
-}
-
-function decryptBankDetails(value: string) {
+function readBankDetails(value: string) {
+  if (value.startsWith("{")) return JSON.parse(value);
   const [version, nonce, tag, ciphertext] = value.split(":");
   if (version !== "v1") throw new Error("Unsupported encryption version");
   const decipher = createDecipheriv(
@@ -128,7 +111,7 @@ export async function POST(request: Request) {
           select: { bankDetails: true },
         });
         if (!partner) throw new DomainError("BD partner not found.", 404);
-        const details = decryptBankDetails(partner.bankDetails);
+        const details = readBankDetails(partner.bankDetails);
         await tx.auditLog.create({
           data: {
             actor: viewer.id,
@@ -146,7 +129,7 @@ export async function POST(request: Request) {
             id: randomUUID(),
             name,
             email: email.toLowerCase(),
-            bankDetails: encryptBankDetails({
+            bankDetails: JSON.stringify({
               bank,
               accountName,
               accountNumber,

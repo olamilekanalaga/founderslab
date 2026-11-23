@@ -6,6 +6,6 @@ A referral can be recorded when the founder application is approved, the booking
 
 For a completed cycle, review the transfer details, make the transfer independently, and record the payment date and reference. Each cycle and transfer reference can be recorded once. A partner’s balances and referral and payment history appear on the same page.
 
-Set the server-side `BD_BANK_ENCRYPTION_KEY` to a base64-encoded random 32-byte key before enabling registration. Keep a secure backup of the key and use separate keys for separate environments. Existing ciphertext requires the original key. The list endpoint omits bank details. Viewing transfer details requires an authenticated Admin and CSRF validation and creates an audit entry.
+New bank details are stored in PostgreSQL without application-level encryption. Database access and exports must be restricted. Existing encrypted records still require their original server-side `BD_BANK_ENCRYPTION_KEY`. The list endpoint omits bank details. Viewing transfer details requires an authenticated Admin and CSRF validation and creates an audit entry.
 
 The additive migration creates three BD tables. It preserves existing founder, session, booking and award data. Qualification records store opaque booking, company and session IDs so the reward ledger can survive removal of those source records without retaining founder contact information. Existing scheduled session capacities are governed by their saved configuration. Newly generated weekly Spaces default to four seats.
