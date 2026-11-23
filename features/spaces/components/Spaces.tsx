@@ -20,7 +20,7 @@ import { BOOKING_STATUSES } from "@/lib/catalog";
 
 import DeleteRecordButton from "@/features/founders/components/DeleteRecordButton";
 import WeeklySpaceEditor from "@/features/spaces/components/WeeklySpaceEditor";
-import SessionCalendar from "@/features/spaces/components/SessionCalendar";
+import SessionList from "@/features/spaces/components/SessionList";
 import type { Resource } from "@/components/shared/RecordEditor";
 type Editor = (resource: Resource, record?: Record<string, unknown>) => void;
 export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
@@ -261,7 +261,7 @@ export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
             </span>
           </div>
           {tab === "sessions" ? (
-            <SessionCalendar sessions={s.sessions} filter={filter} />
+            <SessionList sessions={s.sessions} filter={filter} />
           ) : tab === "applications" ? (
             <section className="panel">
               <div className="table-wrap">
