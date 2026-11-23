@@ -186,7 +186,7 @@ export default function Operations({
             </button>
           ))}
           <Link className="button" href="/settings">
-            Settings and Space Managers
+            Settings
           </Link>
         </div>
       </section>

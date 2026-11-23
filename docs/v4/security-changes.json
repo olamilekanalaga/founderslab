@@ -19,5 +19,12 @@
     "reason": "Return 410 after existing administrator and CSRF checks, preserving historical rows.",
     "originalSha256": "cd0ad47ba27a86bd60d929836c851111d8c541922ebe8f8c113c601c8d7653b3",
     "sha256": "369ba67d4caaf50e8d0e0a9dec93164759b79953706fc5540cfdee1196b3a192"
+  },
+  {
+    "file": "server/services/space-managers.ts",
+    "name": "assignedSpaces",
+    "reason": "Remove founder and company roster data from the assigned Space Manager response. Assignment and session checks are preserved.",
+    "originalSha256": "cd4ac99b1f447b9c258a836505f499cd5633014786eb1bb214c48e0692981899",
+    "sha256": "85558602c97cc5bdacccd08d305ca8510fcd8f06edc8cdb5f346b0c234f17faf"
   }
 ]

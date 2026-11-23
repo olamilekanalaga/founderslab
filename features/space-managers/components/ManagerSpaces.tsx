@@ -8,10 +8,6 @@ type Space = {
   timezone: string;
   recordingUrl: string;
   postUrl: string;
-  participants: {
-    founder: { id: string; name: string; country: string };
-    company: { id: string; name: string };
-  }[];
   spaceData: null | {
     liveListeners: number | null;
     durationMinutes: number | null;
@@ -314,14 +310,6 @@ function SpaceEditor({
             onChange={(e) => setPost(e.target.value)}
           />
         </label>
-        <h3>Participating founders</h3>
-        <ul>
-          {space.participants.map((p) => (
-            <li key={`${p.founder.id}:${p.company.id}`}>
-              {p.founder.name} · {p.company.name} · {p.founder.country}
-            </li>
-          ))}
-        </ul>
         <button className="button" name="intent" value="draft" disabled={busy}>
           {busy ? "Saving…" : "Save Space data"}
         </button>

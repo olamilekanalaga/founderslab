@@ -1,5 +1,4 @@
 "use client";
-import SpaceManagersSettings from "@/features/space-managers/components/SpaceManagersSettings";
 import { useState } from "react";
 import { Plus, Pencil } from "lucide-react";
 import { useWorkspace } from "@/components/layout/WorkspaceContext";
@@ -11,7 +10,7 @@ export default function Settings({
   edit: (resource: Resource, record?: Record<string, unknown>) => void;
 }) {
   const { state: s } = useWorkspace();
-  const [tab, setTab] = useState("Space Managers");
+  const [tab, setTab] = useState("Options");
   const [group, setGroup] = useState("Sector");
   return (
     <>
@@ -21,7 +20,7 @@ export default function Settings({
         </div>
       </div>
       <div className="tabs settings-tabs">
-        {["Space Managers", "Options", "Activity"].map((t) => (
+        {["Options", "Activity"].map((t) => (
           <button
             key={t}
             className={tab === t ? "active" : ""}
@@ -31,7 +30,6 @@ export default function Settings({
           </button>
         ))}
       </div>
-      {tab === "Space Managers" && <SpaceManagersSettings />}
       <section className="panel" hidden={tab !== "Options"}>
         <SectionHeading
           title="Company options"
