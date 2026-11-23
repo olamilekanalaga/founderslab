@@ -1,4 +1,5 @@
 import type { DataState } from "@/lib/types";
+import { chainNames } from "@/lib/chains";
 export interface Filters {
   country: string;
   sector: string;
@@ -83,6 +84,7 @@ export function reportData(s: DataState, filters: Filters) {
     sectors: groupBy(companies.map((c) => c.sector)),
     stages: groupBy(companies.map((c) => c.stage)),
     teams: groupBy(companies.map((c) => c.teamSize)),
+    chains: groupBy(companies.flatMap((c) => chainNames(c.chains))),
     distribution: groupBy(companies.flatMap((c) => c.distribution)),
     businessNeeds: groupBy(needs.map((n) => n.kind)),
     pipeline: groupBy(opportunities.map((o) => o.status)),

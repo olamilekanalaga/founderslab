@@ -6,6 +6,8 @@ import {
 } from "@/lib/validation/application";
 import { applyCommand } from "@/lib/domain";
 import { makeSeed } from "@/server/db/seed-data";
+import { reportData, blankFilters } from "@/features/reports/lib/selectors";
+import { reportRows } from "@/features/reports/lib/export";
 import {
   createLocalApplication,
   demoViewer,
@@ -174,18 +176,40 @@ test("optional contact and normalized typing do not block valid founder applicat
   }
 });
 
-test("new public applications require every programme answer except email while legacy snapshots remain valid", () => {
+test("simplified public intake omits retired questions, retaining required chain and optional email", () => {
   const input = {
     ...application,
     contact: "",
     founderRole: "Founder",
-    teamCountries: ["United Kingdom"],
-    ecosystem: "None",
+    stage: undefined,
+    ecosystem: " SOLANA , Base, solana ",
     hiring: false,
-    seeking: "None",
     comments: "None",
   };
   assert.equal(publicApplicationSchema.safeParse(input).success, true);
+  const parsed = publicApplicationSchema.parse(input);
+  assert.equal(parsed.stage, "Live");
+  assert.deepEqual(parsed.teamCountries, []);
+  assert.equal(parsed.seeking, "");
+  assert.equal(parsed.ecosystem, "solana, base");
+  let state = approved(parsed);
+  const company = state.companies.at(-1)!;
+  assert.equal(company.stage, "Live");
+  assert.deepEqual(company.chains, ["solana", "base"]);
+  // Live remains editable under the existing active-taxonomy checks.
+  state = applyCommand(
+    state,
+    {
+      type: "company.save",
+      payload: {
+        ...company,
+        founderIds: [state.founders.at(-1)!.id],
+        labelIds: [],
+      },
+    },
+    demoViewer(),
+  );
+  assert.equal(state.companies.at(-1)!.stage, "Live");
   assert.equal(
     publicApplicationSchema.safeParse({ ...input, contact: undefined }).success,
     true,
@@ -193,10 +217,8 @@ test("new public applications require every programme answer except email while 
   for (const field of [
     "projectXHandle",
     "founderRole",
-    "teamCountries",
     "ecosystem",
     "hiring",
-    "seeking",
     "comments",
   ]) {
     assert.equal(
@@ -206,4 +228,29 @@ test("new public applications require every programme answer except email while 
       field,
     );
   }
+  assert.equal(
+    publicApplicationSchema.safeParse({ ...input, ecosystem: " , " }).success,
+    false,
+  );
+});
+
+test("chain reports and exports count each company once per chain across casing and duplicate memberships", () => {
+  const state = makeSeed();
+  // Historical chain arrays stay intact; reporting normalizes them without writes.
+  for (const company of state.companies) company.chains = [];
+  state.companies[0].chains = [" Solana ", "SOLANA", "Base"];
+  state.companies[1].chains = ["solana"];
+  state.memberships.push({ ...state.memberships[0] });
+  const before = structuredClone(state.companies);
+  const report = reportData(state, blankFilters);
+  assert.deepEqual(report.chains, [
+    { name: "solana", value: 2 },
+    { name: "base", value: 1 },
+  ]);
+  assert.ok(
+    reportRows(state, blankFilters, true).some(
+      (row) => row.join("|") === "Chain|solana|2",
+    ),
+  );
+  assert.deepEqual(state.companies, before);
 });

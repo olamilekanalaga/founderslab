@@ -158,6 +158,10 @@ export default function Reports() {
           <SectionHeading title="Team sizes" />
           <Chart label="Report team sizes" data={r.teams} />
         </section>
+        <section className="panel">
+          <SectionHeading title="Projects by chain" />
+          <Chart label="Projects by chain" data={r.chains} />
+        </section>
       </div>
       <section className="panel">
         <SectionHeading title="Founder records" />

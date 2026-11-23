@@ -405,14 +405,11 @@ try {
     description: "Pay",
     speakers: 3,
     teamSize: "2–5",
-    stage: "MVP",
     sector: "Payments",
     focus: "AI",
     founderRole: "Founder",
-    teamCountries: ["United Kingdom"],
-    ecosystem: "None",
+    ecosystem: " SOLANA , Base, solana ",
     hiring: false,
-    seeking: "None",
     comments: "None",
     privacyConsent: true,
     promotionalConsent: false,
@@ -469,6 +466,14 @@ try {
   assert.ok(linked.founderId && linked.companyId);
   assert.equal(linked.xHandle, "isolated_example");
   assert.equal(linked.projectXHandle, "isolated_project");
+  assert.equal(linked.stage, "Live");
+  assert.deepEqual(linked.teamCountries, []);
+  assert.equal(linked.seeking, "");
+  assert.equal(linked.ecosystem, "solana, base");
+  assert.deepEqual(
+    state.companies.find((c) => c.id === linked.companyId)!.chains,
+    ["solana", "base"],
+  );
   assert.equal(
     state.founders.find((f) => f.id === linked.founderId)!.xHandle,
     "isolated_example",
