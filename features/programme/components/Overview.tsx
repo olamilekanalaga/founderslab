@@ -20,6 +20,7 @@ import {
   type SpaceMetric,
 } from "@/features/spaces/lib/space-data";
 import { SectionHeading, Empty, Status } from "@/components/ui";
+import CurrentSaturdayCard from "./CurrentSaturdayCard";
 const Chart = dynamic(() => import("@/components/ui/Charts"), { ssr: false });
 export default function Overview({ addFounder }: { addFounder: () => void }) {
   const { state: s, path, viewer } = useWorkspace();
@@ -84,6 +85,7 @@ export default function Overview({ addFounder }: { addFounder: () => void }) {
           </Link>
         ))}
       </div>
+      <CurrentSaturdayCard />
       <div className="overview-charts">
         <section className="panel">
           <SectionHeading title="Founder growth" />

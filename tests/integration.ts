@@ -8,7 +8,10 @@ import { readFileSync, readdirSync } from "node:fs";
 import { Client } from "pg";
 import AxeBuilder from "@axe-core/playwright";
 import { chromium } from "@playwright/test";
-import { isLondonProgrammeTime } from "@/lib/dates/saturday-schedule";
+import {
+  saturdaySessions,
+  isLondonProgrammeTime,
+} from "@/lib/dates/saturday-schedule";
 import type { DataState } from "@/lib/types";
 import {
   PARTICIPATION_TERMS,
@@ -1406,6 +1409,44 @@ try {
     await page
       .getByRole("heading", { name: "Overview", exact: true })
       .waitFor();
+    const [nextSaturday] = saturdaySessions(new Date(), 1);
+    const cardState = structuredClone(state);
+    const mobileSpace = {
+      ...cardState.sessions[0],
+      id: nextSaturday.id,
+      startsAt: nextSaturday.startsAt.toISOString(),
+      capacity: 12,
+      status: "Scheduled",
+    };
+    cardState.sessions = [mobileSpace];
+    cardState.participants = [];
+    await page.route("**/api/workspace", (route) =>
+      route.fulfill({ json: { state: cardState } }),
+    );
+    await page.reload();
+    const saturdayCard = page.getByRole("region", {
+      name: "Saturday Founder Space",
+    });
+    await saturdayCard.getByText("0/12 filled", { exact: true }).waitFor();
+    assert.equal(
+      await saturdayCard.locator(".current-saturday-slots span").count(),
+      12,
+    );
+    assert.equal(
+      await saturdayCard
+        .getByRole("link", { name: "View Bookings" })
+        .getAttribute("href"),
+      "/spaces?tab=bookings&session=" + mobileSpace.id,
+    );
+    assert.equal(
+      await saturdayCard.evaluate(
+        (card) =>
+          card.getBoundingClientRect().right <= window.innerWidth &&
+          card.scrollWidth <= card.clientWidth,
+      ),
+      true,
+    );
+    await page.unroute("**/api/workspace");
     await page.goto(origin + "/founders/" + linked.founderId);
     await page
       .getByRole("heading", { name: "Integration Fictional", exact: true })
