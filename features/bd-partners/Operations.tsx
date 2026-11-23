@@ -2,6 +2,8 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
+import Spaces, { type SpaceTab } from "@/features/spaces/components/Spaces";
+import type { Resource } from "@/components/shared/RecordEditor";
 import { useWorkspace } from "@/components/layout/WorkspaceContext";
 import { rewardSummary, REFERRALS_PER_CYCLE, REWARD_NAIRA } from "./rewards";
 
@@ -30,7 +32,12 @@ const naira = new Intl.NumberFormat("en-NG", {
   minimumFractionDigits: 0,
 });
 
-export default function Operations() {
+export default function Operations({
+  edit,
+}: {
+  edit: (resource: Resource, record?: Record<string, unknown>) => void;
+}) {
+  const [panel, setPanel] = useState<"bd" | SpaceTab>("bd");
   const { viewer, state } = useWorkspace();
   const [partners, setPartners] = useState<Partner[]>([]);
   const [notice, setNotice] = useState("");
@@ -156,213 +163,234 @@ export default function Operations() {
         <h2>Founder Spaces</h2>
         <p>Review applications, manage bookings and enter weekly attendance.</p>
         <div className="heading-actions">
-          <Link className="button primary" href="#bd-details">
-            BD details
-          </Link>
-          <Link className="button" href="/spaces?tab=applications">
-            Review founder applications
-          </Link>
-          <Link className="button" href="/spaces?tab=bookings">
-            Manage bookings
-          </Link>
-          <Link className="button" href="/spaces">
-            Enter Space data
-          </Link>
+          {(
+            [
+              ["bd", "BD details"],
+              ["applications", "Review founder applications"],
+              ["bookings", "Manage bookings"],
+              ["sessions", "Enter Space data"],
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              className={panel === value ? "button primary" : "button"}
+              aria-pressed={panel === value}
+              aria-controls="operations-panel"
+              onClick={() => {
+                setBankDetails(null);
+                setPanel(value);
+              }}
+            >
+              {label}
+            </button>
+          ))}
           <Link className="button" href="/settings">
             Settings and Space Managers
           </Link>
         </div>
       </section>
-      <section className="panel padded">
-        <h2 id="bd-details" style={{ scrollMarginTop: "100px" }}>
-          Register a BD partner
-        </h2>
-        <form
-          onSubmit={(event) => void submit(event, "register")}
-          className="record-form"
-        >
-          <label>
-            Partner name
-            <input name="name" required maxLength={200} />
-          </label>
-          <label>
-            Email
-            <input name="email" type="email" required maxLength={200} />
-          </label>
-          <label>
-            Bank
-            <input name="bank" required maxLength={200} />
-          </label>
-          <label>
-            Account holder
-            <input name="accountName" required maxLength={200} />
-          </label>
-          <label>
-            Account number
-            <input
-              name="accountNumber"
-              required
-              inputMode="numeric"
-              pattern="[0-9]{10}"
-              maxLength={10}
-              autoComplete="off"
-            />
-          </label>
-          <button className="button primary" disabled={busy}>
-            Register partner
-          </button>
-        </form>
-      </section>
-      {notice && <p role="status">{notice}</p>}
-      {partners.map((partner) => {
-        const reward = rewardSummary(
-          partner.appearances.length,
-          partner.payments,
-        );
-        const unpaid = Array.from(
-          { length: reward.completedCycles },
-          (_, index) => index + 1,
-        ).filter(
-          (cycle) =>
-            !partner.payments.some((payment) => payment.cycle === cycle),
-        );
-        return (
-          <section className="panel padded" key={partner.id}>
-            <h2>{partner.name}</h2>
-            <p>{partner.email}</p>
-            <dl className="facts">
-              {[
-                ["Verified referrals", reward.verified],
-                [
-                  "Current cycle",
-                  `${reward.cycleProgress}/${REFERRALS_PER_CYCLE}`,
-                ],
-                ["Completed cycles", reward.completedCycles],
-                ["Paid cycles", reward.paidCycles],
-                ["Pending Payment", reward.unpaidCycles],
-                ["Total earned", naira.format(reward.earned)],
-                ["Total paid", naira.format(reward.paid)],
-                ["Outstanding", naira.format(reward.outstanding)],
-              ].map(([label, value]) => (
-                <div key={label}>
-                  <dt>{label}</dt>
-                  <dd>{value}</dd>
-                </div>
-              ))}
-            </dl>
-            {(reward.verified === 0 ||
-              reward.cycleProgress < REFERRALS_PER_CYCLE) && (
-              <p>Current cycle · Not Complete</p>
-            )}
-            <details>
-              <summary>Referral and payment history</summary>
-              <ul>
-                {partner.appearances.map((appearance) => {
-                  const company = state.companies.find(
-                    (value) => value.id === appearance.companyId,
-                  );
-                  const session = state.sessions.find(
-                    (value) => value.id === appearance.sessionId,
-                  );
-                  return (
-                    <li key={appearance.bookingId}>
-                      Cycle{" "}
-                      {Math.ceil(appearance.ordinal / REFERRALS_PER_CYCLE)} ·{" "}
-                      {company?.name ?? "Archived project"} ·{" "}
-                      {session?.startsAt.slice(0, 10) ??
-                        appearance.verifiedAt.slice(0, 10)}
-                    </li>
-                  );
-                })}
-                {partner.payments.map((payment) => (
-                  <li key={payment.cycle}>
-                    Cycle {payment.cycle} · Paid · {payment.paidOn} ·{" "}
-                    {payment.reference}
-                  </li>
-                ))}
-              </ul>
-            </details>
+      <div id="operations-panel">
+        {panel !== "bd" && (
+          <Spaces
+            key={panel}
+            edit={edit}
+            embedded={{ tab: panel, onChange: setPanel }}
+          />
+        )}
+        <div hidden={panel !== "bd"}>
+          <section className="panel padded">
+            <h2 id="bd-details" style={{ scrollMarginTop: "100px" }}>
+              Register a BD partner
+            </h2>
             <form
-              onSubmit={(event) => void submit(event, "verify", partner.id)}
+              onSubmit={(event) => void submit(event, "register")}
               className="record-form"
             >
               <label>
-                Attended founder booking
-                <select name="bookingId" required defaultValue="">
-                  <option value="" disabled>
-                    Select booking
-                  </option>
-                  {attendedBookings.map((booking) => (
-                    <option value={booking.id} key={booking.id}>
-                      {booking.label}
-                    </option>
-                  ))}
-                </select>
+                Partner name
+                <input name="name" required maxLength={200} />
               </label>
-              <button
-                className="button"
-                disabled={busy || !attendedBookings.length}
-              >
-                Verify referral
+              <label>
+                Email
+                <input name="email" type="email" required maxLength={200} />
+              </label>
+              <label>
+                Bank
+                <input name="bank" required maxLength={200} />
+              </label>
+              <label>
+                Account holder
+                <input name="accountName" required maxLength={200} />
+              </label>
+              <label>
+                Account number
+                <input
+                  name="accountNumber"
+                  required
+                  inputMode="numeric"
+                  pattern="[0-9]{10}"
+                  maxLength={10}
+                  autoComplete="off"
+                />
+              </label>
+              <button className="button primary" disabled={busy}>
+                Register partner
               </button>
             </form>
-            {!!unpaid.length &&
-              (bankDetails?.partnerId === partner.id ? (
-                <div>
-                  <p>
-                    {bankDetails.bank} · {bankDetails.accountName} ·{" "}
-                    {bankDetails.accountNumber}
-                  </p>
-                  <button
-                    type="button"
-                    className="button"
-                    onClick={() => setBankDetails(null)}
-                  >
-                    Hide transfer details
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  className="button"
-                  disabled={busy}
-                  onClick={() => void viewBank(partner.id)}
-                >
-                  View transfer details
-                </button>
-              ))}
-            {!!unpaid.length && (
-              <form
-                onSubmit={(event) => void submit(event, "pay", partner.id)}
-                className="record-form"
-              >
-                <label>
-                  Reward cycle
-                  <select name="cycle" required>
-                    {unpaid.map((cycle) => (
-                      <option key={cycle} value={cycle}>
-                        Cycle {cycle} · {naira.format(REWARD_NAIRA)} · Pending
-                        Payment
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Payment date
-                  <input name="paidOn" type="date" required />
-                </label>
-                <label>
-                  Transfer reference
-                  <input name="reference" required maxLength={200} />
-                </label>
-                <button className="button primary" disabled={busy}>
-                  Mark paid
-                </button>
-              </form>
-            )}
           </section>
-        );
-      })}
+          {notice && <p role="status">{notice}</p>}
+          {partners.map((partner) => {
+            const reward = rewardSummary(
+              partner.appearances.length,
+              partner.payments,
+            );
+            const unpaid = Array.from(
+              { length: reward.completedCycles },
+              (_, index) => index + 1,
+            ).filter(
+              (cycle) =>
+                !partner.payments.some((payment) => payment.cycle === cycle),
+            );
+            return (
+              <section className="panel padded" key={partner.id}>
+                <h2>{partner.name}</h2>
+                <p>{partner.email}</p>
+                <dl className="facts">
+                  {[
+                    ["Verified referrals", reward.verified],
+                    [
+                      "Current cycle",
+                      `${reward.cycleProgress}/${REFERRALS_PER_CYCLE}`,
+                    ],
+                    ["Completed cycles", reward.completedCycles],
+                    ["Paid cycles", reward.paidCycles],
+                    ["Pending Payment", reward.unpaidCycles],
+                    ["Total earned", naira.format(reward.earned)],
+                    ["Total paid", naira.format(reward.paid)],
+                    ["Outstanding", naira.format(reward.outstanding)],
+                  ].map(([label, value]) => (
+                    <div key={label}>
+                      <dt>{label}</dt>
+                      <dd>{value}</dd>
+                    </div>
+                  ))}
+                </dl>
+                {(reward.verified === 0 ||
+                  reward.cycleProgress < REFERRALS_PER_CYCLE) && (
+                  <p>Current cycle · Not Complete</p>
+                )}
+                <details>
+                  <summary>Referral and payment history</summary>
+                  <ul>
+                    {partner.appearances.map((appearance) => {
+                      const company = state.companies.find(
+                        (value) => value.id === appearance.companyId,
+                      );
+                      const session = state.sessions.find(
+                        (value) => value.id === appearance.sessionId,
+                      );
+                      return (
+                        <li key={appearance.bookingId}>
+                          Cycle{" "}
+                          {Math.ceil(appearance.ordinal / REFERRALS_PER_CYCLE)}{" "}
+                          · {company?.name ?? "Archived project"} ·{" "}
+                          {session?.startsAt.slice(0, 10) ??
+                            appearance.verifiedAt.slice(0, 10)}
+                        </li>
+                      );
+                    })}
+                    {partner.payments.map((payment) => (
+                      <li key={payment.cycle}>
+                        Cycle {payment.cycle} · Paid · {payment.paidOn} ·{" "}
+                        {payment.reference}
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+                <form
+                  onSubmit={(event) => void submit(event, "verify", partner.id)}
+                  className="record-form"
+                >
+                  <label>
+                    Attended founder booking
+                    <select name="bookingId" required defaultValue="">
+                      <option value="" disabled>
+                        Select booking
+                      </option>
+                      {attendedBookings.map((booking) => (
+                        <option value={booking.id} key={booking.id}>
+                          {booking.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    className="button"
+                    disabled={busy || !attendedBookings.length}
+                  >
+                    Verify referral
+                  </button>
+                </form>
+                {!!unpaid.length &&
+                  (bankDetails?.partnerId === partner.id ? (
+                    <div>
+                      <p>
+                        {bankDetails.bank} · {bankDetails.accountName} ·{" "}
+                        {bankDetails.accountNumber}
+                      </p>
+                      <button
+                        type="button"
+                        className="button"
+                        onClick={() => setBankDetails(null)}
+                      >
+                        Hide transfer details
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      className="button"
+                      disabled={busy}
+                      onClick={() => void viewBank(partner.id)}
+                    >
+                      View transfer details
+                    </button>
+                  ))}
+                {!!unpaid.length && (
+                  <form
+                    onSubmit={(event) => void submit(event, "pay", partner.id)}
+                    className="record-form"
+                  >
+                    <label>
+                      Reward cycle
+                      <select name="cycle" required>
+                        {unpaid.map((cycle) => (
+                          <option key={cycle} value={cycle}>
+                            Cycle {cycle} · {naira.format(REWARD_NAIRA)} ·
+                            Pending Payment
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      Payment date
+                      <input name="paidOn" type="date" required />
+                    </label>
+                    <label>
+                      Transfer reference
+                      <input name="reference" required maxLength={200} />
+                    </label>
+                    <button className="button primary" disabled={busy}>
+                      Mark paid
+                    </button>
+                  </form>
+                )}
+              </section>
+            );
+          })}
+        </div>
+      </div>
     </>
   );
 }
