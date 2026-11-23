@@ -34,6 +34,12 @@ export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
   const a = s.applications.find((v) => v.id === selected),
     can = viewer.permissions.includes("booking.write");
   const session = s.sessions.find((v) => v.id === id);
+  const bookingSessionId = params.get("session");
+  const visibleBookings = s.bookings.filter(
+    (b) =>
+      (!bookingSessionId || b.sessionId === bookingSessionId) &&
+      (filter === "All" || b.status === filter),
+  );
   const actual = spaceTotals(s, id);
   return (
     <>
@@ -238,6 +244,14 @@ export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
                 ))}
               </select>
             </label>
+            {tab === "bookings" && bookingSessionId && (
+              <Link
+                className="text-link"
+                href={path("spaces") + "?tab=bookings"}
+              >
+                View all bookings
+              </Link>
+            )}
             <span className="muted">
               {tab === "sessions"
                 ? "Default capacity: five founder projects, not five speakers."
@@ -314,67 +328,67 @@ export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {s.bookings
-                      .filter((b) => filter === "All" || b.status === filter)
-                      .map((b) => (
-                        <tr key={b.id}>
-                          <td>
-                            <b>
-                              {
-                                s.applications.find(
-                                  (a) => a.id === b.applicationId,
-                                )?.companyName
+                    {visibleBookings.map((b) => (
+                      <tr key={b.id}>
+                        <td>
+                          <b>
+                            {
+                              s.applications.find(
+                                (a) => a.id === b.applicationId,
+                              )?.companyName
+                            }
+                          </b>
+                          <small>
+                            {
+                              s.applications.find(
+                                (a) => a.id === b.applicationId,
+                              )?.founderName
+                            }
+                          </small>
+                        </td>
+                        <td>
+                          <Link
+                            className="text-link"
+                            href={path("spaces", b.sessionId)}
+                          >
+                            {
+                              s.sessions.find((v) => v.id === b.sessionId)
+                                ?.title
+                            }
+                          </Link>
+                        </td>
+                        <td>{b.speakers}</td>
+                        <td>
+                          {can ? (
+                            <select
+                              aria-label={`Booking status ${b.id}`}
+                              disabled={busy}
+                              value={b.status}
+                              onChange={(e) =>
+                                void commit({
+                                  type: "booking.review",
+                                  payload: {
+                                    id: b.id,
+                                    status: e.target.value,
+                                  },
+                                })
                               }
-                            </b>
-                            <small>
-                              {
-                                s.applications.find(
-                                  (a) => a.id === b.applicationId,
-                                )?.founderName
-                              }
-                            </small>
-                          </td>
-                          <td>
-                            <Link
-                              className="text-link"
-                              href={path("spaces", b.sessionId)}
                             >
-                              {
-                                s.sessions.find((v) => v.id === b.sessionId)
-                                  ?.title
-                              }
-                            </Link>
-                          </td>
-                          <td>{b.speakers}</td>
-                          <td>
-                            {can ? (
-                              <select
-                                aria-label={`Booking status ${b.id}`}
-                                disabled={busy}
-                                value={b.status}
-                                onChange={(e) =>
-                                  void commit({
-                                    type: "booking.review",
-                                    payload: {
-                                      id: b.id,
-                                      status: e.target.value,
-                                    },
-                                  })
-                                }
-                              >
-                                {BOOKING_STATUSES.map((v) => (
-                                  <option key={v}>{v}</option>
-                                ))}
-                              </select>
-                            ) : (
-                              <Status value={b.status} />
-                            )}
-                          </td>
-                        </tr>
-                      ))}
+                              {BOOKING_STATUSES.map((v) => (
+                                <option key={v}>{v}</option>
+                              ))}
+                            </select>
+                          ) : (
+                            <Status value={b.status} />
+                          )}
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
-                {!s.bookings.length && <Empty>No bookings yet.</Empty>}
+                {!visibleBookings.length && (
+                  <Empty>No matching bookings.</Empty>
+                )}
               </div>
             </section>
           )}
