@@ -1,21 +1,18 @@
 "use client";
 import SpaceManagersSettings from "@/features/space-managers/components/SpaceManagersSettings";
 import { useState } from "react";
-import { ShieldCheck, Plus, Pencil } from "lucide-react";
+import { Plus, Pencil } from "lucide-react";
 import { useWorkspace } from "@/components/layout/WorkspaceContext";
-import { ROLES, PERMISSIONS } from "@/lib/catalog";
-import { SectionHeading, Status, Avatar, Modal } from "@/components/ui";
+import { SectionHeading, Status } from "@/components/ui";
 import type { Resource } from "@/components/shared/RecordEditor";
 export default function Settings({
   edit,
 }: {
   edit: (resource: Resource, record?: Record<string, unknown>) => void;
 }) {
-  const { state: s, commit, busy } = useWorkspace(),
-    [tab, setTab] = useState("Admins"),
-    [group, setGroup] = useState("Sector"),
-    [userId, setUser] = useState<string | null>(null);
-  const target = s.users.find((u) => u.id === userId);
+  const { state: s } = useWorkspace();
+  const [tab, setTab] = useState("Space Managers");
+  const [group, setGroup] = useState("Sector");
   return (
     <>
       <div className="page-heading">
@@ -24,7 +21,7 @@ export default function Settings({
         </div>
       </div>
       <div className="tabs settings-tabs">
-        {["Admins", "Space Managers", "Options", "Activity"].map((t) => (
+        {["Space Managers", "Options", "Activity"].map((t) => (
           <button
             key={t}
             className={tab === t ? "active" : ""}
@@ -35,52 +32,6 @@ export default function Settings({
         ))}
       </div>
       {tab === "Space Managers" && <SpaceManagersSettings />}
-      <section className="panel" hidden={tab !== "Admins"}>
-        <SectionHeading
-          title="Admin access"
-          detail="Authorised administrators"
-        />
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Team member</th>
-                <th>Role</th>
-                <th>Access</th>
-                <th>Status</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {s.users
-                .filter((u) => u.roleId === "admin")
-                .map((u, i) => (
-                  <tr key={u.id}>
-                    <td>
-                      <div className="table-person">
-                        <Avatar name={u.name} index={i} />
-                        <span>
-                          <b>{u.name}</b>
-                          <small>{u.email}</small>
-                        </span>
-                      </div>
-                    </td>
-                    <td>{ROLES[u.roleId]?.name || u.roleId}</td>
-                    <td>{u.permissions.length} permissions</td>
-                    <td>
-                      <Status value={u.active ? "Active" : "Inactive"} />
-                    </td>
-                    <td>
-                      <button className="button" onClick={() => setUser(u.id)}>
-                        <ShieldCheck size={14} /> Permissions
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
       <section className="panel" hidden={tab !== "Options"}>
         <SectionHeading
           title="Company options"
@@ -143,86 +94,6 @@ export default function Settings({
             ))}
         </div>
       </section>
-      {target && (
-        <PermissionEditor
-          key={target.id}
-          name={target.name}
-          id={target.id}
-          permissions={target.permissions}
-          active={target.active}
-          close={() => setUser(null)}
-          save={async (permissions) => {
-            const ok = await commit({
-              type: "user.permissions",
-              payload: {
-                id: target.id,
-                active: permissions.active,
-                permissions: permissions.values,
-              },
-            });
-            if (ok) setUser(null);
-          }}
-          busy={busy}
-        />
-      )}
     </>
-  );
-}
-function PermissionEditor({
-  name,
-  permissions,
-  active,
-  close,
-  save,
-  busy,
-}: {
-  name: string;
-  id: string;
-  permissions: string[];
-  active: boolean;
-  close: () => void;
-  save: (p: { active: boolean; values: string[] }) => Promise<void>;
-  busy: boolean;
-}) {
-  const [values, setValues] = useState(permissions),
-    [enabled, setEnabled] = useState(active);
-  return (
-    <Modal title={`Permissions · ${name}`} close={close}>
-      <form
-        className="stack-form"
-        onSubmit={async (e) => {
-          e.preventDefault();
-          await save({ active: enabled, values });
-        }}
-      >
-        <label className="check-label">
-          <input
-            type="checkbox"
-            checked={enabled}
-            onChange={(e) => setEnabled(e.target.checked)}
-          />{" "}
-          Account active
-        </label>
-        <div className="permissions-grid">
-          {PERMISSIONS.map((p) => (
-            <label className="check-label" key={p}>
-              <input
-                type="checkbox"
-                checked={values.includes(p)}
-                onChange={() =>
-                  setValues((v) =>
-                    v.includes(p) ? v.filter((x) => x !== p) : [...v, p],
-                  )
-                }
-              />
-              {p.replaceAll(".", " · ")}
-            </label>
-          ))}
-        </div>
-        <button className="button primary" disabled={busy}>
-          Save permissions
-        </button>
-      </form>
-    </Modal>
   );
 }
