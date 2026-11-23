@@ -156,7 +156,10 @@ export default function Operations() {
         <h2>Founder Spaces</h2>
         <p>Review applications, manage bookings and enter weekly attendance.</p>
         <div className="heading-actions">
-          <Link className="button primary" href="/spaces?tab=applications">
+          <Link className="button primary" href="#bd-details">
+            BD details
+          </Link>
+          <Link className="button" href="/spaces?tab=applications">
             Review founder applications
           </Link>
           <Link className="button" href="/spaces?tab=bookings">
@@ -171,7 +174,9 @@ export default function Operations() {
         </div>
       </section>
       <section className="panel padded">
-        <h2>Register a BD partner</h2>
+        <h2 id="bd-details" style={{ scrollMarginTop: "100px" }}>
+          Register a BD partner
+        </h2>
         <form
           onSubmit={(event) => void submit(event, "register")}
           className="record-form"
