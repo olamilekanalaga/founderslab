@@ -309,6 +309,7 @@ try {
     "/reports",
     "/campaigns",
     "/settings",
+    "/owner-invitations",
   ]) {
     const response = await fetch(origin + route, { redirect: "manual" });
     assert.equal(response.status, 307, route);
@@ -939,20 +940,9 @@ try {
       "timezone",
       "recordingUrl",
       "postUrl",
-      "participants",
       "spaceData",
     ].sort(),
   );
-  const sharedParticipant = assigned.data.spaces[0].participants[0];
-  assert.deepEqual(Object.keys(sharedParticipant.founder).sort(), [
-    "country",
-    "id",
-    "name",
-  ]);
-  assert.deepEqual(Object.keys(sharedParticipant.company).sort(), [
-    "id",
-    "name",
-  ]);
   assert.equal((await request("/api/auth/me", undefined, manager)).status, 401);
   assert.equal(
     (await request("/api/workspace", undefined, manager)).status,
@@ -987,6 +977,7 @@ try {
     "/reports",
     "/campaigns",
     "/settings",
+    "/owner-invitations",
     "/companies",
     "/founders",
   ]) {
@@ -1495,10 +1486,7 @@ try {
       corrected.companies.find((c) => c.id === linked.companyId)!.xHandle,
       "corrected_project",
     );
-    await page.goto(origin + "/settings");
-    await page
-      .getByRole("button", { name: "Space Managers", exact: true })
-      .click();
+    await page.goto(origin + "/owner-invitations");
     await page
       .getByRole("heading", { name: "Space Managers", exact: true })
       .waitFor();

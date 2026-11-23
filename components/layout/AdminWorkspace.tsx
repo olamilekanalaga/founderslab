@@ -32,12 +32,14 @@ import Directory from "@/features/directory/components/Directory";
 import Spaces from "@/features/spaces/components/Spaces";
 import Reports from "@/features/reports/components/Reports";
 import Campaigns from "@/features/campaigns/components/MonthlyWinner";
+import SpaceManagersSettings from "@/features/space-managers/components/SpaceManagersSettings";
 import TeamSettings from "@/features/settings/components/Settings";
 const navigation = [
   { id: "dashboard", label: "Overview", icon: LayoutDashboard },
   { id: "founders", label: "Founders", icon: Users },
   { id: "companies", label: "Companies", icon: Building2 },
   { id: "operations", label: "Admin operations", icon: Mic2 },
+  { id: "owner-invitations", label: "Owner invitations", icon: ShieldCheck },
   { id: "reports", label: "Reports", icon: ChartNoAxesCombined },
 ] as const;
 export default function Workspace(props: {
@@ -214,6 +216,8 @@ function Shell({ section, id }: { section: Section; id?: string }) {
             <Overview addFounder={() => edit("founder")} />
           ) : section === "founders" || section === "companies" ? (
             <Directory kind={section} id={id} edit={edit} />
+          ) : section === "owner-invitations" ? (
+            <SpaceManagersSettings />
           ) : section === "operations" ? (
             <Operations edit={edit} />
           ) : section === "spaces" ? (
