@@ -2496,7 +2496,7 @@ td select {
 }
 .founder-contact-actions {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
 .founder-contact-actions .button {

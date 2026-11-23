@@ -21,6 +21,7 @@ export function reportRows(s: DataState, filters: Filters, demo: boolean) {
     ["Count", "Companies", String(r.companies.length)],
     ["Count", "Countries", String(r.countries.length)],
     ...r.countries.map((c) => ["Country", c.name, String(c.value)]),
+    ...r.chains.map((c) => ["Chain", c.name, String(c.value)]),
     ["Founder", "Company", "Country", "Short description"],
     ...r.founders.map((f) => {
       const companies = s.memberships

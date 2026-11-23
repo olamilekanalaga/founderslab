@@ -24,6 +24,7 @@ export const STAGES = [
   "Early traction",
   "Growth",
   "Mature",
+  "Live",
 ];
 export const TEAM_SIZES = ["1", "2–5", "6–10", "11–25", "26+"];
 export const FUNCTIONS = [
