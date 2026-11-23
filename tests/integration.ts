@@ -12,6 +12,7 @@ import {
   saturdaySessions,
   isLondonProgrammeTime,
 } from "@/lib/dates/saturday-schedule";
+import { rewardSummary } from "@/features/bd-partners/rewards";
 import type { DataState } from "@/lib/types";
 import {
   PARTICIPATION_TERMS,
@@ -75,6 +76,7 @@ const env = {
   BOOTSTRAP_ADMIN_EMAIL: "admin@integration.example.invalid",
   BOOTSTRAP_ADMIN_NAME: "Integration Admin",
   BOOTSTRAP_ADMIN_PASSWORD: password,
+  BD_BANK_ENCRYPTION_KEY: randomBytes(32).toString("base64"),
   NODE_ENV: "production" as const,
 };
 let server: ReturnType<typeof spawn> | undefined;
@@ -131,7 +133,7 @@ try {
     .sort()
     .filter(
       (name) =>
-        name !== "202611220004_project_x_identity" && !name.endsWith(".toml"),
+        name < "202611220004_project_x_identity" && !name.endsWith(".toml"),
     )) {
     const sql = readFileSync(`prisma/migrations/${name}/migration.sql`, "utf8");
     await legacyDb.query(sql);
@@ -299,6 +301,7 @@ try {
   }
   for (const route of [
     "/dashboard",
+    "/operations",
     "/founders",
     "/founders/f1",
     "/companies",
@@ -1988,6 +1991,176 @@ try {
   await deletionDb.end();
   pass(
     "Historical award rows survive archive reads and rejected writes; permanent founder/application deletion revokes confirmations, removes owned data and preserves shared Spaces, with Admin-only CSRF checks",
+  );
+  const bdRoute = "/api/bd-partners";
+  assert.equal((await request(bdRoute)).status, 401);
+  const registerPartner = {
+    action: "register",
+    name: "BD Integration Partner",
+    email: "bd-integration@example.invalid",
+    bank: "Example Bank",
+    accountName: "BD Integration Partner",
+    accountNumber: "0123456789",
+  };
+  assert.equal(
+    (await request(bdRoute, registerPartner, admin, false)).status,
+    403,
+  );
+  assert.equal((await request(bdRoute, registerPartner, admin)).status, 200);
+  const partner = (await request(bdRoute, undefined, admin)).data[0];
+  assert.equal(partner.bankDetails, undefined);
+  const bank = (
+    await request(bdRoute, { action: "bank", partnerId: partner.id }, admin)
+  ).data;
+  assert.equal(bank.details.accountNumber, registerPartner.accountNumber);
+  const bdDb = new Client({ connectionString: url.toString() });
+  await bdDb.connect();
+  try {
+    const ciphertext = (
+      await bdDb.query('SELECT "bankDetails" FROM "BdPartner" WHERE id=$1', [
+        partner.id,
+      ])
+    ).rows[0].bankDetails;
+    assert.ok(ciphertext.startsWith("v1:"));
+    assert.ok(!ciphertext.includes(registerPartner.accountNumber));
+    const {
+      rows: [candidate],
+    } = await bdDb.query(
+      `SELECT id, "companyId" FROM "Application" WHERE status='Approved' AND "founderId" IS NOT NULL AND "companyId" IS NOT NULL LIMIT 1`,
+    );
+    assert.ok(candidate);
+    for (let i = 1; i <= 8; i++) {
+      const sessionId = `bd-test-space-${i}`;
+      const bookingId = `bd-test-booking-${i}`;
+      const attendanceId = `bd-test-report-${i}`;
+      const saturday = new Date(Date.UTC(2025, 0, 4 + (i - 1) * 7, 19));
+      await bdDb.query(
+        `INSERT INTO "Session"(id,title,"startsAt",host,capacity,deadline,status,"updatedAt")
+         VALUES($1,'BD test Space',$2,'Test',4,$2,'Completed',now())`,
+        [sessionId, saturday],
+      );
+      await bdDb.query(
+        `INSERT INTO "BookingRequest"(id,"applicationId","sessionId",speakers,status,"updatedAt")
+         VALUES($1,$2,$3,1,'Attended',now())`,
+        [bookingId, candidate.id, sessionId],
+      );
+      const payload = { action: "verify", partnerId: partner.id, bookingId };
+      assert.equal((await request(bdRoute, payload, admin)).status, 400);
+      await bdDb.query(
+        `INSERT INTO "SpaceData"(id,"sessionId","recordedBy","submittedAt","updatedAt")
+         VALUES($1,$2,'test',now(),now())`,
+        [attendanceId, sessionId],
+      );
+      await bdDb.query(
+        `INSERT INTO "SpaceTeamAttendance"(id,"spaceDataId","companyId","foundersCount")
+         VALUES($1,$2,$3,1)`,
+        [`bd-test-team-${i}`, attendanceId, candidate.companyId],
+      );
+      const attempts = await Promise.all([
+        request(bdRoute, payload, admin),
+        request(bdRoute, payload, admin),
+      ]);
+      assert.deepEqual(
+        attempts.map((attempt) => attempt.status).sort(),
+        [200, 409],
+      );
+      const recorded = (await request(bdRoute, undefined, admin)).data[0];
+      assert.equal(recorded.appearances.length, i);
+      assert.equal(
+        rewardSummary(i, recorded.payments).earned,
+        Math.floor(i / 4) * 20_000,
+      );
+    }
+    const pay = {
+      action: "pay",
+      partnerId: partner.id,
+      cycle: 1,
+      reference: "BD-TEST-TRANSFER",
+      paidOn: "2025-06-01",
+    };
+    assert.equal(
+      (await request(bdRoute, { ...pay, cycle: 3 }, admin)).status,
+      400,
+    );
+    const attempts = await Promise.all([
+      request(bdRoute, pay, admin),
+      request(bdRoute, pay, admin),
+    ]);
+    assert.deepEqual(
+      attempts.map((attempt) => attempt.status).sort(),
+      [200, 409],
+    );
+    assert.equal(
+      (await request(bdRoute, { ...pay, cycle: 2 }, admin)).status,
+      409,
+    );
+    const recorded = (await request(bdRoute, undefined, admin)).data[0];
+    assert.deepEqual(
+      rewardSummary(recorded.appearances.length, recorded.payments),
+      {
+        verified: 8,
+        cycleProgress: 4,
+        completedCycles: 2,
+        paidCycles: 1,
+        unpaidCycles: 1,
+        earned: 40_000,
+        paid: 20_000,
+        outstanding: 20_000,
+      },
+    );
+    assert.equal(recorded.payments[0].paidOn, pay.paidOn);
+    assert.equal(recorded.payments[0].reference, pay.reference);
+  } finally {
+    await bdDb.end();
+  }
+  const operationsBrowser = await chromium.launch({
+    executablePath:
+      process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || "/usr/bin/chromium",
+    headless: true,
+    args: ["--no-sandbox"],
+  });
+  try {
+    const page = await operationsBrowser.newPage({
+      viewport: { width: 393, height: 852 },
+    });
+    const token = admin.cookie.split(";")[0].split("=")[1];
+    await page
+      .context()
+      .addCookies([{ name: "fl_session", value: token, url: origin }]);
+    await page.goto(origin + "/dashboard");
+    await page.getByRole("button", { name: "Open navigation" }).click();
+    await page
+      .getByRole("navigation", { name: "Mobile navigation" })
+      .getByRole("link", { name: /Admin operations/ })
+      .click();
+    await page
+      .getByRole("heading", { name: "BD Integration Partner" })
+      .waitFor();
+    await page
+      .getByRole("link", { name: "Review founder applications" })
+      .waitFor();
+    await page.getByRole("link", { name: "Enter Space data" }).waitFor();
+    const payOption = await page
+      .getByLabel("Reward cycle")
+      .locator("option")
+      .allTextContents();
+    assert.equal(payOption.length, 1);
+    assert.match(payOption[0], /Cycle 2.*Pending Payment/);
+    await page.getByRole("button", { name: "View transfer details" }).click();
+    await page.getByText(/Example Bank.*0123456789/).waitFor();
+    await page.getByRole("button", { name: "Hide transfer details" }).click();
+    assert.equal(await page.getByText(/0123456789/).count(), 0);
+    assert.equal(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+      true,
+    );
+  } finally {
+    await operationsBrowser.close();
+  }
+  pass(
+    "BD registration, protected bank details, two reward cycles, concurrent duplicate prevention and manual payment recording",
   );
   const oldCookie = admin.cookie;
   assert.equal(
