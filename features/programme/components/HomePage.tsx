@@ -97,7 +97,7 @@ export default function HomePage() {
             <div>
               <Users size={19} aria-hidden="true" />
               <span>
-                <strong>Five founder projects</strong> per Space
+                <strong>Four founder projects</strong> per Space
               </span>
             </div>
             <div>

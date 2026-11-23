@@ -705,7 +705,7 @@ test("Saturday eligibility follows London rather than the original session timez
   assert.equal(sessionDay(lateSaturday), "2026-12-05");
 });
 
-test("approved Saturday schedule opens winter 7 PM London dates with five places", async () => {
+test("approved Saturday schedule opens winter 7 PM London dates with four places", async () => {
   const { saturdaySessions } = await import("@/lib/dates/saturday-schedule");
   const { publicSlotOpen } = await import("@/lib/dates/booking");
   const weeks = saturdaySessions(new Date("2026-11-22T10:00:00Z"));
@@ -729,7 +729,7 @@ test("approved Saturday schedule opens winter 7 PM London dates with five places
       (w) =>
         w.startsAt.getUTCDay() === 6 &&
         w.startsAt.getUTCHours() === 19 &&
-        w.capacity === 5,
+        w.capacity === 4,
     ),
   );
   assert.equal(

@@ -43,7 +43,7 @@ export function saturdaySessions(now = new Date(), weeks = 12) {
       startsAt,
       timezone: LONDON_TIME_ZONE,
       host: "⭕️La_Crrypt💰₿",
-      capacity: 5,
+      capacity: 4,
       deadline: startsAt,
       status: "Scheduled",
       researchStatus: "Not started",
