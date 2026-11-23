@@ -75,8 +75,7 @@ export default function PublicHeader() {
         ))}
         <Link
           className="fl-action fl-action-primary"
-          href="/book"
-          aria-current={pathname === "/book" ? "page" : undefined}
+          href="/#choose-a-saturday"
           onClick={() => setOpen(false)}
         >
           Choose a Saturday <ArrowUpRight size={17} aria-hidden="true" />

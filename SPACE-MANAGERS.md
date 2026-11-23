@@ -10,14 +10,14 @@ Set these in the existing Vercel project's Production environment and redeploy:
 - `RESEND_API_KEY`: your transactional Resend API key.
 - `MANAGER_EMAIL_FROM`: an address on a sender domain verified in Resend, e.g. `Founders Lab <spaces@your-domain>`.
 
-No email provider plan or API subscription was purchased. Configure your own provider account and verify its sending domain. Do not put API keys in source code. A successful API response with an email ID is recorded as provider acceptance, not proof of inbox delivery. Missing configuration, timeouts and provider rejections never report successful sending and invalidate the attempted link. Settings shows whether configuration is present; it does not certify sender-domain verification.
+No email provider plan or API subscription was purchased. Configure your own provider account and verify its sending domain. Do not put API keys in source code. A successful API response with an email ID is recorded as provider acceptance, not proof of inbox delivery. Missing configuration, timeouts and provider rejections never report successful sending and invalidate the attempted link. Owner invitations shows whether configuration is present; it does not certify sender-domain verification.
 
 ## Workflow
 
-1. Admin Settings → Space Managers. Enter the friend's email, select their weekly Spaces, and send the invitation.
+1. Owner invitations. Enter the friend's email, select their weekly Spaces, and send the invitation.
 2. The email links to `/manager/spaces` with a 15-minute, single-use token in the fragment. It is removed from browser history on opening; the manager explicitly continues to verify mailbox access. Merely opening the page does not consume the link.
 3. Verification issues a separate HTTP-only, production-Secure, SameSite=Strict session lasting eight hours. No password, public signup or founder account is created.
-4. The manager sees only assigned session titles/dates, participating founder names/countries and company names, plus exactly four report inputs: listener count, duration (hours/minutes), recording URL and weekly X post URL. Detailed founder/team attendance is not shown or editable. No contacts, private notes, booking approvals, research, reports or awards are returned.
+4. The manager sees only assigned session titles and dates, plus exactly four report inputs: listener count, duration (hours/minutes), recording URL and weekly X post URL. The manager API omits the founder roster and detailed founder/team attendance. Manage invitations from Owner invitations. No contacts, private notes, booking approvals, research, reports or awards are returned.
 5. Manager edits reuse the existing SpaceData and Session records for listener totals, duration and X links. Founder/team attendance rows, private notes, booking associations and session participants are preserved; managers cannot change them.
 6. Admin can replace assignments, resend a new email link, inspect last activity or revoke access. Resending invalidates old links. Revocation is terminal for that manager record: it invalidates sessions and unused links immediately while retaining edits and audit history. Revoked records cannot be silently reactivated by resending.
 7. A manager can request another short-lived link from `/manager/spaces` after session expiry. Requests are rate-limited; no link is issued for unknown or revoked emails. Managers can sign out independently of the Admin session.

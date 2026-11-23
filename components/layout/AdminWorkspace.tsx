@@ -9,7 +9,6 @@ import {
   Building2,
   Mic2,
   ChartNoAxesCombined,
-  Settings as SettingsIcon,
   Search,
   Menu,
   ChevronRight,
@@ -20,6 +19,7 @@ import {
   RefreshCw,
   CheckCircle2,
   CircleAlert,
+  Settings as SettingsIcon,
 } from "lucide-react";
 import type { Section, DataState, Viewer } from "@/lib/types";
 import { ROLES } from "@/lib/catalog";
@@ -30,19 +30,21 @@ import {
 } from "@/components/layout/WorkspaceContext";
 import { Modal, Empty, Avatar } from "@/components/ui";
 import RecordEditor, { type Resource } from "@/components/shared/RecordEditor";
+import Operations from "@/features/bd-partners/Operations";
 import Overview from "@/features/programme/components/Overview";
 import Directory from "@/features/directory/components/Directory";
 import Spaces from "@/features/spaces/components/Spaces";
 import Reports from "@/features/reports/components/Reports";
 import Campaigns from "@/features/campaigns/components/MonthlyWinner";
+import SpaceManagersSettings from "@/features/space-managers/components/SpaceManagersSettings";
 import TeamSettings from "@/features/settings/components/Settings";
 const navigation = [
   { id: "dashboard", label: "Overview", icon: LayoutDashboard },
   { id: "founders", label: "Founders", icon: Users },
   { id: "companies", label: "Companies", icon: Building2 },
-  { id: "spaces", label: "Founder Spaces", icon: Mic2 },
+  { id: "operations", label: "Admin operations", icon: Mic2 },
+  { id: "owner-invitations", label: "Owner invitations", icon: ShieldCheck },
   { id: "reports", label: "Reports", icon: ChartNoAxesCombined },
-  { id: "settings", label: "Settings", icon: SettingsIcon },
 ] as const;
 export default function Workspace(props: {
   section: Section;
@@ -128,7 +130,7 @@ function Shell({ section, id }: { section: Section; id?: string }) {
         >
           <Icon size={19} strokeWidth={1.7} />
           <span>{label}</span>
-          {navId === "spaces" && pending > 0 && <small>{pending}</small>}
+          {navId === "operations" && pending > 0 && <small>{pending}</small>}
         </Link>
       ))}
     </nav>
@@ -136,7 +138,11 @@ function Shell({ section, id }: { section: Section; id?: string }) {
   const title =
     section === "campaigns"
       ? "Founder award archive"
-      : navigation.find((n) => n.id === section)?.label;
+      : section === "settings"
+        ? "Settings"
+        : section === "spaces"
+          ? "Founder Spaces"
+          : navigation.find((n) => n.id === section)?.label;
   const can = viewer.permissions.includes(SECTION_PERMISSIONS[section]);
   const role = ROLES[viewer.roleId]?.name || viewer.roleId;
   const logout = (
@@ -265,6 +271,10 @@ function Shell({ section, id }: { section: Section; id?: string }) {
             <Overview addFounder={() => edit("founder")} />
           ) : section === "founders" || section === "companies" ? (
             <Directory kind={section} id={id} edit={edit} />
+          ) : section === "owner-invitations" ? (
+            <SpaceManagersSettings />
+          ) : section === "operations" ? (
+            <Operations edit={edit} />
           ) : section === "spaces" ? (
             <Spaces id={id} edit={edit} />
           ) : section === "reports" ? (

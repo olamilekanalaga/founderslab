@@ -52,7 +52,13 @@ test("application starts with honest examples and accepts a bare domain through 
   expect(
     await website.evaluate((el: HTMLInputElement) => el.checkValidity()),
   ).toBe(true);
-  for (const name of ["stage", "sector", "teamSize"]) {
+  for (const name of ["stage", "teamCountries", "seeking"]) {
+    await expect(page.locator(`.public-form [name="${name}"]`)).toHaveCount(0);
+  }
+  await expect(
+    page.locator(".public-form input[name=ecosystem]"),
+  ).toHaveAttribute("required", "");
+  for (const name of ["sector", "teamSize"]) {
     const field = page.locator(`select[name="${name}"]`);
     await expect(field).toHaveValue("");
     await expect(field.locator("option:checked")).toHaveText(
@@ -104,9 +110,7 @@ test("missing required answers focus the field, while optional email and normali
     country: "  united   KINGDOM  ",
     description: "A product",
     focus: "A customer need",
-    teamCountries: "United Kingdom",
-    ecosystem: "None",
-    seeking: "None",
+    ecosystem: " SOLANA , Base, solana ",
     comments: "None",
   })) {
     await page.locator(`.public-form [name="${name}"]`).fill(value);
@@ -114,7 +118,6 @@ test("missing required answers focus the field, while optional email and normali
   await page.locator('select[name="teamSize"]').selectOption("2–5");
   await page.locator('select[name="speakers"]').selectOption("1");
   await page.locator('select[name="hiring"]').selectOption("no");
-  await page.locator('select[name="stage"]').selectOption("MVP");
   await page.locator('select[name="sector"]').selectOption("Payments");
   await page
     .getByLabel("I agree to the privacy notice and programme terms.")
@@ -147,4 +150,8 @@ test("missing required answers focus the field, while optional email and normali
   expect(submitted?.projectXHandle).toBe("official_project");
   expect(submitted?.country).toBe("United Kingdom");
   expect(submitted?.website).toBe("https://Example.com");
+  expect(submitted?.stage).toBe("Live");
+  expect(submitted?.teamCountries).toEqual([]);
+  expect(submitted?.seeking).toBe("");
+  expect(submitted?.ecosystem).toBe("solana, base");
 });

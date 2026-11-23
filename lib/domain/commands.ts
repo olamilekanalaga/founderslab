@@ -4,6 +4,7 @@ import { approvedSeats } from "./queries";
 import type { Command, DataState, Viewer } from "@/lib/types";
 import { actionPermission, RESEARCH_SECTIONS } from "@/lib/catalog";
 import { schemas } from "@/lib/validation";
+import { chainNames } from "@/lib/chains";
 export function applyCommand(
   state: DataState,
   command: Command,
@@ -178,7 +179,7 @@ export function applyCommand(
             customers: [],
             businessModels: [],
             ecosystems: a.ecosystem ? [a.ecosystem] : [],
-            chains: [],
+            chains: chainNames(a.ecosystem),
             integrations: [],
             distribution: [],
             hiringStatus: a.hiring ? "Hiring" : "Unknown",

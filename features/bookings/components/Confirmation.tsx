@@ -112,7 +112,7 @@ export function Confirmation() {
               pending request does not reserve a seat. Save this private link to
               check your status; do not share it publicly.
             </p>
-            <Link className="button primary" href="/book">
+            <Link className="button primary" href="/#choose-a-saturday">
               Explore session requests <ArrowRight size={16} />
             </Link>
           </div>

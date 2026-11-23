@@ -7,7 +7,7 @@ import PublicHeader from "@/components/layout/PublicHeader";
 import SessionTime from "@/components/shared/SessionTime";
 
 import { publicSlotOpen, type PublicSession } from "@/lib/dates/booking";
-import { COUNTRIES, SECTORS, STAGES, TEAM_SIZES } from "@/lib/catalog";
+import { COUNTRIES, SECTORS, TEAM_SIZES } from "@/lib/catalog";
 import { formError } from "@/lib/validation/form-errors";
 import { publicApplicationSchema as applicationSchema } from "@/lib/validation/application";
 
@@ -34,14 +34,11 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
     country: "",
     description: "",
     teamSize: "",
-    stage: "",
     sector: "",
     focus: "",
     founderRole: "Founder",
     contact: "",
-    teamCountries: "",
     ecosystem: "",
-    seeking: "",
     comments: "",
     websiteTrap: "",
   });
@@ -51,7 +48,6 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
   const [catalog, setCatalog] = useState({
     countries: COUNTRIES,
     sectors: SECTORS,
-    stages: STAGES,
   });
   useEffect(() => {
     void api("programme")
@@ -61,9 +57,6 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
           countries: r.settings.countryOptions || COUNTRIES,
           sectors: labels
             .filter((l) => l.group === "Sector")
-            .map((l) => l.name),
-          stages: labels
-            .filter((l) => l.group === "Product stage")
             .map((l) => l.name),
         });
       })
@@ -89,8 +82,7 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
       publicSlotOpen(chosenSession, chosenSession.availableSeats),
     );
   const countries = catalog.countries,
-    sectors = catalog.sectors,
-    stages = catalog.stages;
+    sectors = catalog.sectors;
   const change = (key: string, value: string) =>
     setFields((f) => ({ ...f, [key]: value }));
   return (
@@ -98,6 +90,7 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
       <PublicHeader />
       <main className="public-form-page" id="main-content">
         <h1>Bring your founder story.</h1>
+        <p>For founders with live Web3 products.</p>
         {!configured && (
           <p role="alert">Applications are temporarily unavailable.</p>
         )}
@@ -120,7 +113,7 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
                 </span>
               )}
             </div>
-            <Link className="text-link" href="/book">
+            <Link className="text-link" href="/#choose-a-saturday">
               Change date
             </Link>
           </div>
@@ -332,22 +325,6 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
               />
             </label>
             <label>
-              Product stage
-              <select
-                name="stage"
-                required
-                value={fields.stage}
-                onChange={(e) => change("stage", e.target.value)}
-              >
-                <option value="" disabled>
-                  Select an option
-                </option>
-                {stages.map((v) => (
-                  <option key={v}>{v}</option>
-                ))}
-              </select>
-            </label>
-            <label>
               Primary sector
               <select
                 name="sector"
@@ -376,23 +353,18 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
             </label>
           </div>
           <div className="record-form">
-            {[
-              ["teamCountries", "Team countries · comma separated"],
-              ["ecosystem", "Blockchain ecosystem"],
-              ["seeking", "Skills or partnerships being sought"],
-            ].map(([key, label]) => (
-              <label key={key}>
-                {label}
-                <input
-                  name={key}
-                  required
-                  placeholder="Enter None if not applicable"
-                  maxLength={200}
-                  value={fields[key]}
-                  onChange={(e) => change(key, e.target.value)}
-                />
-              </label>
-            ))}
+            <label>
+              Chain
+              <input
+                name="ecosystem"
+                required
+                placeholder="e.g. Solana, Ethereum, Base"
+                maxLength={200}
+                value={fields.ecosystem}
+                onChange={(e) => change("ecosystem", e.target.value)}
+              />
+              <small>Separate multiple chains with commas.</small>
+            </label>
             <label>
               Are you actively hiring?
               <select

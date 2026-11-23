@@ -1,26 +1,14 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-test("public booking is light, backend-backed and limited to eight Saturdays", async ({
+test("public booking is light, backend-backed and limited to three Saturdays", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 393, height: 852 });
-  const availability = page.waitForResponse(
-    (response) =>
-      response.url().includes("/api/public/sessions") &&
-      response.request().method() === "GET",
-  );
   await page.goto("/book?mode=demo");
-  expect((await availability).status()).toBe(200);
-  await expect(page.locator(".weekly-date")).toHaveCount(8, { timeout: 15000 });
-  await expect(page.locator(".fl-date-panel-heading")).toContainText(
-    "7 PM London",
-  );
-  await expect(page.locator(".fl-date-group")).toHaveCount(2);
+  await expect(page).toHaveURL(/\/#choose-a-saturday$/);
+  await expect(page.locator(".fl-preview-dates > button")).toHaveCount(3);
   await expect(page.getByText("Demo mode", { exact: true })).toHaveCount(0);
   await expect(page.locator(".public-footer")).toContainText("⭕️La_Crrypt💰₿");
-  await expect(page.locator(".weekly-date").first()).toContainText(
-    /slots? left|Full/,
-  );
   const audit = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa"])
     .analyze();

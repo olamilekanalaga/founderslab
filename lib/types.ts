@@ -99,6 +99,8 @@ export interface Command {
   payload: Record<string, unknown>;
 }
 export type Section =
+  | "owner-invitations"
+  | "operations"
   | "dashboard"
   | "founders"
   | "companies"
@@ -112,6 +114,8 @@ export type Section =
   | "campaigns"
   | "settings";
 export const SECTIONS: Section[] = [
+  "owner-invitations",
+  "operations",
   "dashboard",
   "founders",
   "companies",

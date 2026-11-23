@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { TEAM_SIZES } from "@/lib/catalog";
+import { chainNames } from "@/lib/chains";
 import {
   text,
   short,
@@ -65,19 +66,15 @@ export const applicationSchema = z.object({
 export const normaliseKey = (handle: string, company: string) =>
   `${handle.replace(/^@/, "").trim().toLowerCase()}:${company.trim().toLowerCase().replace(/\s+/g, " ")}`;
 
-/** Current public form requires all programme answers except the private email.
- * The legacy schema above remains usable for historical application snapshots.
- */
+/** Removed intake questions default without changing historical snapshots. */
 export const publicApplicationSchema = applicationSchema.extend({
+  stage: required.optional().default("Live"),
   projectXHandle: xHandle,
   founderRole: required,
-  teamCountries: optionalList.refine(
-    (values) => values.length > 0,
-    "Enter your team countries",
-  ),
-  ecosystem: required,
+  ecosystem: required
+    .transform((value) => chainNames(value).join(", "))
+    .pipe(required),
   hiring: z.boolean(),
-  seeking: text.min(1, "Enter an answer, or None if not applicable"),
   comments: text.min(1, "Enter an answer, or None if not applicable"),
   contact: z
     .string()

@@ -10,7 +10,11 @@ import { readFileSync, readdirSync } from "node:fs";
 import { Client } from "pg";
 import AxeBuilder from "@axe-core/playwright";
 import { chromium } from "@playwright/test";
-import { isLondonProgrammeTime } from "@/lib/dates/saturday-schedule";
+import {
+  saturdaySessions,
+  isLondonProgrammeTime,
+} from "@/lib/dates/saturday-schedule";
+import { rewardSummary } from "@/features/bd-partners/rewards";
 import type { DataState } from "@/lib/types";
 import {
   PARTICIPATION_TERMS,
@@ -76,6 +80,7 @@ const env = {
   BOOTSTRAP_ADMIN_EMAIL: "admin@integration.example.invalid",
   BOOTSTRAP_ADMIN_NAME: "Integration Admin",
   BOOTSTRAP_ADMIN_PASSWORD: password,
+  BD_BANK_ENCRYPTION_KEY: "",
   NODE_ENV: "production" as const,
 };
 let server: ReturnType<typeof spawn> | undefined;
@@ -132,7 +137,7 @@ try {
     .sort()
     .filter(
       (name) =>
-        name !== "202611220004_project_x_identity" && !name.endsWith(".toml"),
+        name < "202611220004_project_x_identity" && !name.endsWith(".toml"),
     )) {
     const sql = readFileSync(`prisma/migrations/${name}/migration.sql`, "utf8");
     await legacyDb.query(sql);
@@ -198,7 +203,7 @@ try {
       (row) =>
         new Date(row.startsAt).getUTCDay() === 6 &&
         isLondonProgrammeTime(row.startsAt) &&
-        row.capacity === 5,
+        row.capacity === 4,
     ),
   );
   await initialDb.query('UPDATE "Session" SET status=$1 WHERE id=$2', [
@@ -300,6 +305,7 @@ try {
   }
   for (const route of [
     "/dashboard",
+    "/operations",
     "/founders",
     "/founders/f1",
     "/companies",
@@ -307,6 +313,7 @@ try {
     "/reports",
     "/campaigns",
     "/settings",
+    "/owner-invitations",
   ]) {
     const response = await fetch(origin + route, { redirect: "manual" });
     assert.equal(response.status, 307, route);
@@ -409,14 +416,11 @@ try {
     description: "Pay",
     speakers: 3,
     teamSize: "2–5",
-    stage: "MVP",
     sector: "Payments",
     focus: "AI",
     founderRole: "Founder",
-    teamCountries: ["United Kingdom"],
-    ecosystem: "None",
+    ecosystem: " SOLANA , Base, solana ",
     hiring: false,
-    seeking: "None",
     comments: "None",
     privacyConsent: true,
     promotionalConsent: false,
@@ -473,6 +477,14 @@ try {
   assert.ok(linked.founderId && linked.companyId);
   assert.equal(linked.xHandle, "isolated_example");
   assert.equal(linked.projectXHandle, "isolated_project");
+  assert.equal(linked.stage, "Live");
+  assert.deepEqual(linked.teamCountries, []);
+  assert.equal(linked.seeking, "");
+  assert.equal(linked.ecosystem, "solana, base");
+  assert.deepEqual(
+    state.companies.find((c) => c.id === linked.companyId)!.chains,
+    ["solana", "base"],
+  );
   assert.equal(
     state.founders.find((f) => f.id === linked.founderId)!.xHandle,
     "isolated_example",
@@ -932,20 +944,9 @@ try {
       "timezone",
       "recordingUrl",
       "postUrl",
-      "participants",
       "spaceData",
     ].sort(),
   );
-  const sharedParticipant = assigned.data.spaces[0].participants[0];
-  assert.deepEqual(Object.keys(sharedParticipant.founder).sort(), [
-    "country",
-    "id",
-    "name",
-  ]);
-  assert.deepEqual(Object.keys(sharedParticipant.company).sort(), [
-    "id",
-    "name",
-  ]);
   assert.equal((await request("/api/auth/me", undefined, manager)).status, 401);
   assert.equal(
     (await request("/api/workspace", undefined, manager)).status,
@@ -980,6 +981,7 @@ try {
     "/reports",
     "/campaigns",
     "/settings",
+    "/owner-invitations",
     "/companies",
     "/founders",
   ]) {
@@ -1409,6 +1411,44 @@ try {
         exact: true,
       })
       .waitFor();
+    const [nextSaturday] = saturdaySessions(new Date(), 1);
+    const cardState = structuredClone(state);
+    const mobileSpace = {
+      ...cardState.sessions[0],
+      id: nextSaturday.id,
+      startsAt: nextSaturday.startsAt.toISOString(),
+      capacity: 12,
+      status: "Scheduled",
+    };
+    cardState.sessions = [mobileSpace];
+    cardState.participants = [];
+    await page.route("**/api/workspace", (route) =>
+      route.fulfill({ json: { state: cardState } }),
+    );
+    await page.reload();
+    const saturdayCard = page.getByRole("region", {
+      name: "Saturday Founder Space",
+    });
+    await saturdayCard.getByText("0/12 filled", { exact: true }).waitFor();
+    assert.equal(
+      await saturdayCard.locator(".current-saturday-slots span").count(),
+      12,
+    );
+    assert.equal(
+      await saturdayCard
+        .getByRole("link", { name: "View Bookings" })
+        .getAttribute("href"),
+      "/spaces?tab=bookings&session=" + mobileSpace.id,
+    );
+    assert.equal(
+      await saturdayCard.evaluate(
+        (card) =>
+          card.getBoundingClientRect().right <= window.innerWidth &&
+          card.scrollWidth <= card.clientWidth,
+      ),
+      true,
+    );
+    await page.unroute("**/api/workspace");
     await page.goto(origin + "/founders/" + linked.founderId);
     await page
       .getByRole("heading", { name: "Integration Fictional", exact: true })
@@ -1454,10 +1494,7 @@ try {
       corrected.companies.find((c) => c.id === linked.companyId)!.xHandle,
       "corrected_project",
     );
-    await page.goto(origin + "/settings");
-    await page
-      .getByRole("button", { name: "Space Managers", exact: true })
-      .click();
+    await page.goto(origin + "/owner-invitations");
     await page
       .getByRole("heading", { name: "Space Managers", exact: true })
       .waitFor();
@@ -2024,6 +2061,195 @@ try {
   await deletionDb.end();
   pass(
     "Historical award rows survive archive reads and rejected writes; permanent founder/application deletion revokes confirmations, removes owned data and preserves shared Spaces, with Admin-only CSRF checks",
+  );
+  const bdRoute = "/api/bd-partners";
+  assert.equal((await request(bdRoute)).status, 401);
+  const registerPartner = {
+    action: "register",
+    name: "BD Integration Partner",
+    email: "bd-integration@example.invalid",
+    bank: "Example Bank",
+    accountName: "BD Integration Partner",
+    accountNumber: "0123456789",
+  };
+  assert.equal(
+    (await request(bdRoute, registerPartner, admin, false)).status,
+    403,
+  );
+  assert.equal((await request(bdRoute, registerPartner, admin)).status, 200);
+  const partner = (await request(bdRoute, undefined, admin)).data[0];
+  assert.equal(partner.bankDetails, undefined);
+  const bank = (
+    await request(bdRoute, { action: "bank", partnerId: partner.id }, admin)
+  ).data;
+  assert.equal(bank.details.accountNumber, registerPartner.accountNumber);
+  const bdDb = new Client({ connectionString: url.toString() });
+  await bdDb.connect();
+  try {
+    const storedBankDetails = (
+      await bdDb.query('SELECT "bankDetails" FROM "BdPartner" WHERE id=$1', [
+        partner.id,
+      ])
+    ).rows[0].bankDetails;
+    assert.equal(
+      JSON.parse(storedBankDetails).accountNumber,
+      registerPartner.accountNumber,
+    );
+    const {
+      rows: [candidate],
+    } = await bdDb.query(
+      `SELECT id, "companyId" FROM "Application" WHERE status='Approved' AND "founderId" IS NOT NULL AND "companyId" IS NOT NULL LIMIT 1`,
+    );
+    assert.ok(candidate);
+    for (let i = 1; i <= 8; i++) {
+      const sessionId = `bd-test-space-${i}`;
+      const bookingId = `bd-test-booking-${i}`;
+      const attendanceId = `bd-test-report-${i}`;
+      const saturday = new Date(Date.UTC(2025, 0, 4 + (i - 1) * 7, 19));
+      await bdDb.query(
+        `INSERT INTO "Session"(id,title,"startsAt",host,capacity,deadline,status,"updatedAt")
+         VALUES($1,'BD test Space',$2,'Test',4,$2,'Completed',now())`,
+        [sessionId, saturday],
+      );
+      await bdDb.query(
+        `INSERT INTO "BookingRequest"(id,"applicationId","sessionId",speakers,status,"updatedAt")
+         VALUES($1,$2,$3,1,'Attended',now())`,
+        [bookingId, candidate.id, sessionId],
+      );
+      const payload = { action: "verify", partnerId: partner.id, bookingId };
+      assert.equal((await request(bdRoute, payload, admin)).status, 400);
+      await bdDb.query(
+        `INSERT INTO "SpaceData"(id,"sessionId","recordedBy","submittedAt","updatedAt")
+         VALUES($1,$2,'test',now(),now())`,
+        [attendanceId, sessionId],
+      );
+      await bdDb.query(
+        `INSERT INTO "SpaceTeamAttendance"(id,"spaceDataId","companyId","foundersCount")
+         VALUES($1,$2,$3,1)`,
+        [`bd-test-team-${i}`, attendanceId, candidate.companyId],
+      );
+      const attempts = await Promise.all([
+        request(bdRoute, payload, admin),
+        request(bdRoute, payload, admin),
+      ]);
+      assert.deepEqual(
+        attempts.map((attempt) => attempt.status).sort(),
+        [200, 409],
+      );
+      const recorded = (await request(bdRoute, undefined, admin)).data[0];
+      assert.equal(recorded.appearances.length, i);
+      assert.equal(
+        rewardSummary(i, recorded.payments).earned,
+        Math.floor(i / 4) * 20_000,
+      );
+    }
+    const pay = {
+      action: "pay",
+      partnerId: partner.id,
+      cycle: 1,
+      reference: "BD-TEST-TRANSFER",
+      paidOn: "2025-06-01",
+    };
+    assert.equal(
+      (await request(bdRoute, { ...pay, cycle: 3 }, admin)).status,
+      400,
+    );
+    const attempts = await Promise.all([
+      request(bdRoute, pay, admin),
+      request(bdRoute, pay, admin),
+    ]);
+    assert.deepEqual(
+      attempts.map((attempt) => attempt.status).sort(),
+      [200, 409],
+    );
+    assert.equal(
+      (await request(bdRoute, { ...pay, cycle: 2 }, admin)).status,
+      409,
+    );
+    const recorded = (await request(bdRoute, undefined, admin)).data[0];
+    assert.deepEqual(
+      rewardSummary(recorded.appearances.length, recorded.payments),
+      {
+        verified: 8,
+        cycleProgress: 4,
+        completedCycles: 2,
+        paidCycles: 1,
+        unpaidCycles: 1,
+        earned: 40_000,
+        paid: 20_000,
+        outstanding: 20_000,
+      },
+    );
+    assert.equal(recorded.payments[0].paidOn, pay.paidOn);
+    assert.equal(recorded.payments[0].reference, pay.reference);
+  } finally {
+    await bdDb.end();
+  }
+  const operationsBrowser = await chromium.launch({
+    executablePath:
+      process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || "/usr/bin/chromium",
+    headless: true,
+    args: ["--no-sandbox"],
+  });
+  try {
+    const page = await operationsBrowser.newPage({
+      viewport: { width: 393, height: 852 },
+    });
+    const token = admin.cookie.split(";")[0].split("=")[1];
+    await page
+      .context()
+      .addCookies([{ name: "fl_session", value: token, url: origin }]);
+    await page.goto(origin + "/dashboard");
+    await page.getByRole("button", { name: "Open navigation" }).click();
+    await page
+      .getByRole("navigation", { name: "Mobile navigation" })
+      .getByRole("link", { name: /Admin operations/ })
+      .click();
+    await page
+      .getByRole("heading", { name: "BD Integration Partner" })
+      .waitFor();
+    const review = page.getByRole("button", {
+      name: "Review founder applications",
+    });
+    await review.click();
+    await page
+      .getByRole("columnheader", { name: "Founder / company" })
+      .waitFor();
+    assert.equal(new URL(page.url()).pathname, "/operations");
+    assert.equal(
+      await page
+        .getByRole("heading", { name: "Register a BD partner" })
+        .isVisible(),
+      false,
+    );
+    const bookings = page.getByRole("button", { name: "Manage bookings" });
+    await bookings.click();
+    await page.getByRole("columnheader", { name: "Booking status" }).waitFor();
+    await page.getByRole("button", { name: "BD details" }).click();
+    await page
+      .getByRole("heading", { name: "Register a BD partner" })
+      .waitFor();
+    const payOption = await page
+      .getByLabel("Reward cycle")
+      .locator("option")
+      .allTextContents();
+    assert.equal(payOption.length, 1);
+    assert.match(payOption[0], /Cycle 2.*Pending Payment/);
+    await page.getByRole("button", { name: "View transfer details" }).click();
+    await page.getByText(/Example Bank.*0123456789/).waitFor();
+    await page.getByRole("button", { name: "Hide transfer details" }).click();
+    assert.equal(await page.getByText(/0123456789/).count(), 0);
+    assert.equal(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+      true,
+    );
+  } finally {
+    await operationsBrowser.close();
+  }
+  pass(
+    "BD registration, protected bank details, two reward cycles, concurrent duplicate prevention and manual payment recording",
   );
   const oldCookie = admin.cookie;
   assert.equal(

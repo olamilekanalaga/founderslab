@@ -20,14 +20,23 @@ import { BOOKING_STATUSES } from "@/lib/catalog";
 
 import DeleteRecordButton from "@/features/founders/components/DeleteRecordButton";
 import WeeklySpaceEditor from "@/features/spaces/components/WeeklySpaceEditor";
-import SessionCalendar from "@/features/spaces/components/SessionCalendar";
+import SessionList from "@/features/spaces/components/SessionList";
 import type { Resource } from "@/components/shared/RecordEditor";
 type Editor = (resource: Resource, record?: Record<string, unknown>) => void;
-export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
+export type SpaceTab = "sessions" | "applications" | "bookings";
+export default function Spaces({
+  id,
+  edit,
+  embedded,
+}: {
+  id?: string;
+  edit: Editor;
+  embedded?: { tab: SpaceTab; onChange: (tab: SpaceTab) => void };
+}) {
   const { state: s, viewer, path, commit, busy } = useWorkspace(),
     router = useRouter(),
     params = useSearchParams();
-  const tab = params.get("tab") || "sessions";
+  const tab = embedded?.tab ?? (params.get("tab") || "sessions");
   const [selected, setSelected] = useState<string | null>(null),
     [booking, setBooking] = useState(false),
     [filterState, setFilterState] = useState({
@@ -50,6 +59,12 @@ export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
     ),
     can = viewer.permissions.includes("booking.write");
   const session = s.sessions.find((v) => v.id === id);
+  const bookingSessionId = embedded ? null : params.get("session");
+  const visibleBookings = s.bookings.filter(
+    (b) =>
+      (!bookingSessionId || b.sessionId === bookingSessionId) &&
+      (filter === "All" || b.status === filter),
+  );
   const actual = spaceTotals(s, id);
   return (
     <>
@@ -225,7 +240,10 @@ export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
                 key={value}
                 className={tab === value ? "active" : ""}
                 aria-pressed={tab === value}
-                onClick={() => router.replace(`${path("spaces")}?tab=${value}`)}
+                onClick={() => {
+                  if (embedded) embedded.onChange(value as SpaceTab);
+                  else router.replace(`${path("spaces")}?tab=${value}`);
+                }}
               >
                 {label}
                 {value === "applications" && (
@@ -259,16 +277,24 @@ export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
                 ))}
               </select>
             </label>
+            {tab === "bookings" && bookingSessionId && (
+              <Link
+                className="text-link"
+                href={path("spaces") + "?tab=bookings"}
+              >
+                View all bookings
+              </Link>
+            )}
             <span className="muted">
               {tab === "sessions"
-                ? "Default capacity: five founder projects, not five speakers."
+                ? "Default capacity: four founder projects, not five speakers."
                 : tab === "bookings"
                   ? "Requests need approval; a pending request does not reserve a seat."
                   : "Review founder applications and booking requests."}
             </span>
           </div>
           {tab === "sessions" ? (
-            <SessionCalendar sessions={s.sessions} filter={filter} />
+            <SessionList sessions={s.sessions} filter={filter} />
           ) : tab === "applications" ? (
             <section className="panel workflow-desktop">
               <div
@@ -359,69 +385,65 @@ export default function Spaces({ id, edit }: { id?: string; edit: Editor }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {s.bookings
-                      .filter((b) => filter === "All" || b.status === filter)
-                      .map((b) => (
-                        <tr key={b.id}>
-                          <td>
-                            <b>
-                              {
-                                s.applications.find(
-                                  (a) => a.id === b.applicationId,
-                                )?.companyName
+                    {visibleBookings.map((b) => (
+                      <tr key={b.id}>
+                        <td>
+                          <b>
+                            {
+                              s.applications.find(
+                                (a) => a.id === b.applicationId,
+                              )?.companyName
+                            }
+                          </b>
+                          <small>
+                            {
+                              s.applications.find(
+                                (a) => a.id === b.applicationId,
+                              )?.founderName
+                            }
+                          </small>
+                        </td>
+                        <td>
+                          <Link
+                            className="text-link"
+                            href={path("spaces", b.sessionId)}
+                          >
+                            {
+                              s.sessions.find((v) => v.id === b.sessionId)
+                                ?.title
+                            }
+                          </Link>
+                        </td>
+                        <td>{b.speakers}</td>
+                        <td>
+                          {can ? (
+                            <select
+                              aria-label={`Booking status ${b.id}`}
+                              disabled={busy}
+                              value={b.status}
+                              onChange={(e) =>
+                                void commit({
+                                  type: "booking.review",
+                                  payload: {
+                                    id: b.id,
+                                    status: e.target.value,
+                                  },
+                                })
                               }
-                            </b>
-                            <small>
-                              {
-                                s.applications.find(
-                                  (a) => a.id === b.applicationId,
-                                )?.founderName
-                              }
-                            </small>
-                          </td>
-                          <td>
-                            <Link
-                              className="text-link"
-                              href={path("spaces", b.sessionId)}
                             >
-                              {
-                                s.sessions.find((v) => v.id === b.sessionId)
-                                  ?.title
-                              }
-                            </Link>
-                          </td>
-                          <td>{b.speakers}</td>
-                          <td>
-                            {can ? (
-                              <select
-                                aria-label={`Booking status ${b.id}`}
-                                disabled={busy}
-                                value={b.status}
-                                onChange={(e) =>
-                                  void commit({
-                                    type: "booking.review",
-                                    payload: {
-                                      id: b.id,
-                                      status: e.target.value,
-                                    },
-                                  })
-                                }
-                              >
-                                {BOOKING_STATUSES.map((v) => (
-                                  <option key={v}>{v}</option>
-                                ))}
-                              </select>
-                            ) : (
-                              <Status value={b.status} />
-                            )}
-                          </td>
-                        </tr>
-                      ))}
+                              {BOOKING_STATUSES.map((v) => (
+                                <option key={v}>{v}</option>
+                              ))}
+                            </select>
+                          ) : (
+                            <Status value={b.status} />
+                          )}
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
-                {!s.bookings.some(
-                  (b) => filter === "All" || b.status === filter,
-                ) && (
+                {!visibleBookings.length && (
                   <Empty title="No matching bookings">
                     Pending requests appear here. Approve a request to reserve a
                     project seat.

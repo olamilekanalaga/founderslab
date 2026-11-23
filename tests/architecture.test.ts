@@ -168,7 +168,7 @@ test("authentication, manager permissions and request implementations match revi
     );
   }
 });
-test("historical Prisma migrations remain byte-identical; the schema adds only nullable project identities", () => {
+test("historical Prisma migrations remain byte-identical and BD tables are additive", () => {
   for (const entry of manifest.database) {
     assert.ok(existsSync(entry.file), entry.file);
     const contents =
@@ -176,6 +176,7 @@ test("historical Prisma migrations remain byte-identical; the schema adds only n
         ? readFileSync(entry.file, "utf8")
             .replace(/^  xHandle +String\?\n/m, "")
             .replace(/^  projectXHandle +String\?\n/m, "")
+            .replace(/\nmodel BdPartner \{[\s\S]*$/, "")
         : readFileSync(entry.file);
     assert.equal(digest(contents), entry.sha256, entry.file);
   }
@@ -194,12 +195,20 @@ test("historical Prisma migrations remain byte-identical; the schema adds only n
     addition,
     'ALTER TABLE "Company" ADD COLUMN "xHandle" TEXT;\nALTER TABLE "Application" ADD COLUMN "projectXHandle" TEXT;',
   );
+  const bdMigration = "prisma/migrations/202611230001_bd_rewards/migration.sql";
+  assert.equal(
+    digest(readFileSync(bdMigration)),
+    "06b897cc6ed1b3f1c8bd367870db000dce7e9fea486ba972f6b05acc467b2725",
+  );
   assert.deepEqual(
     sql,
     manifest.database
       .map((e) => e.file)
       .filter((f) => f.endsWith(".sql"))
-      .concat("prisma/migrations/202611220004_project_x_identity/migration.sql")
+      .concat(
+        "prisma/migrations/202611220004_project_x_identity/migration.sql",
+        bdMigration,
+      )
       .sort(),
   );
 });

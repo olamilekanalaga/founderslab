@@ -7,6 +7,7 @@ import { useWorkspace } from "@/components/layout/WorkspaceContext";
 import { Avatar, Empty, SectionHeading, ExternalLink } from "@/components/ui";
 
 import FounderSpaces from "@/features/spaces/components/FounderSpaces";
+import { chainNames } from "@/lib/chains";
 
 import type { Resource } from "@/components/shared/RecordEditor";
 type Editor = (resource: Resource, record?: Record<string, unknown>) => void;
@@ -83,6 +84,10 @@ export default function CompanyProfile({
           <div>
             <dt>Stage</dt>
             <dd>{company.stage}</dd>
+          </div>
+          <div>
+            <dt>Chain</dt>
+            <dd>{chainNames(company.chains).join(", ") || "Not recorded"}</dd>
           </div>
         </dl>
       </section>

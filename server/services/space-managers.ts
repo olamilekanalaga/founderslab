@@ -166,13 +166,6 @@ export async function assignedSpaces(managerId: string) {
           timezone: true,
           recordingUrl: true,
           postUrl: true,
-          participants: {
-            where: { attendance: { not: "Cancelled" } },
-            select: {
-              founder: { select: { id: true, name: true, country: true } },
-              company: { select: { id: true, name: true } },
-            },
-          },
           spaceData: {
             select: {
               liveListeners: true,
