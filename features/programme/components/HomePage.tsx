@@ -67,7 +67,10 @@ export default function HomePage() {
                 in discovering what they’re building.
               </p>
               <div className="fl-hero-actions">
-                <Link className="fl-action fl-action-primary" href="/book">
+                <Link
+                  className="fl-action fl-action-primary"
+                  href="/#choose-a-saturday"
+                >
                   Book a Founder Space{" "}
                   <ArrowRight size={18} aria-hidden="true" />
                 </Link>
@@ -126,7 +129,7 @@ export default function HomePage() {
                 Hosted by ⭕️La_Crrypt💰₿, each weekly X Space brings a small
                 group of founders into one conversation.
               </p>
-              <Link className="fl-inline-action" href="/book">
+              <Link className="fl-inline-action" href="/#choose-a-saturday">
                 Find your conversation{" "}
                 <ArrowRight size={17} aria-hidden="true" />
               </Link>
@@ -250,7 +253,7 @@ export default function HomePage() {
                 introductions are invitation-only.
               </p>
             </div>
-            <Link className="fl-inline-action" href="/book">
+            <Link className="fl-inline-action" href="/#choose-a-saturday">
               Choose a Saturday <ArrowRight size={17} aria-hidden="true" />
             </Link>
           </section>
@@ -262,7 +265,10 @@ export default function HomePage() {
               <h2 id="cta-title">What are you building?</h2>
               <p>There’s a conversation waiting to happen.</p>
             </div>
-            <Link className="fl-action fl-action-primary" href="/book">
+            <Link
+              className="fl-action fl-action-primary"
+              href="/#choose-a-saturday"
+            >
               Choose a Saturday <ArrowRight size={19} aria-hidden="true" />
             </Link>
             <p className="fl-final-note">

@@ -6995,3 +6995,7 @@ td > b,
   border-radius: 8px;
   background: var(--light);
 }
+
+#choose-a-saturday {
+  scroll-margin-top: 100px;
+}

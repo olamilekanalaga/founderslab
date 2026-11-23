@@ -7,9 +7,9 @@
   },
   {
     "path": "/book",
-    "status": 200,
-    "location": null,
-    "headings": ["Choose your Saturday."]
+    "status": 307,
+    "location": "/#choose-a-saturday",
+    "headings": []
   },
   {
     "path": "/apply",
