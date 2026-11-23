@@ -19,6 +19,7 @@ import {
   RefreshCw,
   CheckCircle2,
   CircleAlert,
+  Archive,
   Settings as SettingsIcon,
 } from "lucide-react";
 import type { Section, DataState, Viewer } from "@/lib/types";
@@ -45,6 +46,8 @@ const navigation = [
   { id: "operations", label: "Admin operations", icon: Mic2 },
   { id: "owner-invitations", label: "Owner invitations", icon: ShieldCheck },
   { id: "reports", label: "Reports", icon: ChartNoAxesCombined },
+  { id: "campaigns", label: "Award archive", icon: Archive },
+  { id: "settings", label: "Settings", icon: SettingsIcon },
 ] as const;
 export default function Workspace(props: {
   section: Section;
@@ -83,6 +86,22 @@ function Shell({ section, id }: { section: Section; id?: string }) {
       resource: Resource;
       record?: Record<string, unknown>;
     } | null>(null);
+  const [effects, setEffects] = useState<"glass" | "system" | "reduced">(
+    "glass",
+  );
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("founderslab-appearance");
+      if (saved === "glass" || saved === "system" || saved === "reduced")
+        setEffects(saved);
+    } catch {}
+  }, []);
+  const appearance = (value: "glass" | "system" | "reduced") => {
+    setEffects(value);
+    try {
+      localStorage.setItem("founderslab-appearance", value);
+    } catch {}
+  };
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [section, id]);
@@ -122,8 +141,18 @@ function Shell({ section, id }: { section: Section; id?: string }) {
     <nav aria-label={isMobile ? "Mobile navigation" : "Workspace navigation"}>
       {visible.map(({ id: navId, label, icon: Icon }) => (
         <Link
-          className={navId === section ? "active" : ""}
-          aria-current={navId === section ? "page" : undefined}
+          className={
+            navId === section ||
+            (navId === "operations" && section === "spaces")
+              ? "active"
+              : ""
+          }
+          aria-current={
+            navId === section ||
+            (navId === "operations" && section === "spaces")
+              ? "page"
+              : undefined
+          }
           key={navId}
           href={path(navId)}
           onClick={() => setMobile(false)}
@@ -172,7 +201,10 @@ function Shell({ section, id }: { section: Section; id?: string }) {
         .slice(0, 5)
     : [];
   return (
-    <div className="app-shell admin-experience">
+    <div
+      className="app-shell admin-experience admin-studio admin-desk"
+      data-visual-effects={effects}
+    >
       <aside className="sidebar">
         <Link
           className="brand"
@@ -189,8 +221,8 @@ function Shell({ section, id }: { section: Section; id?: string }) {
         <div className="sidebar-workspace">
           <span className="workspace-dot" />
           <div>
-            <b>Programme operations</b>
-            <small>Private workspace</small>
+            <b>Programme workspace</b>
+            <small>People. Projects. Spaces.</small>
           </div>
           <ShieldCheck size={16} />
         </div>
@@ -240,6 +272,15 @@ function Shell({ section, id }: { section: Section; id?: string }) {
             </button>
           )}
           <div className="topbar-actions">
+            {lastUpdated && (
+              <span className="workspace-freshness" role="status">
+                Updated{" "}
+                {new Intl.DateTimeFormat("en-GB", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }).format(new Date(lastUpdated))}
+              </span>
+            )}
             <button
               className={`icon-button ${busy ? "refreshing" : ""}`}
               aria-label="Refresh workspace"
@@ -272,7 +313,15 @@ function Shell({ section, id }: { section: Section; id?: string }) {
           ) : section === "founders" || section === "companies" ? (
             <Directory kind={section} id={id} edit={edit} />
           ) : section === "owner-invitations" ? (
-            <SpaceManagersSettings />
+            <>
+              <div className="page-heading">
+                <div>
+                  <h1>Owner invitations</h1>
+                  <p>Manage reporting access to assigned Spaces.</p>
+                </div>
+              </div>
+              <SpaceManagersSettings />
+            </>
           ) : section === "operations" ? (
             <Operations edit={edit} />
           ) : section === "spaces" ? (
@@ -327,6 +376,25 @@ function Shell({ section, id }: { section: Section; id?: string }) {
             <p>{viewer.email}</p>
             <span className="small-tag">{role}</span>
           </div>
+          <fieldset className="studio-appearance">
+            <legend>Appearance</legend>
+            <div>
+              {(["glass", "system", "reduced"] as const).map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  aria-pressed={effects === value}
+                  onClick={() => appearance(value)}
+                >
+                  {value === "glass"
+                    ? "Glass"
+                    : value === "system"
+                      ? "System"
+                      : "Reduced effects"}
+                </button>
+              ))}
+            </div>
+          </fieldset>
           {viewer.permissions.includes("team.manage") && (
             <Link
               className="button"

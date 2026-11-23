@@ -6,7 +6,8 @@ import { createHash, randomBytes } from "node:crypto";
 import { spawn, spawnSync } from "node:child_process";
 import { createServer } from "node:http";
 import { once } from "node:events";
-import { readFileSync, readdirSync } from "node:fs";
+import { readFileSync, readdirSync, mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { Client } from "pg";
 import AxeBuilder from "@axe-core/playwright";
 import { chromium } from "@playwright/test";
@@ -20,6 +21,9 @@ import {
   PARTICIPATION_TERMS,
   RETIRED_AWARD_COMMANDS,
 } from "@/lib/programme-policy";
+const artifactDir = process.env.TEST_ARTIFACT_DIR || "artifacts";
+mkdirSync(artifactDir, { recursive: true });
+const artifactPath = (name: string) => join(artifactDir, name);
 try {
   process.loadEnvFile(".env");
 } catch {}
@@ -1237,12 +1241,12 @@ try {
       [],
     );
     await page.screenshot({
-      path: "artifacts/space-manager-mobile.png",
+      path: artifactPath("space-manager-mobile.png"),
       fullPage: true,
     });
     await page.setViewportSize({ width: 1440, height: 1000 });
     await page.screenshot({
-      path: "artifacts/space-manager-desktop.png",
+      path: artifactPath("space-manager-desktop.png"),
       fullPage: true,
     });
   } finally {
@@ -1394,10 +1398,11 @@ try {
     args: ["--no-sandbox"],
   });
   try {
-    const page = await browser.newPage({
+    const reviewContext = await browser.newContext({
       viewport: { width: 393, height: 852 },
       timezoneId: "Africa/Lagos",
     });
+    const page = await reviewContext.newPage();
     const errors: string[] = [];
     page.on("pageerror", (e) => errors.push(e.message));
     await page.goto(origin + "/signin");
@@ -1405,12 +1410,97 @@ try {
     await page.getByLabel("Password", { exact: true }).fill(password);
     await page.getByRole("button", { name: "Sign in", exact: true }).click();
     await page.waitForURL("**/dashboard");
+    await page.locator(".desk-grid").waitFor();
+    await page.screenshot({
+      path: artifactPath("admin-desk-populated-mobile.png"),
+      fullPage: true,
+    });
+    await page.setViewportSize({ width: 1358, height: 644 });
+    await page.mouse.move(0, 0);
+    const populatedCards = await page
+      .locator(".desk-grid > *")
+      .evaluateAll((cards) =>
+        cards.map((card) => ({
+          class: card.className,
+          height: card.clientHeight,
+          scroll: card.scrollHeight,
+        })),
+      );
+    assert.ok(
+      populatedCards.every((c) => c.scroll <= c.height + 2),
+      JSON.stringify(populatedCards.filter((c) => c.scroll > c.height + 2)),
+    );
+    await page.screenshot({
+      path: artifactPath("admin-desk-populated-laptop.png"),
+      fullPage: true,
+    });
+    await page.setViewportSize({ width: 393, height: 852 });
+    await page.locator(".desk-queue .desk-queue-row").first().click();
+    await page.getByRole("dialog").waitFor();
+    assert.equal(
+      await page.getByRole("dialog").evaluate((el) => el.isConnected),
+      true,
+      "Client navigation opens review in the current workspace",
+    );
     await page
-      .getByRole("heading", {
-        name: "A clear view of what’s next.",
-        exact: true,
-      })
+      .getByRole("button", { name: "Close dialog", exact: true })
+      .click();
+    await page.goto(origin + `/operations?tab=applications&review=${app.id}`);
+    const fullReview = page.getByRole("dialog");
+    await fullReview.waitFor();
+    for (const label of [
+      "Founder role",
+      "Team countries",
+      "Hiring",
+      "Applicant comments",
+      "Blockchain / chain",
+    ])
+      assert.ok(
+        await fullReview.getByText(label, { exact: true }).count(),
+        `Complete submitted field: ${label}`,
+      );
+    await page.screenshot({
+      path: artifactPath("admin-desk-full-review-mobile.png"),
+      fullPage: false,
+    });
+    const reviewAxe = await new AxeBuilder({ page })
+      .include(".application-dialog")
+      .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+      .analyze();
+    writeFileSync(
+      artifactPath("full-review-accessibility.json"),
+      JSON.stringify(
+        reviewAxe.violations.map((v) => ({
+          id: v.id,
+          impact: v.impact,
+          nodes: v.nodes.map((n) => ({
+            target: n.target,
+            summary: n.failureSummary,
+          })),
+        })),
+        null,
+        2,
+      ),
+    );
+    assert.deepEqual(
+      reviewAxe.violations,
+      [],
+      "Populated full application review is accessible on mobile",
+    );
+    await fullReview
+      .getByRole("button", { name: "Assign session", exact: true })
+      .click();
+    await page
+      .getByRole("dialog")
+      .getByLabel("Application / project")
       .waitFor();
+    assert.equal(
+      await page.getByLabel("Application / project").inputValue(),
+      app.id,
+      "Review hands the exact approved application to BookingEditor",
+    );
+    await page.keyboard.press("Escape");
+    await page.goto(origin + "/dashboard");
     const [nextSaturday] = saturdaySessions(new Date(), 1);
     const cardState = structuredClone(state);
     const mobileSpace = {
@@ -1426,10 +1516,13 @@ try {
       route.fulfill({ json: { state: cardState } }),
     );
     await page.reload();
+    await page.locator(".desk-details > summary").click();
     const saturdayCard = page.getByRole("region", {
       name: "Saturday Founder Space",
     });
-    await saturdayCard.getByText("0/12 filled", { exact: true }).waitFor();
+    await saturdayCard
+      .getByText("No projects booked yet.", { exact: false })
+      .waitFor();
     assert.equal(
       await saturdayCard.locator(".current-saturday-slots span").count(),
       12,
@@ -1460,7 +1553,7 @@ try {
       true,
     );
     await page.screenshot({
-      path: "artifacts/private-founder-mobile.png",
+      path: artifactPath("private-founder-mobile.png"),
       fullPage: true,
     });
     await page
@@ -1506,7 +1599,7 @@ try {
       .waitFor();
     await page.mouse.move(0, 0);
     await page.screenshot({
-      path: "artifacts/space-manager-settings-mobile.png",
+      path: artifactPath("space-manager-settings-mobile.png"),
       fullPage: true,
     });
     await page.setViewportSize({ width: 1440, height: 1000 });
@@ -1897,7 +1990,7 @@ try {
       .waitFor();
     await page.mouse.move(0, 0);
     await page.screenshot({
-      path: "artifacts/v4-award-archive-mobile.png",
+      path: artifactPath("v4-award-archive-mobile.png"),
       fullPage: true,
     });
     await page.goto(origin + "/founders/" + uiFounder.id);
@@ -2213,7 +2306,8 @@ try {
     });
     await review.click();
     await page
-      .getByRole("columnheader", { name: "Founder / company" })
+      .getByRole("button", { name: "Review application", exact: true })
+      .first()
       .waitFor();
     assert.equal(new URL(page.url()).pathname, "/operations");
     assert.equal(
@@ -2224,7 +2318,11 @@ try {
     );
     const bookings = page.getByRole("button", { name: "Manage bookings" });
     await bookings.click();
-    await page.getByRole("columnheader", { name: "Booking status" }).waitFor();
+    await page
+      .locator(".workflow-mobile")
+      .getByLabel(/Booking status/)
+      .first()
+      .waitFor();
     await page.getByRole("button", { name: "BD details" }).click();
     await page
       .getByRole("heading", { name: "Register a BD partner" })

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Check, Minus } from "lucide-react";
+import { Check, Minus, ArrowUpRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useWorkspace } from "@/components/layout/WorkspaceContext";
 import { currentSaturday } from "@/features/spaces/lib/current-saturday";
@@ -18,6 +18,7 @@ export default function CurrentSaturdayCard() {
     base: DataState;
     data?: DataState;
     failed?: boolean;
+    updatedAt?: string;
   }>();
   const [now, setNow] = useState(() => new Date());
   const [retry, setRetry] = useState(0);
@@ -37,7 +38,11 @@ export default function CurrentSaturdayCard() {
         if (!response.ok) throw new Error("Unable to load bookings");
         const result = await response.json();
         if (!controller.signal.aborted)
-          setSnapshot({ base: state, data: result.state });
+          setSnapshot({
+            base: state,
+            data: result.state,
+            updatedAt: new Date().toISOString(),
+          });
       } catch {
         if (!controller.signal.aborted)
           setSnapshot({ base: state, failed: true });
@@ -55,25 +60,47 @@ export default function CurrentSaturdayCard() {
     };
   }, [state, retry]);
 
-  const { startsAt, session, filled } = currentSaturday(
-    snapshot?.base === state && snapshot.data ? snapshot.data : state,
-    now,
-  );
+  const current =
+    snapshot?.base === state && snapshot.data ? snapshot.data : state;
+  const { startsAt, session, filled } = currentSaturday(current, now);
   const failed = snapshot?.base === state && snapshot.failed;
   const remaining = session ? Math.max(0, session.capacity - filled) : 0;
+  const projectIds = new Set(
+    current.participants
+      .filter(
+        (p) => p.sessionId === session?.id && p.attendance !== "Cancelled",
+      )
+      .map((p) => p.companyId),
+  );
+  const projects = current.companies.filter((c) => projectIds.has(c.id));
   return (
     <section
       className="panel current-saturday"
       aria-labelledby="current-saturday-title"
     >
       <div className="current-saturday-heading">
-        <div>
+        <div className="studio-space-date" aria-hidden="true">
+          <b>
+            {new Intl.DateTimeFormat("en-GB", {
+              day: "2-digit",
+              timeZone: "Europe/London",
+            }).format(startsAt)}
+          </b>
+          <span>
+            {new Intl.DateTimeFormat("en-GB", {
+              month: "short",
+              timeZone: "Europe/London",
+            }).format(startsAt)}
+          </span>
+        </div>
+        <div className="studio-space-heading-copy">
           <h2 id="current-saturday-title">Saturday Founder Space</h2>
           <p>{londonDate.format(startsAt)} · 7:00 PM UK</p>
         </div>
         {snapshot && !failed && session && session.status !== "Cancelled" && (
           <strong>
-            {filled}/{session.capacity} filled
+            {filled}
+            <span>/{session.capacity}</span>
           </strong>
         )}
       </div>
@@ -113,19 +140,45 @@ export default function CurrentSaturdayCard() {
               </div>
               <p>
                 {filled === 0
-                  ? `No founders booked yet. ${session.capacity} slots available.`
+                  ? `No projects booked yet. ${session.capacity} project seats available.`
                   : remaining === 0
-                    ? `All ${session.capacity} founder slots are filled for this Saturday.`
-                    : `Only ${remaining} founder ${remaining === 1 ? "place remaining" : "places remaining"}.`}
+                    ? `All ${session.capacity} project seats are filled for this Saturday.`
+                    : `${remaining} project ${remaining === 1 ? "seat remaining" : "seats remaining"}. Pending requests do not reserve a seat.`}
               </p>
             </>
           )}
-          <Link
-            className="button"
-            href={`${path("spaces")}?tab=bookings&session=${encodeURIComponent(session.id)}`}
-          >
-            View Bookings
-          </Link>
+          {!!projects.length && (
+            <div className="studio-space-roster" aria-label="Approved projects">
+              {projects.slice(0, 3).map((project) => (
+                <Link key={project.id} href={path("companies", project.id)}>
+                  {project.name}
+                </Link>
+              ))}
+              {projects.length > 3 && (
+                <Link href={path("spaces", session.id)}>
+                  +{projects.length - 3} more
+                </Link>
+              )}
+            </div>
+          )}
+          <div className="studio-space-footer">
+            <Link
+              className="button primary"
+              href={`${path("spaces")}?tab=bookings&session=${encodeURIComponent(session.id)}`}
+            >
+              View Bookings <ArrowUpRight size={15} />
+            </Link>
+            {snapshot?.updatedAt && !failed && (
+              <small>
+                Updated{" "}
+                {new Intl.DateTimeFormat("en-GB", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }).format(new Date(snapshot.updatedAt))}{" "}
+                · refreshes every 30s
+              </small>
+            )}
+          </div>
         </>
       )}
     </section>

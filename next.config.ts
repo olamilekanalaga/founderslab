@@ -21,4 +21,12 @@ const config: NextConfig = {
     ];
   },
 };
+// Keep the isolated laptop preview within its available disk and worker budget.
+if (process.env.FOUNDERSLAB_LOCAL_PREVIEW === "1") {
+  config.experimental = { ...config.experimental, cpus: 1 };
+  config.webpack = (webpackConfig) => {
+    webpackConfig.cache = false;
+    return webpackConfig;
+  };
+}
 export default config;

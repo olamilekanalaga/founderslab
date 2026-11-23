@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import Spaces, { type SpaceTab } from "@/features/spaces/components/Spaces";
 import type { Resource } from "@/components/shared/RecordEditor";
 import { useWorkspace } from "@/components/layout/WorkspaceContext";
@@ -37,7 +38,23 @@ export default function Operations({
 }: {
   edit: (resource: Resource, record?: Record<string, unknown>) => void;
 }) {
-  const [panel, setPanel] = useState<"bd" | SpaceTab>("bd");
+  const params = useSearchParams();
+  const router = useRouter();
+  const requestedPanel = params.get("tab");
+  const panel: "bd" | SpaceTab =
+    requestedPanel === "applications" ||
+    requestedPanel === "bookings" ||
+    requestedPanel === "sessions"
+      ? requestedPanel
+      : "bd";
+  function setPanel(value: "bd" | SpaceTab) {
+    const next = new URLSearchParams(params.toString());
+    next.set("tab", value);
+    next.delete("review");
+    next.delete("status");
+    next.delete("session");
+    router.replace(`/operations?${next.toString()}`, { scroll: false });
+  }
   const { viewer, state } = useWorkspace();
   const [partners, setPartners] = useState<Partner[]>([]);
   const [notice, setNotice] = useState("");

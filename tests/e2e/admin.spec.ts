@@ -28,7 +28,7 @@ test.describe("Admin experience", () => {
   test.beforeEach(async ({ page, context }) => {
     await context.addCookies(cookies);
     await page.goto("/dashboard");
-    await expect(page.locator(".next-space")).toBeVisible();
+    await expect(page.locator(".desk-grid")).toBeVisible();
   });
   test("workspace search supports repeated queries and distinct company results", async ({
     page,
@@ -57,6 +57,38 @@ test.describe("Admin experience", () => {
     await expect(page.getByLabel("Search companies")).toHaveValue(
       "company-query",
     );
+  });
+  test("Operations deep links and browser history select the intended workflow", async ({
+    page,
+  }) => {
+    await page.goto("/operations?tab=applications&status=Pending");
+    await expect(
+      page.getByRole("button", {
+        name: "Review founder applications",
+        exact: true,
+      }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByLabel("Space workflow status")).toHaveValue(
+      "Pending",
+    );
+    await page.goto("/operations?tab=bookings");
+    await expect(
+      page.getByRole("button", { name: "Manage bookings", exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await page.goBack();
+    await expect(
+      page.getByRole("button", {
+        name: "Review founder applications",
+        exact: true,
+      }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await page
+      .getByRole("button", { name: "Enter Space data", exact: true })
+      .click();
+    await expect(page).toHaveURL(/operations\?tab=sessions$/);
+    await expect(
+      page.getByRole("button", { name: "Create Space", exact: true }),
+    ).toBeVisible();
   });
   test("mobile navigation and account sign-out revoke the current real session", async ({
     browser,
@@ -189,12 +221,12 @@ test.describe("Admin experience", () => {
     await expect(page.locator(".toast[role=alert]")).toContainText(
       "Acceptance simulation: refresh unavailable",
     );
-    await expect(page.locator(".next-space")).toBeVisible();
+    await expect(page.locator(".desk-grid")).toBeVisible();
     await page.unroute("**/api/workspace");
     await page
       .getByRole("button", { name: "Refresh workspace", exact: true })
       .click();
-    await expect(page.getByRole("status")).toContainText(
+    await expect(page.locator(".toast[role=status]")).toContainText(
       "Workspace refreshed.",
     );
   });
@@ -210,7 +242,7 @@ test.describe("Admin experience", () => {
         }),
       }),
     );
-    await page.goto("/settings?tab=Space%20Managers");
+    await page.goto("/owner-invitations");
     await expect(
       page.locator(".space-managers-settings [role=alert]"),
     ).toContainText("Space Managers couldn’t load.");
@@ -261,11 +293,11 @@ test.describe("Admin experience", () => {
         "/spaces",
         "/spaces?tab=applications",
         "/reports",
-        "/settings?tab=Space%20Managers",
+        "/owner-invitations",
       ]) {
         await page.goto(route);
         await expect(page.locator("main h1")).toBeVisible();
-        if (route.includes("Space%20Managers"))
+        if (route === "/owner-invitations")
           await expect(
             page.getByText("No Space Managers invited.", { exact: true }),
           ).toBeVisible();

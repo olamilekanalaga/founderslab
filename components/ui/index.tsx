@@ -1,6 +1,16 @@
 "use client";
-import { useEffect, useRef, useId, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useId,
+  useState,
+  useCallback,
+  type ReactNode,
+} from "react";
+import { createPortal } from "react-dom";
 import { X, ArrowUpRight, Search, CheckCircle2 } from "lucide-react";
+let activeDialogLocks = 0;
+let previousBodyOverflow = "";
 export function Status({ value }: { value: string }) {
   const group =
     /^(Approved|Attended|Complete|Completed|Won|Verified|Transferred|Eligible|Active|Evidence reviewed)$/.test(
@@ -53,6 +63,17 @@ export function Modal({
     callback = useRef(close),
     baseline = useRef<string | null>(null);
   const [discard, setDiscard] = useState(false);
+  const [portalHost, setPortalHost] = useState<Element | null>(null);
+  const attachModal = useCallback((node: HTMLDivElement | null) => {
+    ref.current = node;
+    if (node) {
+      const host =
+        node.closest(
+          ".app-shell, .manager-workspace, .manager-light, .manager-shell, .fl-public",
+        ) || document.body;
+      setPortalHost((current) => (current === host ? current : host));
+    }
+  }, []);
   const formSnapshot = () =>
     Array.from(
       ref.current?.querySelectorAll<
@@ -85,6 +106,7 @@ export function Modal({
     callback.current = requestClose;
   });
   useEffect(() => {
+    if (!portalHost) return;
     const previous = document.activeElement as HTMLElement,
       el = ref.current;
     const items = () =>
@@ -116,15 +138,19 @@ export function Modal({
       }
     };
     document.addEventListener("keydown", listener);
-    const old = document.body.style.overflow;
+    if (activeDialogLocks === 0)
+      previousBodyOverflow = document.body.style.overflow;
+    activeDialogLocks += 1;
     document.body.style.overflow = "hidden";
     return () => {
-      document.body.style.overflow = old;
+      activeDialogLocks -= 1;
+      if (activeDialogLocks === 0)
+        document.body.style.overflow = previousBodyOverflow;
       document.removeEventListener("keydown", listener);
       previous?.focus();
     };
-  }, []);
-  return (
+  }, [portalHost]);
+  const content = (
     <div
       className="modal-backdrop"
       onMouseDown={(e) => {
@@ -132,7 +158,7 @@ export function Modal({
       }}
     >
       <div
-        ref={ref}
+        ref={attachModal}
         className={`modal ${wide ? "wide" : ""} ${className}`}
         role="dialog"
         aria-modal="true"
@@ -166,6 +192,8 @@ export function Modal({
       </div>
     </div>
   );
+  // Keep dialogs outside filtered cards while retaining the workspace theme.
+  return portalHost ? createPortal(content, portalHost) : content;
 }
 export function Empty({
   children,
