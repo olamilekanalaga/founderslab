@@ -26,16 +26,27 @@ export function ProgrammeAvailability({ children }: { children: ReactNode }) {
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let active = true;
-    void api("sessions")
-      .then(({ sessions }: { sessions: PublicSession[] }) => {
+    let pending = false;
+    async function refresh() {
+      if (pending) return;
+      pending = true;
+      try {
+        const { sessions } = await api("sessions");
         if (active)
           setAvailability({ status: "ready", sessions, asOf: Date.now() });
-      })
-      .catch(() => {
+      } catch {
         if (active) setAvailability({ status: "error", sessions: [], asOf: 0 });
-      });
+      } finally {
+        pending = false;
+      }
+    }
+    void refresh();
+    const timer = window.setInterval(refresh, 30_000);
+    window.addEventListener("focus", refresh);
     return () => {
       active = false;
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refresh);
     };
   }, [attempt]);
   const retry = () => {

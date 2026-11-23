@@ -113,7 +113,7 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
                 </span>
               )}
             </div>
-            <Link className="text-link" href="/book">
+            <Link className="text-link" href="/#choose-a-saturday">
               Change date
             </Link>
           </div>

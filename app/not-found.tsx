@@ -5,7 +5,7 @@ export default function NotFound() {
       <section className="auth-card">
         <h1>That page isn’t in the lab.</h1>
         <p>Try the founder workspace or the public programme.</p>
-        <Link className="button primary" href="/book">
+        <Link className="button primary" href="/#choose-a-saturday">
           Open the booking calendar
         </Link>
         <Link className="text-link" href="/">

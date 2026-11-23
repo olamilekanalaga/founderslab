@@ -89,8 +89,8 @@ for (const [label, width, height] of [
       .locator(".fl-hero-actions")
       .getByRole("link", { name: "Book a Founder Space" })
       .click();
-    await expect(page).toHaveURL(/\/book$/);
-    await expect(page.locator(".weekly-date")).toHaveCount(8);
+    await expect(page).toHaveURL(/\/#choose-a-saturday$/);
+    await expect(page.locator("#choose-a-saturday")).toBeVisible();
   });
 }
 
@@ -142,7 +142,7 @@ test("full, closed, empty and failed availability never invent bookable seats or
   );
   await expect(
     page.getByRole("link", { name: "Choose this Saturday" }),
-  ).toHaveAttribute("href", `/book?session=${sessions[1].id}`);
+  ).toHaveAttribute("href", `/apply?session=${sessions[1].id}`);
   await expect(page.locator(".fl-preview-dates > button").nth(2)).toContainText(
     "Closed",
   );
@@ -159,7 +159,9 @@ test("full, closed, empty and failed availability never invent bookable seats or
   );
   await expect(page.locator(".fl-preview-dates > button")).toHaveCount(0);
   await page.goto("/book");
-  await expect(page.locator(".calendar-empty-state")).toBeVisible();
+  await expect(page.locator(".fl-preview-message")).toContainText(
+    "No upcoming Saturdays",
+  );
   await expect(page.locator('a[href="/signin"]')).toHaveCount(0);
   await page.unroute("**/api/public/sessions");
   await page.route("**/api/public/sessions", (route) =>

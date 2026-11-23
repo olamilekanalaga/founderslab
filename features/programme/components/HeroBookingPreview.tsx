@@ -16,6 +16,7 @@ export default function HeroBookingPreview() {
     upcoming.find((session) => publicSlotOpen(session, session.availableSeats));
   return (
     <aside
+      id="choose-a-saturday"
       className="fl-preview-wrap"
       aria-label="Live programme booking preview"
     >
@@ -108,7 +109,7 @@ export default function HeroBookingPreview() {
             })
           )}
         </div>
-        {chosen ? (
+        {chosen && (
           <div className="fl-preview-selected">
             <span className="fl-preview-session-label">
               <Mic2 size={15} aria-hidden="true" /> Live on X Spaces
@@ -118,15 +119,9 @@ export default function HeroBookingPreview() {
             </div>
             <Link
               className="fl-action fl-action-primary"
-              href={`/book?session=${encodeURIComponent(chosen.id)}`}
+              href={`/apply?session=${encodeURIComponent(chosen.id)}`}
             >
               Choose this Saturday <ArrowRight size={17} aria-hidden="true" />
-            </Link>
-          </div>
-        ) : (
-          <div className="fl-preview-selected">
-            <Link className="fl-action fl-action-primary" href="/book">
-              Choose a Saturday <ArrowRight size={17} aria-hidden="true" />
             </Link>
           </div>
         )}
