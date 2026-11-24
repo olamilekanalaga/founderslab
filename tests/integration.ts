@@ -3057,27 +3057,37 @@ try {
       true,
     );
     await page.goto(origin + "/dashboard");
-    const intelligence = page.locator("section").filter({
-      has: page.getByRole("heading", { name: "BD performance", exact: true }),
-    });
+    const performanceLink = page
+      .getByRole("navigation", { name: "Workspace navigation" })
+      .getByRole("link", { name: "BD Performance", exact: true });
+    await performanceLink.click();
+    await expect(page).toHaveURL(/\/bd-performance$/);
+    await expect(performanceLink).toHaveAttribute("aria-current", "page");
     await expect(
-      intelligence
-        .getByText("Verified appearances", { exact: true })
-        .locator("..")
-        .locator("dd"),
-    ).toHaveText("8");
+      page.getByRole("heading", { name: "BD Performance", level: 1 }),
+    ).toBeVisible();
+    const metrics = page.locator(".bd-performance-metrics");
+    for (const [label, value] of [
+      ["Verified appearances", "8"],
+      ["Commission earned", "₦40,000"],
+      ["Commission paid", "₦20,000"],
+    ]) {
+      await expect(
+        metrics
+          .getByText(label, { exact: true })
+          .locator("..")
+          .locator("strong"),
+      ).toHaveText(value);
+    }
+    assert.equal(await metrics.locator(".metric-card").count(), 10);
     await expect(
-      intelligence
-        .getByText("Commission earned", { exact: true })
-        .locator("..")
-        .locator("dd"),
-    ).toHaveText("₦40,000");
-    await expect(
-      intelligence
-        .getByText("Commission paid", { exact: true })
-        .locator("..")
-        .locator("dd"),
-    ).toHaveText("₦20,000");
+      page.getByRole("region", { name: "BD performance leaderboard" }),
+    ).toBeVisible();
+    assert.ok(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    );
   } finally {
     await operationsBrowser.close();
   }

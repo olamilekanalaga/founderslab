@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useWorkspace } from "@/components/layout/WorkspaceContext";
+import CommissionExample from "./CommissionExample";
 import { bdIntelligence, naira, type Partner } from "./intelligence";
 
 function Metrics({ data }: { data: ReturnType<typeof bdIntelligence> }) {
   const { totals, acquired } = data;
   return (
-    <dl className="facts">
+    <div className="metric-grid bd-performance-metrics">
       {[
         ["Registered BD partners", totals.registered],
         ["Active BD partners", totals.active],
@@ -21,17 +22,28 @@ function Metrics({ data }: { data: ReturnType<typeof bdIntelligence> }) {
         ["Partners paid", totals.recipients],
         ["Founders acquired", acquired],
       ].map(([label, value]) => (
-        <div key={label}>
-          <dt>{label}</dt>
-          <dd>{value}</dd>
+        <div className="metric-card" key={label}>
+          <div>{label}</div>
+          <strong>{value}</strong>
         </div>
       ))}
-    </dl>
+    </div>
   );
 }
 
 export function BdOverview() {
-  const { state, lastUpdated } = useWorkspace();
+  return (
+    <section className="panel padded">
+      <h2>BD performance</h2>
+      <Link className="button" href="/bd-performance">
+        Open BD Performance
+      </Link>
+    </section>
+  );
+}
+
+export default function BdPerformance() {
+  const { lastUpdated } = useWorkspace();
   const [partners, setPartners] = useState<Partner[]>();
   const [error, setError] = useState(false);
   useEffect(() => {
@@ -42,31 +54,37 @@ export function BdOverview() {
     })
       .then(async (response) => {
         if (!response.ok) throw new Error();
-        setPartners(await response.json());
+        const records: Partner[] = await response.json();
+        setPartners(records);
+        setError(false);
       })
       .catch(() => {
         if (!controller.signal.aborted) setError(true);
       });
     return () => controller.abort();
   }, [lastUpdated]);
+
   return (
-    <section className="panel padded">
-      <h2>BD performance</h2>
-      {partners ? (
-        <Metrics data={bdIntelligence(partners, state.applications)} />
+    <>
+      <div className="page-heading">
+        <h1>BD Performance</h1>
+        <Link className="button" href="/operations?tab=bd">
+          Manage BD partners
+        </Link>
+      </div>
+      {partners && !error ? (
+        <BdIntelligence partners={partners} />
       ) : (
         <p role="status">
           {error ? "Could not load BD performance." : "Loading BD performance…"}
         </p>
       )}
-      <Link className="button" href="/operations?tab=bd">
-        Open BD operations
-      </Link>
-    </section>
+      <CommissionExample />
+    </>
   );
 }
 
-export default function BdIntelligence({ partners }: { partners: Partner[] }) {
+function BdIntelligence({ partners }: { partners: Partner[] }) {
   const { state } = useWorkspace();
   const [month, setMonth] = useState("");
   const [partner, setPartner] = useState("");
@@ -83,11 +101,10 @@ export default function BdIntelligence({ partners }: { partners: Partner[] }) {
       b[rankBy] - a[rankBy] || a.partner.name.localeCompare(b.partner.name),
   );
   return (
-    <section className="panel padded">
-      <h2>BD performance</h2>
-      <div className="filter-bar">
+    <section className="bd-performance">
+      <div className="panel padded bd-performance-filters">
         <label>
-          Month (blank for all time)
+          Month (optional)
           <input
             type="month"
             value={month}
@@ -127,53 +144,57 @@ export default function BdIntelligence({ partners }: { partners: Partner[] }) {
         </p>
       )}
       <Metrics data={data} />
-      <div
-        className="table-wrap"
-        role="region"
-        tabIndex={0}
-        aria-label="BD performance leaderboard"
-      >
-        <table>
-          <thead>
-            <tr>
-              {[
-                "Rank",
-                "BD partner",
-                "Applications",
-                "Verified",
-                "Cycles",
-                "Earned",
-                "Paid",
-                "Outstanding",
-              ].map((head) => (
-                <th scope="col" key={head}>
-                  {head}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {ranked.map((row, index) => (
-              <tr key={row.partner.id}>
-                <td>{index + 1}</td>
-                <th scope="row">
-                  <Link href={`/operations?tab=bd&partner=${row.partner.id}`}>
-                    {[row.partner.fullName, row.partner.name]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </Link>
-                </th>
-                <td>{row.applications}</td>
-                <td>{row.verified}</td>
-                <td>{row.cycles}</td>
-                <td>{naira.format(row.earned)}</td>
-                <td>{naira.format(row.paid)}</td>
-                <td>{naira.format(row.outstanding)}</td>
+      <section className="panel padded">
+        <h2>Leaderboard</h2>
+        <div
+          className="table-wrap"
+          role="region"
+          tabIndex={0}
+          aria-label="BD performance leaderboard"
+        >
+          <table>
+            <thead>
+              <tr>
+                {[
+                  "Rank",
+                  "BD partner",
+                  "Applications",
+                  "Verified",
+                  "Cycles",
+                  "Earned",
+                  "Paid",
+                  "Outstanding",
+                ].map((head) => (
+                  <th scope="col" key={head}>
+                    {head}
+                  </th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {ranked.map((row, index) => (
+                <tr key={row.partner.id}>
+                  <td>{index + 1}</td>
+                  <th scope="row">
+                    <Link href={`/operations?tab=bd&partner=${row.partner.id}`}>
+                      {[row.partner.fullName, row.partner.name]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </Link>
+                  </th>
+                  <td>{row.applications}</td>
+                  <td>{row.verified}</td>
+                  <td>{row.cycles}</td>
+                  <td>{naira.format(row.earned)}</td>
+                  <td>{naira.format(row.paid)}</td>
+                  <td>{naira.format(row.outstanding)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {!ranked.length && <p>No BD partners match these filters.</p>}
+      </section>
     </section>
   );
 }

@@ -101,6 +101,7 @@ export interface Command {
 export type Section =
   | "owner-invitations"
   | "operations"
+  | "bd-performance"
   | "dashboard"
   | "founders"
   | "companies"
@@ -115,6 +116,7 @@ export type Section =
 export const SECTIONS: Section[] = [
   "owner-invitations",
   "operations",
+  "bd-performance",
   "dashboard",
   "founders",
   "companies",
