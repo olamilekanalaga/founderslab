@@ -2002,6 +2002,20 @@ try {
           return 0;
         });
     }
+    async function checkHeaderAppearance(theme: string) {
+      for (const mode of ["Glass", "Reduced effects", "System"]) {
+        await account.getByRole("button", { name: mode, exact: true }).click();
+        await expect(workspace.locator(".topbar")).toHaveCSS(
+          "background-color",
+          "rgba(0, 0, 0, 0)",
+        );
+        assert.ok(
+          (await textContrast(".topbar-left > b")) >= 4.5,
+          `${theme} header in ${mode}`,
+        );
+      }
+    }
+    await checkHeaderAppearance("founders");
     for (const [name, color] of [
       ["superteam", "rgb(17, 23, 38)"],
       ["classic", "rgb(255, 255, 255)"],
@@ -2012,6 +2026,7 @@ try {
     ]) {
       await themePicker.selectOption(name);
       await expect(workspace).toHaveCSS("background-color", color);
+      await checkHeaderAppearance(name);
       await expect(account).toHaveCSS("backdrop-filter", "none");
       await account.getByRole("button", { name: "Close dialog" }).click();
       await page.getByRole("button", { name: "Activity", exact: true }).click();
