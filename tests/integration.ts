@@ -1933,7 +1933,10 @@ try {
     await navigation.getByRole("link", { name: "Settings" }).click();
     await page.getByRole("button", { name: "Sign out", exact: true }).click();
     await page.waitForURL("**/signin");
-    assert.equal((await page.request.get("/api/auth/me")).status(), 401);
+    assert.equal(
+      (await page.request.get(origin + "/api/auth/me")).status(),
+      401,
+    );
     assert.deepEqual(errors, []);
   } finally {
     await browser.close();
