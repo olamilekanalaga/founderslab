@@ -1319,6 +1319,23 @@ try {
     await page
       .getByRole("button", { name: "Continue securely", exact: true })
       .click();
+    await page.getByRole("button", { name: "BD data", exact: true }).click();
+    await page
+      .getByRole("heading", { name: "Add approved BD partner" })
+      .waitFor();
+    assert.equal(
+      await page
+        .getByRole("button", { name: "Save Space data", exact: true })
+        .isVisible(),
+      false,
+    );
+    await page.getByRole("button", { name: "Space data", exact: true }).click();
+    assert.equal(
+      await page
+        .getByRole("heading", { name: "Add approved BD partner" })
+        .isVisible(),
+      false,
+    );
     await page
       .getByRole("button", { name: "Save Space data", exact: true })
       .waitFor();
@@ -1609,17 +1626,12 @@ try {
       [],
       "Populated full application review is accessible on mobile",
     );
-    await fullReview
-      .getByRole("button", { name: "Assign session", exact: true })
-      .click();
-    await page
-      .getByRole("dialog")
-      .getByLabel("Application / project")
-      .waitFor();
+    await fullReview.getByRole("table", { name: "Project answers" }).waitFor();
     assert.equal(
-      await page.getByLabel("Application / project").inputValue(),
-      app.id,
-      "Review hands the exact approved application to BookingEditor",
+      await fullReview
+        .getByRole("button", { name: "Assign session", exact: true })
+        .count(),
+      0,
     );
     await page.keyboard.press("Escape");
     await page.goto(origin + "/dashboard");
