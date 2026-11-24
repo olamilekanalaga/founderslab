@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import BrandMark from "@/components/shared/BrandMark";
 import {
@@ -371,8 +372,14 @@ function Shell({ section, id }: { section: Section; id?: string }) {
           className="account-dialog"
         >
           <div className="account-detail">
-            <Avatar name={viewer.name} />
-            <h3>{viewer.name}</h3>
+            <Image
+              className="account-portrait"
+              src="/owner-portrait.jpg"
+              width={72}
+              height={72}
+              alt=""
+            />
+            <h3>⭕️La_Crrypt💰₿</h3>
             <p>{viewer.email}</p>
             <span className="small-tag">{role}</span>
           </div>
