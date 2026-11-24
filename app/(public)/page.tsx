@@ -1,18 +1,18 @@
 import type { Metadata } from "next";
 import HomePage from "@/features/programme/components/HomePage";
 export const metadata: Metadata = {
-  title: "Founders Lab | Introduce your product. Reach your audience.",
+  title: "FoundersLab | Weekly Web3 Conversations",
   description:
-    "Founders Lab is for Web3 founders who want to introduce their products, share their journey and reach an audience interested in discovering what they’re building.",
+    "FoundersLab brings Web3 founders together to discuss what they’re building, who it’s for and what’s happening across the industry.",
   openGraph: {
-    title: "Founders Lab | Introduce your product. Reach your audience.",
+    title: "FoundersLab | Weekly Web3 Conversations",
     description:
-      "A weekly space for Web3 builders. Sundays, 7 PM London. Free participation, subject to review.",
+      "Open conversations with Web3 founders about their products, users and markets. Sundays at 7 PM London time. Free participation, subject to review.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Founders Lab | Introduce your product. Reach your audience.",
+    title: "FoundersLab | Weekly Web3 Conversations",
   },
 };
 export default function Page() {
