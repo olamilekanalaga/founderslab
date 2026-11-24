@@ -54,17 +54,36 @@ export async function lockManager(
   return manager;
 }
 export async function sendManagerEmail(email: string, raw: string) {
-  const key = process.env.RESEND_API_KEY,
-    from = process.env.MANAGER_EMAIL_FROM,
-    origin = process.env.APP_ORIGIN;
+  const key = process.env.RESEND_API_KEY?.trim(),
+    from = process.env.MANAGER_EMAIL_FROM?.trim(),
+    origin = process.env.APP_ORIGIN?.trim();
   if (!key || !from || !origin)
     throw new DomainError(
       "Email delivery is not configured. Set RESEND_API_KEY, MANAGER_EMAIL_FROM and APP_ORIGIN. No email was sent.",
       503,
     );
-  const base = new URL(origin);
-  if (process.env.VERCEL === "1" && base.protocol !== "https:")
-    throw new DomainError("Configure an HTTPS APP_ORIGIN.", 503);
+  let base: URL;
+  try {
+    base = new URL(origin);
+  } catch {
+    throw new DomainError(
+      "Set APP_ORIGIN to the public Founders Lab origin.",
+      503,
+    );
+  }
+  if (
+    !["https:", "http:"].includes(base.protocol) ||
+    (process.env.VERCEL === "1" && base.protocol !== "https:") ||
+    base.username ||
+    base.password ||
+    base.pathname !== "/" ||
+    base.search ||
+    base.hash
+  )
+    throw new DomainError(
+      "Set APP_ORIGIN to the site origin with no path or query. Vercel requires HTTPS.",
+      503,
+    );
   const link = new URL("/manager/spaces", base);
   link.hash = `token=${raw}`;
   // A local mock is supported only outside hosted Vercel deployments, for isolated tests.
@@ -77,8 +96,10 @@ export async function sendManagerEmail(email: string, raw: string) {
   try {
     response = await fetch(endpoint, {
       method: "POST",
+      redirect: "error",
       headers: {
         Authorization: `Bearer ${key}`,
+        "Idempotency-Key": `space-manager/${hash(raw)}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -96,11 +117,14 @@ export async function sendManagerEmail(email: string, raw: string) {
     );
   }
   const result = await response.json().catch(() => null);
-  if (!response.ok || !result?.id)
-    throw new DomainError(
-      "Email provider did not accept the invitation. Check sender configuration and try again.",
-      502,
-    );
+  if (response.ok && typeof result?.id === "string" && result.id.trim()) return;
+  const guidance =
+    response.status === 401 || response.status === 403
+      ? "Check the Resend sending key, sender domain verification and recipient restrictions."
+      : response.status === 429
+        ? "Check Resend rate limits and sending quota before retrying."
+        : "Check the failed request in Resend Logs and verify the sender address.";
+  throw new DomainError(`Resend did not confirm acceptance. ${guidance}`, 502);
 }
 export async function issueManagerLink(managerId: string, actor: string) {
   const raw = token();
