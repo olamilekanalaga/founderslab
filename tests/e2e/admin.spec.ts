@@ -104,23 +104,26 @@ test.describe("Admin experience", () => {
     await page.getByRole("button", { name: "Sign in", exact: true }).click();
     await page.waitForURL("**/dashboard");
     await page.setViewportSize({ width: 393, height: 852 });
-    await page
-      .getByRole("button", { name: "Open navigation", exact: true })
-      .click();
+    const navigation = page.getByRole("navigation", {
+      name: "Workspace navigation",
+    });
     await expect(
-      page
-        .getByRole("dialog")
-        .getByRole("button", { name: "Sign out", exact: true }),
+      navigation.getByRole("link", { name: "Overview" }),
+    ).toHaveAttribute("aria-current", "page");
+    expect(
+      await navigation.evaluate((bar) => bar.getBoundingClientRect().bottom),
+    ).toBe(852);
+    await navigation.getByRole("link", { name: "Settings" }).click();
+    await expect(
+      navigation.getByRole("link", { name: "Settings" }),
+    ).toHaveAttribute("aria-current", "page");
+    await expect(
+      page.getByRole("heading", { name: "⭕️La_Crrypt💰₿" }),
     ).toBeVisible();
-    await page.keyboard.press("Escape");
     await expect(
-      page.getByRole("button", { name: "Open navigation", exact: true }),
-    ).toBeFocused();
-    await page.getByRole("button", { name: /Open account menu for/ }).click();
-    await page
-      .getByRole("dialog")
-      .getByRole("button", { name: "Sign out", exact: true })
-      .click();
+      page.getByRole("link", { name: "Programme website" }),
+    ).toHaveAttribute("href", "/");
+    await page.getByRole("button", { name: "Sign out", exact: true }).click();
     await expect(page).toHaveURL(/\/signin$/);
     expect((await page.request.get("/api/auth/me")).status()).toBe(401);
     await context.close();
@@ -203,32 +206,29 @@ test.describe("Admin experience", () => {
       .getByRole("button", { name: "Discard changes", exact: true })
       .click();
   });
-  test("refresh errors are persistent and recover without losing the workspace", async ({
+  test("workspace refreshes on focus and keeps the last snapshot after a failure", async ({
     page,
   }) => {
+    await expect(
+      page.getByRole("button", { name: "Refresh workspace", exact: true }),
+    ).toHaveCount(0);
     await page.route("**/api/workspace", (route) =>
-      route.fulfill({
-        status: 503,
-        contentType: "application/json",
-        body: JSON.stringify({
-          error: "Acceptance simulation: refresh unavailable",
-        }),
-      }),
+      route.fulfill({ status: 503, json: { error: "Offline" } }),
     );
-    await page
-      .getByRole("button", { name: "Refresh workspace", exact: true })
-      .click();
-    await expect(page.locator(".toast[role=alert]")).toContainText(
-      "Acceptance simulation: refresh unavailable",
+    const failed = page.waitForResponse(
+      (response) =>
+        response.url().endsWith("/api/workspace") && response.status() === 503,
     );
+    await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+    await failed;
     await expect(page.locator(".desk-grid")).toBeVisible();
     await page.unroute("**/api/workspace");
-    await page
-      .getByRole("button", { name: "Refresh workspace", exact: true })
-      .click();
-    await expect(page.locator(".toast[role=status]")).toContainText(
-      "Workspace refreshed.",
+    const recovered = page.waitForResponse(
+      (response) => response.url().endsWith("/api/workspace") && response.ok(),
     );
+    await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+    await recovered;
+    await expect(page.locator(".workspace-freshness")).toContainText("Updated");
   });
   test("manager load failures provide retry and do not claim email is disconnected", async ({
     page,

@@ -1,16 +1,18 @@
 "use client";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Plus, Pencil } from "lucide-react";
 import { useWorkspace } from "@/components/layout/WorkspaceContext";
 import { SectionHeading, Status } from "@/components/ui";
 import type { Resource } from "@/components/shared/RecordEditor";
 export default function Settings({
   edit,
+  account,
 }: {
+  account: ReactNode;
   edit: (resource: Resource, record?: Record<string, unknown>) => void;
 }) {
   const { state: s } = useWorkspace();
-  const [tab, setTab] = useState("Options");
+  const [tab, setTab] = useState("Account");
   const [group, setGroup] = useState("Sector");
   return (
     <>
@@ -20,7 +22,7 @@ export default function Settings({
         </div>
       </div>
       <div className="tabs settings-tabs">
-        {["Options", "Activity"].map((t) => (
+        {["Account", "Options", "Activity"].map((t) => (
           <button
             key={t}
             className={tab === t ? "active" : ""}
@@ -30,6 +32,9 @@ export default function Settings({
           </button>
         ))}
       </div>
+      <section className="panel settings-account" hidden={tab !== "Account"}>
+        {account}
+      </section>
       <section className="panel" hidden={tab !== "Options"}>
         <SectionHeading
           title="Company options"

@@ -1774,7 +1774,28 @@ try {
       path: artifactPath("space-manager-settings-mobile.png"),
       fullPage: true,
     });
-    await page.goto(origin + "/settings");
+    const navigation = page.getByRole("navigation", {
+      name: "Workspace navigation",
+    });
+    await navigation.getByRole("link", { name: "Settings" }).click();
+    await page.getByRole("heading", { name: "⭕️La_Crrypt💰₿" }).waitFor();
+    assert.equal(
+      await navigation
+        .getByRole("link", { name: "Settings" })
+        .getAttribute("aria-current"),
+      "page",
+    );
+    assert.equal(
+      await navigation.evaluate((bar) => bar.getBoundingClientRect().bottom),
+      page.viewportSize()?.height,
+    );
+    assert.equal(
+      await page
+        .getByRole("link", { name: "Programme website" })
+        .getAttribute("href"),
+      "/",
+    );
+    await page.getByRole("button", { name: "Sign out", exact: true }).waitFor();
     await page.getByRole("button", { name: "Activity", exact: true }).click();
     const activity = page.getByRole("table", { name: "Recent audit activity" });
     await activity.getByRole("columnheader", { name: "Time (UTC)" }).waitFor();
@@ -1784,6 +1805,26 @@ try {
       ),
       true,
     );
+    const accountButton = page.getByRole("button", {
+      name: /Open account menu/,
+    });
+    const portrait = accountButton.locator("img");
+    await portrait.waitFor();
+    await page.waitForFunction(() => {
+      const image = document.querySelector<HTMLImageElement>(
+        ".account-trigger img",
+      );
+      return image?.complete && image.naturalWidth > 0;
+    });
+    assert.equal(
+      await page.getByRole("button", { name: "Refresh workspace" }).count(),
+      0,
+    );
+    const workspaceUpdate = page.waitForResponse(
+      (response) => response.url().endsWith("/api/workspace") && response.ok(),
+    );
+    await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+    await workspaceUpdate;
     await page.getByRole("button", { name: /Open account menu/ }).click();
     const account = page.getByRole("dialog", { name: "Your account" });
     await account.getByRole("button", { name: "Reduced effects" }).click();
@@ -1889,12 +1930,19 @@ try {
     pass(
       "Admin UTC editor creates and updates winter/summer sessions through real UI, HTTP and PostgreSQL without shifting the clock",
     );
+    await navigation.getByRole("link", { name: "Settings" }).click();
+    await page.getByRole("button", { name: "Sign out", exact: true }).click();
+    await page.waitForURL("**/signin");
+    assert.equal(
+      (await page.request.get(origin + "/api/auth/me")).status(),
+      401,
+    );
     assert.deepEqual(errors, []);
   } finally {
     await browser.close();
   }
   pass(
-    "Production mobile sign-in, private dashboard and newly approved founder profile render without runtime errors",
+    "Production mobile sign-in, bottom navigation, Settings sign-out and private founder profiles render without runtime errors",
   );
   // Attendance-gated cycles: isolated past-session fixtures, never production records.
   const cycleDb = new Client({ connectionString: url.toString() });
@@ -2478,9 +2526,8 @@ try {
       .context()
       .addCookies([{ name: "fl_session", value: token, url: origin }]);
     await page.goto(origin + "/dashboard");
-    await page.getByRole("button", { name: "Open navigation" }).click();
     await page
-      .getByRole("navigation", { name: "Mobile navigation" })
+      .getByRole("navigation", { name: "Workspace navigation" })
       .getByRole("link", { name: /Admin operations/ })
       .click();
     await page

@@ -3,20 +3,17 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import BrandMark from "@/components/shared/BrandMark";
 import {
   LayoutDashboard,
   Users,
   Mic2,
   ChartNoAxesCombined,
   Search,
-  Menu,
   ChevronRight,
   ArrowUpRight,
   X,
   LogOut,
   ShieldCheck,
-  RefreshCw,
   CheckCircle2,
   CircleAlert,
   Settings as SettingsIcon,
@@ -37,6 +34,19 @@ import Spaces from "@/features/spaces/components/Spaces";
 import Reports from "@/features/reports/components/Reports";
 import SpaceManagersSettings from "@/features/space-managers/components/SpaceManagersSettings";
 import TeamSettings from "@/features/settings/components/Settings";
+const OWNER_NAME = "⭕️La_Crrypt💰₿";
+
+function OwnerPortrait({ size = 38 }: { size?: number }) {
+  return (
+    <Image
+      className={size === 72 ? "owner-avatar account-portrait" : "owner-avatar"}
+      src="/owner-portrait.jpg"
+      width={size}
+      height={size}
+      alt=""
+    />
+  );
+}
 const navigation = [
   { id: "dashboard", label: "Overview", icon: LayoutDashboard },
   { id: "founders", label: "Directory", icon: Users },
@@ -67,13 +77,10 @@ function Shell({ section, id }: { section: Section; id?: string }) {
       message,
       feedback,
       setMessage,
-      refresh,
-      busy,
       lastUpdated,
     } = useWorkspace(),
     router = useRouter();
-  const [mobile, setMobile] = useState(false),
-    [searchOpen, setSearchOpen] = useState(false),
+  const [searchOpen, setSearchOpen] = useState(false),
     [accountOpen, setAccountOpen] = useState(false),
     [search, setSearch] = useState(""),
     [signingOut, setSigningOut] = useState(false),
@@ -87,8 +94,11 @@ function Shell({ section, id }: { section: Section; id?: string }) {
   useEffect(() => {
     try {
       const saved = localStorage.getItem("founderslab-appearance");
-      if (saved === "glass" || saved === "system" || saved === "reduced")
+      if (saved === "glass" || saved === "system" || saved === "reduced") {
+        // Restore the browser preference after the initial server render.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setEffects(saved);
+      }
     } catch {}
   }, []);
   const appearance = (value: "glass" | "system" | "reduced") => {
@@ -132,8 +142,8 @@ function Shell({ section, id }: { section: Section; id?: string }) {
     viewer.permissions.includes(SECTION_PERMISSIONS[n.id]),
   );
   const pending = s.applications.filter((a) => a.status === "Pending").length;
-  const nav = (isMobile = false) => (
-    <nav aria-label={isMobile ? "Mobile navigation" : "Workspace navigation"}>
+  const nav = (
+    <nav className="workspace-bottom-nav" aria-label="Workspace navigation">
       {visible.map(({ id: navId, label, icon: Icon }) => (
         <Link
           className={
@@ -152,7 +162,6 @@ function Shell({ section, id }: { section: Section; id?: string }) {
           }
           key={navId}
           href={path(navId)}
-          onClick={() => setMobile(false)}
         >
           <Icon size={19} strokeWidth={1.7} />
           <span>{label}</span>
@@ -172,6 +181,7 @@ function Shell({ section, id }: { section: Section; id?: string }) {
             ? "Founder Spaces"
             : navigation.find((n) => n.id === section)?.label;
   const can = viewer.permissions.includes(SECTION_PERMISSIONS[section]);
+  const canManageTeam = viewer.permissions.includes("team.manage");
   const role = ROLES[viewer.roleId]?.name || viewer.roleId;
   const logout = (
     <button
@@ -204,54 +214,9 @@ function Shell({ section, id }: { section: Section; id?: string }) {
       className="app-shell admin-experience admin-studio admin-desk"
       data-visual-effects={effects}
     >
-      <aside className="sidebar">
-        <Link
-          className="brand"
-          href={path("dashboard")}
-          aria-label="Founders Lab overview"
-        >
-          <span className="brand-mark">
-            <BrandMark />
-          </span>
-          <span>
-            Founders Lab<small>Programme workspace</small>
-          </span>
-        </Link>
-        <div className="sidebar-workspace">
-          <span className="workspace-dot" />
-          <div>
-            <b>Programme workspace</b>
-            <small>People. Projects. Spaces.</small>
-          </div>
-          <ShieldCheck size={16} />
-        </div>
-        <p className="nav-label">Workspace</p>
-        {nav()}
-        <div className="sidebar-bottom">
-          <Link className="sidebar-public" href="/">
-            Programme website
-            <ArrowUpRight size={15} />
-          </Link>
-          <div className="sidebar-user">
-            <Avatar name={viewer.name} />
-            <div>
-              <b title={viewer.name}>{viewer.name}</b>
-              <small>{role}</small>
-            </div>
-          </div>
-          {logout}
-        </div>
-      </aside>
       <div className="main-column">
         <header className="topbar">
           <div className="topbar-left">
-            <button
-              className="icon-button mobile-menu"
-              aria-label="Open navigation"
-              onClick={() => setMobile(true)}
-            >
-              <Menu size={22} />
-            </button>
             <span className="desktop-only">Workspace</span>
             <ChevronRight size={14} className="desktop-only" />
             <b>{title}</b>
@@ -281,24 +246,11 @@ function Shell({ section, id }: { section: Section; id?: string }) {
               </span>
             )}
             <button
-              className={`icon-button ${busy ? "refreshing" : ""}`}
-              aria-label="Refresh workspace"
-              title={
-                lastUpdated
-                  ? `Last updated ${new Date(lastUpdated).toLocaleTimeString()}`
-                  : "Refresh workspace data"
-              }
-              onClick={() => void refresh()}
-              disabled={busy}
-            >
-              <RefreshCw size={18} />
-            </button>
-            <button
               className="account-trigger"
-              aria-label={`Open account menu for ${viewer.name}`}
+              aria-label={`Open account menu for ${OWNER_NAME}`}
               onClick={() => setAccountOpen(true)}
             >
-              <Avatar name={viewer.name} />
+              <OwnerPortrait />
             </button>
           </div>
         </header>
@@ -328,7 +280,25 @@ function Shell({ section, id }: { section: Section; id?: string }) {
           ) : section === "reports" ? (
             <Reports />
           ) : (
-            <TeamSettings edit={edit} />
+            <TeamSettings
+              edit={edit}
+              account={
+                <>
+                  <div className="account-detail">
+                    <OwnerPortrait size={72} />
+                    <h3>{OWNER_NAME}</h3>
+                    <p>{viewer.email}</p>
+                    <span className="small-tag">{role}</span>
+                  </div>
+                  <div className="settings-account-actions">
+                    <Link className="button" href="/">
+                      Programme website <ArrowUpRight size={16} />
+                    </Link>
+                    {logout}
+                  </div>
+                </>
+              }
+            />
           )}
         </main>
         <footer className="workspace-footer">
@@ -340,27 +310,7 @@ function Shell({ section, id }: { section: Section; id?: string }) {
           </span>
         </footer>
       </div>
-      {mobile && (
-        <Modal
-          title="Your workspace"
-          close={() => setMobile(false)}
-          className="navigation-dialog"
-        >
-          <div className="mobile-nav">{nav(true)}</div>
-          <div className="mobile-account">
-            <Avatar name={viewer.name} />
-            <div>
-              <b>{viewer.name}</b>
-              <small>{role}</small>
-            </div>
-          </div>
-          <Link className="button" href="/">
-            Programme website
-            <ArrowUpRight size={16} />
-          </Link>
-          {logout}
-        </Modal>
-      )}
+      {nav}
       {accountOpen && (
         <Modal
           title="Your account"
@@ -368,14 +318,8 @@ function Shell({ section, id }: { section: Section; id?: string }) {
           className="account-dialog"
         >
           <div className="account-detail">
-            <Image
-              className="account-portrait"
-              src="/owner-portrait.jpg"
-              width={72}
-              height={72}
-              alt=""
-            />
-            <h3>⭕️La_Crrypt💰₿</h3>
+            <OwnerPortrait size={72} />
+            <h3>{OWNER_NAME}</h3>
             <p>{viewer.email}</p>
             <span className="small-tag">{role}</span>
           </div>
@@ -405,7 +349,7 @@ function Shell({ section, id }: { section: Section; id?: string }) {
                   : "Solid panels with blur and animations turned off."}
             </p>
           </fieldset>
-          {viewer.permissions.includes("team.manage") && (
+          {canManageTeam ? (
             <Link
               className="button"
               href={path("settings")}
@@ -414,8 +358,9 @@ function Shell({ section, id }: { section: Section; id?: string }) {
               <SettingsIcon size={17} />
               Team and settings
             </Link>
+          ) : (
+            logout
           )}
-          {logout}
         </Modal>
       )}
       {searchOpen && (

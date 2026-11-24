@@ -279,16 +279,13 @@
   background: #ede7f8;
   color: #6842bc;
 }
-.admin-experience .account-trigger .person-avatar {
+.admin-experience .owner-avatar {
+  flex-shrink: 0;
+  border-radius: 10px;
+  object-fit: cover;
+}
+.admin-experience .account-trigger .owner-avatar {
   border-radius: 50%;
-}
-.admin-experience .refreshing svg {
-  animation: admin-spin 1.2s linear infinite;
-}
-@keyframes admin-spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 .admin-experience .workspace-main {
   padding: 38px 36px 32px;
