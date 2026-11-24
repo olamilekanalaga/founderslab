@@ -2580,10 +2580,37 @@ try {
       (await request(bdRoute, { ...pay, cycle: 3 }, admin)).status,
       400,
     );
-    const attempts = await Promise.all([
-      request(bdRoute, pay, admin),
-      request(bdRoute, pay, admin),
-    ]);
+    const paymentManager: Jar = { cookie: "", csrf: "" };
+    assert.equal(
+      (
+        await adminManagerRequest({
+          action: "invite",
+          email: "payment-manager@integration.example.invalid",
+          allSpaces: true,
+          sessionIds: [],
+        })
+      ).status,
+      201,
+    );
+    assert.equal(
+      (
+        await request(
+          "/api/manager/verify",
+          { token: emailToken() },
+          paymentManager,
+        )
+      ).status,
+      200,
+    );
+    paymentManager.csrf = (
+      await request("/api/manager/spaces", undefined, paymentManager)
+    ).data.csrf;
+    assert.equal(
+      (await request(bdRoute, pay, paymentManager, false)).status,
+      403,
+    );
+    assert.equal((await request(bdRoute, pay, paymentManager)).status, 200);
+    assert.equal((await request(bdRoute, pay, admin)).status, 409);
     assert.deepEqual(
       attempts.map((attempt) => attempt.status).sort(),
       [200, 409],
@@ -2677,7 +2704,7 @@ try {
     await operationsBrowser.close();
   }
   pass(
-    "BD registration, protected bank details, two reward cycles, concurrent duplicate prevention and manual payment recording",
+    "BD X username registration, protected bank details, two reward cycles, concurrent duplicate prevention and manager payment recording",
   );
   const oldCookie = admin.cookie;
   assert.equal(
