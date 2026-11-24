@@ -2895,10 +2895,26 @@ try {
       name: "Review founder applications",
     });
     await review.click();
-    await page
+    const applications = page.getByRole("table", {
+      name: "Founder applications",
+    });
+    await expect(
+      applications.getByRole("columnheader", { name: "Status" }),
+    ).toBeVisible();
+    const statusFilter = page.getByLabel("Space workflow status");
+    await statusFilter.selectOption("Approved");
+    const approvedRow = applications
+      .getByRole("row")
+      .filter({ hasText: "Approved" })
+      .first();
+    await expect(approvedRow).toBeVisible();
+    await approvedRow
       .getByRole("button", { name: "Review application", exact: true })
-      .first()
-      .waitFor();
+      .click();
+    await expect(
+      page.getByRole("dialog", { name: /^Application/ }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Close dialog" }).click();
     assert.equal(new URL(page.url()).pathname, "/operations");
     assert.equal(
       await page

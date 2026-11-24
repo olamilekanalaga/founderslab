@@ -297,22 +297,25 @@ export default function Spaces({
           {tab === "sessions" ? (
             <SessionList sessions={s.sessions} filter={filter} />
           ) : tab === "applications" ? (
-            <section className="panel workflow-desktop">
+            <section className="panel">
               <div
                 className="table-wrap"
                 tabIndex={0}
                 role="region"
-                aria-label="Founder applications"
+                aria-label="Applications table"
               >
-                <table>
+                <table
+                  className="studio-applications-table"
+                  aria-label="Founder applications"
+                >
                   <thead>
                     <tr>
-                      <th>Founder / company</th>
-                      <th>Country</th>
-                      <th>Team</th>
-                      <th>People expected</th>
-                      <th>Status</th>
-                      <th />
+                      <th scope="col">Founder / company</th>
+                      <th scope="col">Status</th>
+                      <th scope="col">Country</th>
+                      <th scope="col">Team</th>
+                      <th scope="col">People expected</th>
+                      <th scope="col">Review</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -320,7 +323,7 @@ export default function Spaces({
                       .filter((a) => filter === "All" || a.status === filter)
                       .map((a, i) => (
                         <tr key={a.id}>
-                          <td>
+                          <th scope="row">
                             <button
                               className="table-person align-left"
                               onClick={() => setSelected(a.id)}
@@ -333,19 +336,19 @@ export default function Spaces({
                                 </small>
                               </span>
                             </button>
+                          </th>
+                          <td>
+                            <Status value={a.status} />
                           </td>
                           <td>{a.country}</td>
                           <td>{a.teamSize}</td>
                           <td>{a.speakers}</td>
                           <td>
-                            <Status value={a.status} />
-                          </td>
-                          <td>
                             <button
                               className="button"
                               onClick={() => setSelected(a.id)}
                             >
-                              Review
+                              Review application
                             </button>
                           </td>
                         </tr>
@@ -458,45 +461,6 @@ export default function Spaces({
                 </Empty>
               )}
             </section>
-          )}
-          {tab === "applications" && (
-            <div className="workflow-mobile">
-              {s.applications
-                .filter((a) => filter === "All" || a.status === filter)
-                .map((item, i) => (
-                  <article className="workflow-card" key={item.id}>
-                    <div className="workflow-card-heading">
-                      <Avatar name={item.founderName} index={i} />
-                      <div>
-                        <b>{item.founderName}</b>
-                        <small>{item.companyName}</small>
-                      </div>
-                    </div>
-                    <p>
-                      {item.country} · {item.speakers} speakers ·{" "}
-                      {item.reference}
-                    </p>
-                    <div className="workflow-card-footer">
-                      <Status value={item.status} />
-                      <button
-                        className="button primary"
-                        onClick={() => setSelected(item.id)}
-                      >
-                        Review application
-                      </button>
-                    </div>
-                  </article>
-                ))}
-              {!s.applications.some(
-                (a) => filter === "All" || a.status === filter,
-              ) && (
-                <section className="panel">
-                  <Empty title="No applications to review">
-                    New founder submissions will appear here.
-                  </Empty>
-                </section>
-              )}
-            </div>
           )}
         </>
       )}
