@@ -43,6 +43,16 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
     comments: "",
     websiteTrap: "",
   });
+  const [referral, setReferral] = useState<{
+    handle: string | null;
+    locked: boolean;
+    valid: boolean;
+  }>();
+  useEffect(() => {
+    void api("referral")
+      .then(setReferral)
+      .catch(() => {});
+  }, []);
   const [privacy, setPrivacy] = useState(false),
     [promo, setPromo] = useState(false),
     [hiring, setHiring] = useState("");
@@ -188,7 +198,12 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
               BD referrer’s X username
               <input
                 name="bdReferrerXHandle"
-                value={fields.bdReferrerXHandle}
+                value={
+                  referral?.locked
+                    ? referral.handle || ""
+                    : fields.bdReferrerXHandle
+                }
+                readOnly={referral?.locked}
                 onChange={(e) => change("bdReferrerXHandle", e.target.value)}
                 autoCapitalize="none"
                 autoCorrect="off"
@@ -199,6 +214,11 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
               <small id="bd-referrer-hint">
                 Enter the X username of the BD partner who referred you, e.g.
                 @ola__crrypt. Leave blank if nobody referred you.
+                {referral?.locked &&
+                  !referral.valid &&
+                  " This referral link is unavailable. You can still apply."}
+                {referral?.valid &&
+                  " The referral from your link will be applied automatically."}
               </small>
             </label>
             <label>

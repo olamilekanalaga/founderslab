@@ -510,6 +510,10 @@ model ProgrammeWeek {
 }
 
 model BdPartner {
+  fullName     String?
+  referralCode String @unique
+  active       Boolean @default(true)
+  access       BdAccess[]
   id          String @id
   name        String
   email       String @unique
@@ -529,6 +533,7 @@ model BdAppearance {
   companyId  String
   ordinal    Int
   verifiedAt DateTime @default(now())
+  reversedAt DateTime?
 
   @@unique([sessionId, companyId])
   @@unique([partnerId, ordinal])
@@ -539,10 +544,23 @@ model BdPayment {
   partnerId String
   partner   BdPartner @relation(fields: [partnerId], references: [id])
   cycle     Int
-  reference String @unique
+  reference String? @unique
+  requestId String? @unique
   paidOn    String
   amount    Int
   createdAt DateTime @default(now())
 
-  @@unique([partnerId, cycle])
+  @@index([partnerId, cycle])
+}
+
+
+model BdAccess {
+  tokenHash String @id
+  partnerId String
+  partner   BdPartner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  purpose   String
+  expiresAt DateTime
+
+  @@index([partnerId, purpose])
+  @@index([purpose, expiresAt])
 }

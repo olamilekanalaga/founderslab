@@ -1,5 +1,6 @@
 "use client";
 
+import { BdOverview } from "@/features/bd-partners/BdIntelligence";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
@@ -306,6 +307,9 @@ export default function Overview({ addFounder }: { addFounder: () => void }) {
           </section>
         )}
       </div>
+      {(can("team.manage") || viewer.roleId === "space-manager") && (
+        <BdOverview />
+      )}
       <details className="panel desk-details">
         <summary>
           <ListChecks size={18} />

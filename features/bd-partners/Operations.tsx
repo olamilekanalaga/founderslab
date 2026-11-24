@@ -5,34 +5,13 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import Spaces, { type SpaceTab } from "@/features/spaces/components/Spaces";
 import type { Resource } from "@/components/shared/RecordEditor";
-import { Status } from "@/components/ui";
+import { Modal, Status } from "@/components/ui";
 import { useWorkspace } from "@/components/layout/WorkspaceContext";
 import { rewardSummary, REFERRALS_PER_CYCLE, REWARD_NAIRA } from "./rewards";
 
-type Partner = {
-  id: string;
-  name: string;
-  email: string;
-  appearances: {
-    bookingId: string;
-    sessionId: string;
-    companyId: string;
-    ordinal: number;
-    verifiedAt: string;
-  }[];
-  payments: {
-    cycle: number;
-    amount: number;
-    paidOn: string;
-    reference: string;
-  }[];
-};
-const naira = new Intl.NumberFormat("en-NG", {
-  style: "currency",
-  currency: "NGN",
-  maximumFractionDigits: 0,
-  minimumFractionDigits: 0,
-});
+import { naira, type Partner } from "./intelligence";
+import BdIntelligence from "./BdIntelligence";
+import ReferralLink from "./ReferralLink";
 
 export default function Operations({
   edit,
@@ -42,6 +21,7 @@ export default function Operations({
   const params = useSearchParams();
   const router = useRouter();
   const requestedPanel = params.get("tab");
+  const selectedPartner = params.get("partner");
   const panel: "bd" | SpaceTab =
     requestedPanel === "applications" ||
     requestedPanel === "bookings" ||
@@ -54,13 +34,18 @@ export default function Operations({
     next.delete("review");
     next.delete("status");
     next.delete("session");
+    next.delete("partner");
     router.replace(`/operations?${next.toString()}`, { scroll: false });
   }
-  const { viewer, state } = useWorkspace();
+  const { viewer, state, lastUpdated } = useWorkspace();
   const [partners, setPartners] = useState<Partner[]>([]);
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const [accessLink, setAccessLink] = useState("");
+  const [accessMessage, setAccessMessage] = useState("");
+  const [paymentRequest, setPaymentRequest] = useState<string>();
+  const isOwner = viewer.permissions.includes("team.manage");
   const [bankDetails, setBankDetails] = useState<{
     partnerId: string;
     bank: string;
@@ -110,7 +95,7 @@ export default function Operations({
           setNotice("Could not load BD partners.");
       });
     return () => controller.abort();
-  }, [attempt]);
+  }, [attempt, lastUpdated]);
 
   async function submit(
     event: FormEvent<HTMLFormElement>,
@@ -120,6 +105,9 @@ export default function Operations({
     event.preventDefault();
     const form = event.currentTarget;
     const values = Object.fromEntries(new FormData(form));
+    const requestId =
+      action === "pay" ? paymentRequest || crypto.randomUUID() : undefined;
+    if (requestId) setPaymentRequest(requestId);
     setBusy(true);
     setNotice("");
     try {
@@ -133,12 +121,30 @@ export default function Operations({
           ...values,
           action,
           ...(partnerId ? { partnerId } : {}),
-          ...(action === "pay" ? { cycle: Number(values.cycle) } : {}),
+          ...(action === "pay"
+            ? {
+                cycle: Number(values.cycle),
+                amount: Number(values.amount),
+                requestId,
+              }
+            : {}),
+          ...(action === "profile"
+            ? {
+                active: values.active === "on",
+                xHandle: values.xHandle || undefined,
+                fullName: values.fullName || undefined,
+              }
+            : {}),
         }),
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error);
-      form.reset();
+      if (action === "pay") setPaymentRequest(undefined);
+      if (action === "access") {
+        setAccessLink(result.accessLink);
+        setAccessMessage("");
+      }
+      if (action !== "profile") form.reset();
       setBankDetails(null);
       setNotice("Saved.");
       setAttempt((value) => value + 1);
@@ -152,7 +158,9 @@ export default function Operations({
 
   const claimed = new Set(
     partners.flatMap((p) =>
-      p.appearances.map((a) => JSON.stringify([a.sessionId, a.companyId])),
+      p.appearances
+        .filter((a) => !a.reversedAt)
+        .map((a) => JSON.stringify([a.sessionId, a.companyId])),
     ),
   );
   const unmatched = state.applications.filter(
@@ -170,7 +178,7 @@ export default function Operations({
       application?.status === "Approved" &&
       application.bdPartnerId &&
       session &&
-      session.status !== "Cancelled" &&
+      session.status === "Completed" &&
       attendance?.submittedAt &&
       state.spaceAttendance.some(
         (entry) =>
@@ -234,6 +242,41 @@ export default function Operations({
           />
         )}
         <div hidden={panel !== "bd"}>
+          <BdIntelligence partners={partners} />
+          {accessLink && (
+            <Modal
+              title="Partner dashboard invitation"
+              close={() => setAccessLink("")}
+            >
+              <p>
+                Share privately. Anyone holding this link can use it once before
+                it expires in 15 minutes.
+              </p>
+              <label>
+                Invitation link
+                <input
+                  readOnly
+                  value={accessLink}
+                  onFocus={(event) => event.currentTarget.select()}
+                />
+              </label>
+              <button
+                className="button"
+                type="button"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(accessLink);
+                    setAccessMessage("Invitation link copied.");
+                  } catch {
+                    setAccessMessage("Select and copy the link above.");
+                  }
+                }}
+              >
+                Copy
+              </button>
+              {accessMessage && <p role="status">{accessMessage}</p>}
+            </Modal>
+          )}
           <section className="panel padded">
             <h2 id="bd-details" style={{ scrollMarginTop: "100px" }}>
               Register a BD partner
@@ -242,6 +285,10 @@ export default function Operations({
               onSubmit={(event) => void submit(event, "register")}
               className="record-form"
             >
+              <label>
+                Full name
+                <input name="fullName" maxLength={200} />
+              </label>
               <label>
                 BD X handle
                 <input
@@ -324,224 +371,362 @@ export default function Operations({
               ))}
             </section>
           )}
-          {partners.map((partner) => {
-            const referrals = state.applications.filter(
-              (application) => application.bdPartnerId === partner.id,
-            );
-            const reviewedBookings = attendedBookings.filter(
-              (booking) => booking.partnerId === partner.id,
-            );
-            const verifiedBookings = new Set(
-              partner.appearances.map((appearance) => appearance.bookingId),
-            );
-            const reward = rewardSummary(
-              partner.appearances.length,
-              partner.payments,
-            );
-            const unpaid = Array.from(
-              { length: reward.completedCycles },
-              (_, index) => index + 1,
-            ).filter(
-              (cycle) =>
-                !partner.payments.some((payment) => payment.cycle === cycle),
-            );
-            return (
-              <section className="panel padded" key={partner.id}>
-                <h2>{partner.name}</h2>
-                <p>{partner.email}</p>
-                <dl className="facts">
-                  {[
-                    ["Total referred", referrals.length],
-                    ["Verified referrals", reward.verified],
-                    [
-                      "Current cycle",
-                      `${reward.cycleProgress}/${REFERRALS_PER_CYCLE}`,
-                    ],
-                    ["Completed cycles", reward.completedCycles],
-                    ["Paid cycles", reward.paidCycles],
-                    ["Pending Payment", reward.unpaidCycles],
-                    ["Total earned", naira.format(reward.earned)],
-                    ["Total paid", naira.format(reward.paid)],
-                    ["Outstanding", naira.format(reward.outstanding)],
-                  ].map(([label, value]) => (
-                    <div key={label}>
-                      <dt>{label}</dt>
-                      <dd>{value}</dd>
-                    </div>
-                  ))}
-                </dl>
-                {(reward.verified === 0 ||
-                  reward.cycleProgress < REFERRALS_PER_CYCLE) && (
-                  <p>Current cycle · Not Complete</p>
-                )}
-                {!!referrals.length && (
-                  <div
-                    className="table-wrap"
-                    role="region"
-                    tabIndex={0}
-                    aria-label={`Founder referrals for ${partner.name}`}
-                  >
-                    <table aria-label="Referred founders">
-                      <thead>
-                        <tr>
-                          <th scope="col">Founder</th>
-                          <th scope="col">Project</th>
-                          <th scope="col">Referral status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {referrals.map((application) => {
-                          const bookings = state.bookings.filter(
-                            (booking) =>
-                              booking.applicationId === application.id,
-                          );
-                          const status = bookings.some((booking) =>
-                            verifiedBookings.has(booking.id),
-                          )
-                            ? "Verified"
-                            : application.status === "Approved"
-                              ? bookings.some(
-                                  (booking) => booking.status === "Attended",
-                                )
-                                ? "Attendance to verify"
-                                : bookings.some(
-                                      (booking) =>
-                                        booking.status === "Approved",
-                                    )
-                                  ? "Booked"
-                                  : "Awaiting booking"
-                              : application.status === "Pending"
-                                ? "Awaiting approval"
-                                : application.status;
-                          return (
-                            <tr key={application.id}>
-                              <th scope="row">
-                                <Link
-                                  href={`/operations?tab=applications&review=${encodeURIComponent(application.id)}`}
-                                >
-                                  {application.founderName}
-                                </Link>
-                              </th>
-                              <td>{application.companyName}</td>
-                              <td>
-                                <Status value={status} />
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-                <details>
-                  <summary>Referral and payment history</summary>
-                  <ul>
-                    {partner.appearances.map((appearance) => {
-                      const company = state.companies.find(
-                        (value) => value.id === appearance.companyId,
-                      );
-                      const session = state.sessions.find(
-                        (value) => value.id === appearance.sessionId,
-                      );
-                      return (
-                        <li key={appearance.bookingId}>
-                          Cycle{" "}
-                          {Math.ceil(appearance.ordinal / REFERRALS_PER_CYCLE)}{" "}
-                          · {company?.name ?? "Archived project"} ·{" "}
-                          {session?.startsAt.slice(0, 10) ??
-                            appearance.verifiedAt.slice(0, 10)}
-                        </li>
-                      );
-                    })}
-                    {partner.payments.map((payment) => (
-                      <li key={payment.cycle}>
-                        Cycle {payment.cycle} · Paid · {payment.paidOn} ·{" "}
-                        {payment.reference}
-                      </li>
-                    ))}
-                  </ul>
-                </details>
-                <form
-                  onSubmit={(event) => void submit(event, "verify", partner.id)}
-                  className="record-form"
-                >
-                  <label>
-                    Attended founder booking
-                    <select name="bookingId" required defaultValue="">
-                      <option value="" disabled>
-                        Select booking
-                      </option>
-                      {reviewedBookings.map((booking) => (
-                        <option value={booking.id} key={booking.id}>
-                          {booking.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <button
-                    className="button"
-                    disabled={busy || !reviewedBookings.length}
-                  >
-                    Verify referral
-                  </button>
-                </form>
-                {!!unpaid.length &&
-                  (bankDetails?.partnerId === partner.id ? (
-                    <div>
-                      <p>
-                        {bankDetails.bank} · {bankDetails.accountName} ·{" "}
-                        {bankDetails.accountNumber}
-                      </p>
-                      <button
-                        type="button"
-                        className="button"
-                        onClick={() => setBankDetails(null)}
+          {selectedPartner && (
+            <Link className="button" href="/operations?tab=bd">
+              View all partners
+            </Link>
+          )}
+          {partners
+            .filter(
+              (partner) => !selectedPartner || partner.id === selectedPartner,
+            )
+            .map((partner) => {
+              const referrals = state.applications.filter(
+                (application) => application.bdPartnerId === partner.id,
+              );
+              const reviewedBookings = attendedBookings.filter(
+                (booking) => booking.partnerId === partner.id,
+              );
+              const verifiedBookings = new Set(
+                partner.appearances
+                  .filter((appearance) => !appearance.reversedAt)
+                  .map((appearance) => appearance.bookingId),
+              );
+              const reward = rewardSummary(
+                verifiedBookings.size,
+                partner.payments,
+              );
+              const balance = (cycle: number) =>
+                REWARD_NAIRA -
+                partner.payments
+                  .filter((payment) => payment.cycle === cycle)
+                  .reduce((sum, payment) => sum + payment.amount, 0);
+              const unpaid = Array.from(
+                { length: reward.completedCycles },
+                (_, index) => index + 1,
+              ).filter((cycle) => balance(cycle) > 0 && reward.outstanding > 0);
+              return (
+                <section className="panel padded" key={partner.id}>
+                  <h2>{partner.name}</h2>
+                  <p>
+                    {[partner.fullName, partner.email]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
+                  <p>
+                    {partner.active ? "Approved and active" : "Revoked"} ·
+                    Registered {partner.createdAt.slice(0, 10)}
+                  </p>
+                  {partner.active && (
+                    <ReferralLink code={partner.referralCode} />
+                  )}
+                  {isOwner && (
+                    <details>
+                      <summary>Edit partner and private access</summary>
+                      <form
+                        className="record-form"
+                        onSubmit={(event) =>
+                          void submit(event, "profile", partner.id)
+                        }
                       >
-                        Hide transfer details
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      className="button"
-                      disabled={busy}
-                      onClick={() => void viewBank(partner.id)}
+                        <label>
+                          Full name
+                          <input
+                            name="fullName"
+                            defaultValue={partner.fullName || ""}
+                            maxLength={200}
+                          />
+                        </label>
+                        <label>
+                          BD X username
+                          <input
+                            name="xHandle"
+                            defaultValue={
+                              partner.name.startsWith("@") ? partner.name : ""
+                            }
+                            maxLength={16}
+                          />
+                        </label>
+                        <label className="check-label">
+                          <input
+                            type="checkbox"
+                            name="active"
+                            defaultChecked={partner.active}
+                          />{" "}
+                          Active and approved
+                        </label>
+                        <button className="button" disabled={busy}>
+                          Save partner
+                        </button>
+                      </form>
+                      {partner.active && (
+                        <form
+                          onSubmit={(event) =>
+                            void submit(event, "access", partner.id)
+                          }
+                        >
+                          <button className="button" disabled={busy}>
+                            Generate private dashboard invitation
+                          </button>
+                        </form>
+                      )}
+                    </details>
+                  )}
+                  <dl className="facts">
+                    {[
+                      ["Total referred", referrals.length],
+                      [
+                        "Pending founders",
+                        referrals.filter(
+                          (referral) => referral.status === "Pending",
+                        ).length,
+                      ],
+                      [
+                        "Approved founders",
+                        referrals.filter(
+                          (referral) => referral.status === "Approved",
+                        ).length,
+                      ],
+                      ["Verified referrals", reward.verified],
+                      [
+                        "Current cycle",
+                        `${reward.cycleProgress}/${REFERRALS_PER_CYCLE}`,
+                      ],
+                      ["Completed cycles", reward.completedCycles],
+                      ["Paid cycles", reward.paidCycles],
+                      ["Pending Payment", reward.unpaidCycles],
+                      ["Total earned", naira.format(reward.earned)],
+                      ["Total paid", naira.format(reward.paid)],
+                      ["Outstanding", naira.format(reward.outstanding)],
+                    ].map(([label, value]) => (
+                      <div key={label}>
+                        <dt>{label}</dt>
+                        <dd>{value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                  {(reward.verified === 0 ||
+                    reward.cycleProgress < REFERRALS_PER_CYCLE) && (
+                    <p>Current cycle · Not Complete</p>
+                  )}
+                  {!!referrals.length && (
+                    <div
+                      className="table-wrap"
+                      role="region"
+                      tabIndex={0}
+                      aria-label={`Founder referrals for ${partner.name}`}
                     >
-                      View transfer details
-                    </button>
-                  ))}
-                {!!unpaid.length && (
+                      <table aria-label="Referred founders">
+                        <thead>
+                          <tr>
+                            <th scope="col">Founder</th>
+                            <th scope="col">Project</th>
+                            <th scope="col">Referral status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {referrals.map((application) => {
+                            const bookings = state.bookings.filter(
+                              (booking) =>
+                                booking.applicationId === application.id,
+                            );
+                            const status = bookings.some((booking) =>
+                              verifiedBookings.has(booking.id),
+                            )
+                              ? "Verified"
+                              : application.status === "Approved"
+                                ? bookings.some(
+                                    (booking) => booking.status === "Attended",
+                                  )
+                                  ? "Attendance to verify"
+                                  : bookings.some(
+                                        (booking) =>
+                                          booking.status === "Approved",
+                                      )
+                                    ? "Booked"
+                                    : "Awaiting booking"
+                                : application.status === "Pending"
+                                  ? "Awaiting approval"
+                                  : application.status;
+                            return (
+                              <tr key={application.id}>
+                                <th scope="row">
+                                  <Link
+                                    href={`/operations?tab=applications&review=${encodeURIComponent(application.id)}`}
+                                  >
+                                    {application.founderName}
+                                  </Link>
+                                </th>
+                                <td>{application.companyName}</td>
+                                <td>
+                                  <Status value={status} />
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                  <details>
+                    <summary>Referral and payment history</summary>
+                    <ul>
+                      {partner.appearances.map((appearance) => {
+                        const company = state.companies.find(
+                          (value) => value.id === appearance.companyId,
+                        );
+                        const session = state.sessions.find(
+                          (value) => value.id === appearance.sessionId,
+                        );
+                        return (
+                          <li key={appearance.bookingId}>
+                            {company?.name ?? "Archived project"} ·{" "}
+                            {session?.startsAt.slice(0, 10) ??
+                              appearance.verifiedAt.slice(0, 10)}{" "}
+                            ·{" "}
+                            {appearance.reversedAt
+                              ? "Verification reversed"
+                              : "Verified"}
+                            {!appearance.reversedAt && (
+                              <form
+                                className="record-form"
+                                onSubmit={(event) =>
+                                  void submit(event, "reverse", partner.id)
+                                }
+                              >
+                                <input
+                                  type="hidden"
+                                  name="appearanceId"
+                                  value={appearance.id}
+                                />
+                                <label>
+                                  Correction reason
+                                  <input
+                                    name="reason"
+                                    required
+                                    maxLength={200}
+                                  />
+                                </label>
+                                <button className="button" disabled={busy}>
+                                  Reverse verification
+                                </button>
+                              </form>
+                            )}
+                          </li>
+                        );
+                      })}
+                      {partner.payments.map((payment) => (
+                        <li key={payment.id}>
+                          Cycle {payment.cycle} · {naira.format(payment.amount)}{" "}
+                          paid · {payment.paidOn}
+                          {payment.reference && ` · ${payment.reference}`}
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
                   <form
-                    onSubmit={(event) => void submit(event, "pay", partner.id)}
+                    onSubmit={(event) =>
+                      void submit(event, "verify", partner.id)
+                    }
                     className="record-form"
                   >
                     <label>
-                      Reward cycle
-                      <select name="cycle" required>
-                        {unpaid.map((cycle) => (
-                          <option key={cycle} value={cycle}>
-                            Cycle {cycle} · {naira.format(REWARD_NAIRA)} ·
-                            Pending Payment
+                      Attended founder booking
+                      <select name="bookingId" required defaultValue="">
+                        <option value="" disabled>
+                          Select booking
+                        </option>
+                        {reviewedBookings.map((booking) => (
+                          <option value={booking.id} key={booking.id}>
+                            {booking.label}
                           </option>
                         ))}
                       </select>
                     </label>
-                    <label>
-                      Payment date
-                      <input name="paidOn" type="date" required />
-                    </label>
-                    <label>
-                      Transfer reference
-                      <input name="reference" required maxLength={200} />
-                    </label>
-                    <button className="button primary" disabled={busy}>
-                      Mark paid
+                    <button
+                      className="button"
+                      disabled={busy || !reviewedBookings.length}
+                    >
+                      Verify referral
                     </button>
                   </form>
-                )}
-              </section>
-            );
-          })}
+                  {!!unpaid.length &&
+                    (bankDetails?.partnerId === partner.id ? (
+                      <div>
+                        <p>
+                          {bankDetails.bank} · {bankDetails.accountName} ·{" "}
+                          {bankDetails.accountNumber}
+                        </p>
+                        <button
+                          type="button"
+                          className="button"
+                          onClick={() => setBankDetails(null)}
+                        >
+                          Hide transfer details
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        className="button"
+                        disabled={busy}
+                        onClick={() => void viewBank(partner.id)}
+                      >
+                        View transfer details
+                      </button>
+                    ))}
+                  {!!unpaid.length && (
+                    <form
+                      onSubmit={(event) =>
+                        void submit(event, "pay", partner.id)
+                      }
+                      className="record-form"
+                    >
+                      <label>
+                        Reward cycle
+                        <select name="cycle" required>
+                          {unpaid.map((cycle) => (
+                            <option key={cycle} value={cycle}>
+                              Cycle {cycle} ·{" "}
+                              {naira.format(
+                                Math.min(balance(cycle), reward.outstanding),
+                              )}{" "}
+                              · Pending Payment
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        Payment date
+                        <input name="paidOn" type="date" required />
+                      </label>
+                      <label>
+                        Amount (₦)
+                        <input
+                          name="amount"
+                          type="number"
+                          min={1}
+                          max={Math.min(REWARD_NAIRA, reward.outstanding)}
+                          step={1}
+                          defaultValue={Math.min(
+                            balance(unpaid[0]),
+                            reward.outstanding,
+                          )}
+                          required
+                        />
+                      </label>
+                      <label>
+                        Transfer reference (optional)
+                        <input name="reference" maxLength={200} />
+                      </label>
+                      <button className="button primary" disabled={busy}>
+                        Mark paid
+                      </button>
+                    </form>
+                  )}
+                </section>
+              );
+            })}
         </div>
       </div>
     </>

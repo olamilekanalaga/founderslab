@@ -211,21 +211,59 @@ export async function executeCommand(command: Command, viewer: Viewer) {
     async (tx) => {
       if (command.type === "booking.create")
         await requireProgrammeBooking(tx, String(command.payload.sessionId));
-      // All capacity decisions for one session serialize on the same PostgreSQL row lock.
+      // Capacity decisions and edits to verified attendance share a session lock.
+      let editedSession: string | undefined;
       if (command.type === "booking.review") {
         const booking = await tx.bookingRequest.findUnique({
           where: { id: String(command.payload.id) },
         });
         if (!booking) throw new DomainError("Booking not found", 404);
-        await tx.$queryRaw`SELECT id FROM "Session" WHERE id = ${booking.sessionId} FOR UPDATE`;
+        editedSession = booking.sessionId;
       } else if (command.type === "space-data.save") {
         await lockProgramme(tx);
-        await tx.$queryRaw`SELECT id FROM "Session" WHERE id = ${String(command.payload.sessionId)} FOR UPDATE`;
+        editedSession = String(command.payload.sessionId);
       } else if (command.type === "session.save" && command.payload.id) {
-        await tx.$queryRaw`SELECT id FROM "Session" WHERE id = ${String(command.payload.id)} FOR UPDATE`;
+        editedSession = String(command.payload.id);
       }
+      if (editedSession)
+        await tx.$queryRaw`SELECT id FROM "Session" WHERE id = ${editedSession} FOR UPDATE`;
+
       const before = await loadState(tx),
         after = applyCommand(before, command, viewer);
+      if (editedSession) {
+        const verified = await tx.bdAppearance.findMany({
+          where: { sessionId: editedSession, reversedAt: null },
+          select: { bookingId: true, companyId: true },
+        });
+        const session = after.sessions.find(
+          (record) => record.id === editedSession,
+        );
+        const report = after.spaceData.find(
+          (record) => record.sessionId === editedSession,
+        );
+        const invalid = verified.some((appearance) => {
+          const booking = after.bookings.find(
+            (record) => record.id === appearance.bookingId,
+          );
+          return (
+            booking &&
+            (booking.status !== "Attended" ||
+              session?.status !== "Completed" ||
+              !report?.submittedAt ||
+              !after.spaceAttendance.some(
+                (attendance) =>
+                  attendance.spaceDataId === report.id &&
+                  attendance.companyId === appearance.companyId &&
+                  attendance.foundersCount > 0,
+              ))
+          );
+        });
+        if (invalid)
+          throw new DomainError(
+            "Reverse the BD verification before changing this attendance or Space status.",
+            409,
+          );
+      }
       await persistDiff(tx, before, after);
       if (command.type === "space-data.save" && command.payload.submit) {
         await ensureProgrammeWindow(tx);

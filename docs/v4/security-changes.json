@@ -2,9 +2,9 @@
   {
     "file": "server/handlers/public.ts",
     "name": "GET",
-    "reason": "Publish current participation terms; omit legacy award defaults. Submission and confirmation unchanged.",
+    "reason": "Resolve only the active referral display handle from the booking cookie without exposing partner records.",
     "originalSha256": "e6253cafa565f0951ca5c6d46d03dc423698dae63c42d0fa0bc1c168f020bd74",
-    "sha256": "0e2e3fb09d4241dc2ce329e4c00288e9b33e951ce3c93d63ba52b34ea1999a86"
+    "sha256": "c6ccf9dbb86e6c2fc14a9200321e0ad3e216c6639fffa35490a1d4f859916c6c"
   },
   {
     "file": "server/handlers/workspace.ts",
@@ -65,9 +65,9 @@
   {
     "file": "server/handlers/public.ts",
     "name": "POST",
+    "reason": "Keep origin and application validation and resolve locked referral attribution on the server, ignoring submitted handles for a referral link.",
     "originalSha256": "714e50f62f02baf27528bb45a11ec3087afcb19fe73227cbaf4b15b891e0f38b",
-    "sha256": "e7b7b715b569d9a89c6716237348a6ca9dbba31394dc8f441477d5cb70c5be09",
-    "reason": "Normalize and match an optional founder-submitted BD handle within the existing private application transaction, with no public lookup response."
+    "sha256": "d6739ddf1a41d608f9fa1e4835cc750e5492bc5525ffed725677e04e12a77564"
   },
   {
     "file": "server/services/space-managers.ts",

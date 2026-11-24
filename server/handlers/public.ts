@@ -15,6 +15,12 @@ import {
   normaliseKey,
 } from "@/lib/validation";
 import { approvedSeats, DomainError } from "@/lib/domain";
+import { cookies } from "next/headers";
+import {
+  activeReferral,
+  BD_REFERRAL_COOKIE,
+  referralSelection,
+} from "@/server/services/bd-referral";
 import { defaultSettings } from "@/lib/catalog";
 import { findBdPartnersByHandle } from "@/server/services/bd-registration";
 
@@ -24,6 +30,15 @@ export async function GET(
 ) {
   try {
     const { action } = await params;
+    if (action === "referral") {
+      const selected = await referralSelection();
+      const partner = selected ? await activeReferral(db(), selected) : null;
+      return json({
+        handle: partner?.name.startsWith("@") ? partner.name : null,
+        locked: Boolean(selected),
+        valid: Boolean(partner),
+      });
+    }
     if (action === "programme") {
       const settings = await db().setting.findUnique({
         where: { key: "programme" },
@@ -148,9 +163,15 @@ export async function POST(
       60 * 60000,
     );
     if (action === "apply") {
+      const selected = await referralSelection();
+      const input = await body(request);
       const { sessionId, ...p } = applicationSchema
         .extend({ sessionId: z.string().min(1).max(200).optional() })
-        .parse(await body(request));
+        .parse(
+          selected && input && typeof input === "object"
+            ? { ...input, bdReferrerXHandle: null }
+            : input,
+        );
       const configuration = await db().setting.findUnique({
         where: { key: "programme" },
       });
@@ -211,14 +232,26 @@ export async function POST(
               409,
             );
         }
-        const matchingPartners = data.bdReferrerXHandle
-          ? await findBdPartnersByHandle(tx, `@${data.bdReferrerXHandle}`)
-          : [];
+        const linkedPartner = selected
+          ? await activeReferral(tx, selected)
+          : null;
+        const matchingPartners =
+          !selected && data.bdReferrerXHandle
+            ? await findBdPartnersByHandle(tx, `@${data.bdReferrerXHandle}`)
+            : [];
         return tx.application.create({
           data: {
             ...data,
-            bdPartnerId:
-              matchingPartners.length === 1 ? matchingPartners[0].id : null,
+            bdReferrerXHandle: selected
+              ? linkedPartner?.name.startsWith("@")
+                ? linkedPartner.name.slice(1).toLowerCase()
+                : null
+              : data.bdReferrerXHandle,
+            bdPartnerId: selected
+              ? (linkedPartner?.id ?? null)
+              : matchingPartners.length === 1
+                ? matchingPartners[0].id
+                : null,
             id,
             reference: `FL-${id.slice(0, 8).toUpperCase()}`,
             dedupeKey: normaliseKey(p.xHandle, p.companyName),
@@ -238,6 +271,7 @@ export async function POST(
           },
         });
       });
+      if (selected) (await cookies()).delete(BD_REFERRAL_COOKIE);
       return json(
         {
           token: raw,

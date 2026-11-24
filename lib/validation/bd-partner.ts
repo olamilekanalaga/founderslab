@@ -18,6 +18,7 @@ export const optionalBdXHandle = z
   .transform((value) => value ?? null);
 
 export const bdRegistration = z.object({
+  fullName: entry.optional(),
   name: bdXHandle.transform((handle) => `@${handle}`),
   email: z.email().max(200),
   bank: entry,

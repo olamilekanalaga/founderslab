@@ -225,6 +225,7 @@ test("historical Prisma migrations remain byte-identical and BD tables are addit
         "prisma/migrations/202611240001_manager_all_spaces/migration.sql",
         "prisma/migrations/202611240002_bd_application_attribution/migration.sql",
         "prisma/migrations/202611240003_manual_manager_invitations/migration.sql",
+        "prisma/migrations/202611240004_bd_intelligence/migration.sql",
       )
       .sort(),
   );
