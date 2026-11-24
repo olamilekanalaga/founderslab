@@ -1,11 +1,11 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-test("public booking is light, backend-backed and limited to three Saturdays", async ({
+test("public booking is light, backend-backed and limited to three Sundays", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 393, height: 852 });
   await page.goto("/book?mode=demo");
-  await expect(page).toHaveURL(/\/#choose-a-saturday$/);
+  await expect(page).toHaveURL(/\/#choose-a-sunday$/);
   await expect(page.locator(".fl-preview-dates > button")).toHaveCount(3);
   await expect(page.getByText("Demo mode", { exact: true })).toHaveCount(0);
   await expect(page.locator(".public-footer")).toContainText("⭕️La_Crrypt💰₿");

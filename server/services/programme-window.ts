@@ -1,9 +1,9 @@
 import type { Prisma } from "@prisma/client";
 import {
-  saturdaySessions,
+  sundaySessions,
   londonDay,
-  saturdaySchedulePlan,
-} from "@/lib/dates/saturday-schedule";
+  sundaySchedulePlan,
+} from "@/lib/dates/sunday-schedule";
 import { DomainError } from "@/lib/domain";
 export const WINDOW_WEEKS = 8,
   CYCLE_WEEKS = 4;
@@ -19,7 +19,7 @@ export async function ensureProgrammeWindow(
     where: { id: "main" },
     create: {
       id: "main",
-      anchorDay: londonDay(saturdaySessions(now, 1)[0].startsAt),
+      anchorDay: londonDay(sundaySessions(now, 1)[0].startsAt),
     },
     update: {},
   });
@@ -29,7 +29,7 @@ export async function ensureProgrammeWindow(
       day.setUTCDate(day.getUTCDate() + 7 * (schedule.activeStart + i));
       return {
         position: schedule.activeStart + i,
-        slot: saturdaySessions(day, 1)[0],
+        slot: sundaySessions(day, 1)[0],
       };
     });
     for (const { position, slot } of slots) {
@@ -53,7 +53,7 @@ export async function ensureProgrammeWindow(
         const current = await tx.session.findUniqueOrThrow({
           where: { id: sessionId },
         });
-        const change = saturdaySchedulePlan([current], [slot]).update[0];
+        const change = sundaySchedulePlan([current], [slot]).update[0];
         if (change) {
           const { id, ...data } = change;
           await tx.session.update({ where: { id }, data });

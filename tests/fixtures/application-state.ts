@@ -21,7 +21,7 @@ export function createLocalBookingApplication(
         session.capacity - approvedSeats(state, sessionId),
         Date.parse(now),
       ),
-    "This Saturday is no longer available. Please choose another date.",
+    "This Sunday is no longer available. Please choose another date.",
   );
   const next = createLocalApplication(state, input, now);
   const application = next.applications.at(-1)!;

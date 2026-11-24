@@ -1,5 +1,5 @@
 import { taxonomyDefaults } from "./taxonomy-defaults";
-import { saturdaySessions } from "@/lib/dates/saturday-schedule";
+import { sundaySessions } from "@/lib/dates/sunday-schedule";
 import type { DataState } from "@/lib/types";
 import {
   defaultSettings,
@@ -436,16 +436,16 @@ export function makeSeed(): DataState {
     s.sessions.push({
       id: `up${i + 1}`,
       title: [
-        "Founder Saturday: product & people",
+        "Founder Sunday: product & people",
         "Making Web3 useful",
         "A founder’s distribution playbook",
         "What teams need next",
       ][i],
-      startsAt: at(12, 5 + i * 7, 19),
+      startsAt: at(12, 6 + i * 7, 19),
       timezone: "UTC",
       host: "⭕️La_Crrypt💰₿",
       capacity: 5,
-      deadline: at(12, 4 + i * 7, 19),
+      deadline: at(12, 5 + i * 7, 19),
       status: "Scheduled",
       researchStatus: "Not started",
       liveUrl: "",
@@ -455,7 +455,7 @@ export function makeSeed(): DataState {
       createdAt: at(11, 15),
       updatedAt: at(11, 15),
     });
-  for (const slot of saturdaySessions(new Date("2026-11-22T00:00:00Z"))) {
+  for (const slot of sundaySessions(new Date("2026-11-28T00:00:00Z"))) {
     if (
       s.sessions.some(
         (session) =>

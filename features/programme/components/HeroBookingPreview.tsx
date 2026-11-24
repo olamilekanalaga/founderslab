@@ -2,24 +2,28 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowRight, CalendarDays, Check, Mic2, RefreshCw } from "lucide-react";
-import { publicSlotOpen } from "@/lib/dates/booking";
+import { isSunday, publicSlotOpen } from "@/lib/dates/booking";
 import SessionTime from "@/components/shared/SessionTime";
 import { useProgrammeAvailability } from "./ProgrammeAvailability";
 export default function HeroBookingPreview() {
   const { availability, retry } = useProgrammeAvailability();
   const [selected, setSelected] = useState("");
   const upcoming = availability.sessions
-    .filter((session) => Date.parse(session.startsAt) > availability.asOf)
+    .filter(
+      (session) =>
+        isSunday(session) && Date.parse(session.startsAt) > availability.asOf,
+    )
     .slice(0, 3);
   const chosen =
     upcoming.find((session) => session.id === selected) ||
     upcoming.find((session) => publicSlotOpen(session, session.availableSeats));
   return (
     <aside
-      id="choose-a-saturday"
+      id="choose-a-sunday"
       className="fl-preview-wrap"
       aria-label="Live programme booking preview"
     >
+      <span id="choose-a-saturday" aria-hidden="true" />
       <div className="fl-preview-card">
         <div className="fl-preview-heading">
           <span className="fl-preview-icon">
@@ -27,14 +31,11 @@ export default function HeroBookingPreview() {
           </span>
           <div>
             <strong>Your next conversation</strong>
-            <span>Find your Saturday</span>
+            <span>Find your Sunday</span>
           </div>
           <span className="fl-free-label">Free</span>
         </div>
-        <div
-          className="fl-preview-dates"
-          aria-label="Upcoming Saturdays preview"
-        >
+        <div className="fl-preview-dates" aria-label="Upcoming Sundays preview">
           {availability.status === "loading" ? (
             <div className="fl-preview-loading" role="status">
               <span />
@@ -54,7 +55,7 @@ export default function HeroBookingPreview() {
           ) : !upcoming.length ? (
             <div className="fl-preview-message" role="status">
               <strong>The next conversation is on its way.</strong>
-              <p>No upcoming Saturdays are currently published.</p>
+              <p>No upcoming Sundays are currently published.</p>
             </div>
           ) : (
             upcoming.map((session) => {
@@ -121,7 +122,7 @@ export default function HeroBookingPreview() {
               className="fl-action fl-action-primary"
               href={`/apply?session=${encodeURIComponent(chosen.id)}`}
             >
-              Choose this Saturday <ArrowRight size={17} aria-hidden="true" />
+              Choose this Sunday <ArrowRight size={17} aria-hidden="true" />
             </Link>
           </div>
         )}

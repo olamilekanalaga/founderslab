@@ -223,7 +223,7 @@ export async function POST(
             )
           )
             throw new DomainError(
-              "This Saturday is no longer available. Please choose another date.",
+              "This Sunday is no longer available. Please choose another date.",
               409,
             );
         }
@@ -348,7 +348,7 @@ export async function POST(
           const state = await loadState(tx);
           if (approvedSeats(state, session.id) >= session.capacity)
             throw new DomainError(
-              "This Saturday is full. Please choose another date.",
+              "This Sunday is full. Please choose another date.",
               409,
             );
           const status = "Pending";

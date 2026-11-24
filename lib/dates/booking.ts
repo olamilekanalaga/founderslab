@@ -1,4 +1,4 @@
-import { LONDON_TIME_ZONE } from "@/lib/dates/saturday-schedule";
+import { LONDON_TIME_ZONE } from "@/lib/dates/sunday-schedule";
 export const BOOKING_TIME_ZONE = LONDON_TIME_ZONE;
 export const BOOKING_TIME_LABEL = "United Kingdom · London (GMT / BST)";
 export interface PublicSession {
@@ -23,12 +23,12 @@ export function sessionDay(session: SessionDate) {
     day: "2-digit",
   }).format(new Date(session.startsAt));
 }
-export function isSaturday(session: SessionDate) {
+export function isSunday(session: SessionDate) {
   return (
     new Intl.DateTimeFormat("en-US", {
       weekday: "short",
       timeZone: BOOKING_TIME_ZONE,
-    }).format(new Date(session.startsAt)) === "Sat"
+    }).format(new Date(session.startsAt)) === "Sun"
   );
 }
 export function publicSlotOpen(
@@ -38,7 +38,7 @@ export function publicSlotOpen(
 ) {
   return (
     session.status === "Scheduled" &&
-    isSaturday(session) &&
+    isSunday(session) &&
     seats > 0 &&
     new Date(session.startsAt).getTime() > now &&
     new Date(session.deadline).getTime() >= now

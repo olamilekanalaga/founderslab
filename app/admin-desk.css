@@ -611,7 +611,7 @@ html:has(.admin-desk)::-webkit-scrollbar-thumb:hover {
 .admin-desk .desk-details-body > .panel:last-child {
   padding: 18px;
 }
-.admin-desk .current-saturday-slots {
+.admin-desk .current-sunday-slots {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(28px, 1fr));
 }
@@ -1211,18 +1211,18 @@ html:has(.admin-desk)::-webkit-scrollbar-thumb:hover {
   margin: 20px auto 0;
 }
 
-.admin-desk .saturday-lineup {
+.admin-desk .sunday-lineup {
   min-width: 0;
   overflow-wrap: anywhere;
 }
 
-.saturday-lineup ol {
+.sunday-lineup ol {
   display: grid;
   gap: 12px;
   padding-inline-start: 1.5rem;
 }
 
-.saturday-lineup li p {
+.sunday-lineup li p {
   margin: 4px 0 0;
 }
 

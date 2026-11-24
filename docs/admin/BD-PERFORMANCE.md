@@ -4,7 +4,7 @@ Register or edit a partner in **Admin operations → BD details**. Registration 
 
 Existing partners with unambiguous X usernames are backfilled from those handles. Older display-name records and duplicate legacy handles receive distinct, stable fallback identifiers. For those records an owner or All Spaces manager can add the current X username without changing the fallback URL. Use the displayed link.
 
-A public link issues a short-lived, hashed attribution token and follows the existing Saturday booking flow. The server resolves the token again when saving the application. Revoked, expired, invalid and unknown link selections result in an application without a linked partner. Applications started without a referral link have no referral input. The server ignores any injected referral handle or partner ID. The owner or an All Spaces manager can review unmatched historical applications. An already linked application cannot be reassigned through that queue.
+A public link issues a short-lived, hashed attribution token and follows the existing Sunday booking flow. The server resolves the token again when saving the application. Revoked, expired, invalid and unknown link selections result in an application without a linked partner. Applications started without a referral link have no referral input. The server ignores any injected referral handle or partner ID. The owner or an All Spaces manager can review unmatched historical applications. An already linked application cannot be reassigned through that queue.
 
 ## Verification and payments
 

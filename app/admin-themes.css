@@ -325,7 +325,7 @@
     color: var(--accent);
   }
 
-  .current-saturday-slots > span:not(.filled) {
+  .current-sunday-slots > span:not(.filled) {
     background: var(--desk-soft);
     border-color: var(--border);
     color: var(--muted);

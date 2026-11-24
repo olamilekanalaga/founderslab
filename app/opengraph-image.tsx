@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
 export const alt =
-  "Founders Lab. Meet the founders building Web3. Saturdays on X Spaces with ⭕️La_Crrypt💰₿.";
+  "Founders Lab. Meet the founders building Web3. Sundays on X Spaces with ⭕️La_Crrypt💰₿.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 export default async function Image() {
@@ -61,7 +61,7 @@ export default async function Image() {
           color: "#78688a",
         }}
       >
-        <span>Saturdays on X Spaces. Hosted by </span>
+        <span>Sundays on X Spaces. Hosted by </span>
         {/* Local vector symbols preserve the host identity without remote emoji downloads. */}
         <span style={{ display: "flex", alignItems: "center", marginLeft: 6 }}>
           <svg width="23" height="23" viewBox="0 0 24 24">

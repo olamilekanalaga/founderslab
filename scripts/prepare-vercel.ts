@@ -42,7 +42,7 @@ console.log(
 );
 run("scripts/migrate.ts", direct);
 run("scripts/seed.ts", application);
-run("scripts/publish-saturdays.ts", application);
+run("scripts/publish-sundays.ts", application);
 if (process.env.BOOTSTRAP_ADMIN_EMAIL && process.env.BOOTSTRAP_ADMIN_PASSWORD) {
   run("scripts/admin.ts", application);
 } else {

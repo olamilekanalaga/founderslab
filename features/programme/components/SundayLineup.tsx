@@ -3,18 +3,18 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useWorkspace } from "@/components/layout/WorkspaceContext";
-import { currentSaturday } from "@/features/spaces/lib/current-saturday";
+import { currentSunday } from "@/features/spaces/lib/current-sunday";
 
 const londonDate = new Intl.DateTimeFormat("en-GB", {
   timeZone: "Europe/London",
   dateStyle: "long",
 });
 
-export default function SaturdayLineup({ now }: { now: number }) {
+export default function SundayLineup({ now }: { now: number }) {
   const { state, path } = useWorkspace();
   const [week, setWeek] = useState(0);
   const [copyStatus, setCopyStatus] = useState("");
-  const { startsAt, session } = currentSaturday(state, new Date(now), week);
+  const { startsAt, session } = currentSunday(state, new Date(now), week);
   const projects = new Map<
     string,
     { name: string; description: string; founders: Set<string> }
@@ -62,7 +62,7 @@ export default function SaturdayLineup({ now }: { now: number }) {
     );
     try {
       await navigator.clipboard.writeText(
-        [`Founders Lab · Saturday, ${date} · 7:00 PM UK`, ...rows].join("\n\n"),
+        [`Founders Lab · Sunday, ${date} · 7:00 PM UK`, ...rows].join("\n\n"),
       );
       setCopyStatus("Lineup copied.");
     } catch {
@@ -74,16 +74,16 @@ export default function SaturdayLineup({ now }: { now: number }) {
 
   return (
     <section
-      className="panel padded saturday-lineup"
+      className="panel padded sunday-lineup"
       aria-labelledby="lineup-title"
     >
       <h2 id="lineup-title">Confirmed founder lineup</h2>
       <div
         className="heading-actions"
-        aria-label="Choose a Saturday"
+        aria-label="Choose a Sunday"
         role="group"
       >
-        {["This Saturday", "Next Saturday"].map((label, index) => (
+        {["This Sunday", "Next Sunday"].map((label, index) => (
           <button
             key={label}
             type="button"
@@ -98,7 +98,7 @@ export default function SaturdayLineup({ now }: { now: number }) {
           </button>
         ))}
       </div>
-      <p>Saturday, {date} · 7:00 PM UK</p>
+      <p>Sunday, {date} · 7:00 PM UK</p>
       {!session ? (
         <p>No Founder Space scheduled.</p>
       ) : session.status === "Cancelled" ? (

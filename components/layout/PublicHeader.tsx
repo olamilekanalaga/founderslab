@@ -75,10 +75,10 @@ export default function PublicHeader() {
         ))}
         <Link
           className="fl-action fl-action-primary"
-          href="/#choose-a-saturday"
+          href="/#choose-a-sunday"
           onClick={() => setOpen(false)}
         >
-          Choose a Saturday <ArrowUpRight size={17} aria-hidden="true" />
+          Choose a Sunday <ArrowUpRight size={17} aria-hidden="true" />
         </Link>
       </nav>
     </header>

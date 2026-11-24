@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-import { saturdaySessions } from "@/lib/dates/saturday-schedule";
+import { sundaySessions } from "@/lib/dates/sunday-schedule";
 import { publicSlotOpen, type PublicSession } from "@/lib/dates/booking";
 
 const headline =
@@ -89,8 +89,8 @@ for (const [label, width, height] of [
       .locator(".fl-hero-actions")
       .getByRole("link", { name: "Book a Founder Space" })
       .click();
-    await expect(page).toHaveURL(/\/#choose-a-saturday$/);
-    await expect(page.locator("#choose-a-saturday")).toBeVisible();
+    await expect(page).toHaveURL(/\/#choose-a-sunday$/);
+    await expect(page.locator("#choose-a-sunday")).toBeVisible();
   });
 }
 
@@ -121,7 +121,7 @@ test("all founder pages expose only public navigation and no founder-award promi
 test("full, closed, empty and failed availability never invent bookable seats or reveal a host login", async ({
   page,
 }) => {
-  const sessions = saturdaySessions(new Date(), 3).map((s, i) => ({
+  const sessions = sundaySessions(new Date(), 3).map((s, i) => ({
     ...s,
     availableSeats: i === 0 ? 0 : i === 1 ? 1 : 4,
     status: i === 2 ? "Cancelled" : "Scheduled",
@@ -141,7 +141,7 @@ test("full, closed, empty and failed availability never invent bookable seats or
     "1 slot left",
   );
   await expect(
-    page.getByRole("link", { name: "Choose this Saturday" }),
+    page.getByRole("link", { name: "Choose this Sunday" }),
   ).toHaveAttribute("href", `/apply?session=${sessions[1].id}`);
   await expect(page.locator(".fl-preview-dates > button").nth(2)).toContainText(
     "Closed",
@@ -155,12 +155,12 @@ test("full, closed, empty and failed availability never invent bookable seats or
   );
   await page.goto("/");
   await expect(page.locator(".fl-preview-message")).toContainText(
-    "No upcoming Saturdays",
+    "No upcoming Sundays",
   );
   await expect(page.locator(".fl-preview-dates > button")).toHaveCount(0);
   await page.goto("/book");
   await expect(page.locator(".fl-preview-message")).toContainText(
-    "No upcoming Saturdays",
+    "No upcoming Sundays",
   );
   await expect(page.locator('a[href="/signin"]')).toHaveCount(0);
   await page.unroute("**/api/public/sessions");

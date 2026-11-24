@@ -17,7 +17,7 @@ export default function ErrorPage({
         <button className="button primary" onClick={reset}>
           Try again
         </button>
-        <Link className="text-link" href="/#choose-a-saturday">
+        <Link className="text-link" href="/#choose-a-sunday">
           Open the booking calendar
         </Link>
       </section>

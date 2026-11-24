@@ -4,7 +4,7 @@ import { ArrowUpRight } from "lucide-react";
 import { useWorkspace } from "@/components/layout/WorkspaceContext";
 import { Status, Empty, ExternalLink } from "@/components/ui";
 import { approvedSeats } from "@/lib/domain";
-import { LONDON_TIME_ZONE } from "@/lib/dates/saturday-schedule";
+import { LONDON_TIME_ZONE } from "@/lib/dates/sunday-schedule";
 
 const sessionDate = new Intl.DateTimeFormat("en-GB", {
   dateStyle: "medium",

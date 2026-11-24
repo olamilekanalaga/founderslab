@@ -19,7 +19,7 @@ export default function PublicFooter() {
       </div>
       <div className="fl-footer-bottom">
         <span>Built around the conversation.</span>
-        <span>Saturdays, 7 PM London. Participation subject to approval.</span>
+        <span>Sundays, 7 PM London. Participation subject to approval.</span>
       </div>
     </footer>
   );
