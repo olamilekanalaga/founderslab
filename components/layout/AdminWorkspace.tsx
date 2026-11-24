@@ -113,7 +113,6 @@ function Shell({ section, id }: { section: Section; id?: string }) {
       }
       const savedTheme = localStorage.getItem("founderslab-theme");
       if (savedTheme && Object.hasOwn(workspaceThemes, savedTheme)) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setTheme(savedTheme as WorkspaceTheme);
       }
     } catch {}
