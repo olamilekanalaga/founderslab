@@ -1627,3 +1627,52 @@
 .admin-studio .studio-sessions-table td:last-child a + a {
   margin-top: 6px;
 }
+
+.admin-studio .studio-bookings-table {
+  min-width: 580px;
+}
+
+.admin-studio .studio-bookings-table th[scope="row"] {
+  text-align: left;
+  font-size: 13px;
+}
+
+.admin-studio .studio-bookings-table th small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.admin-studio .studio-bookings-table .booking-status-control {
+  min-height: 44px;
+  min-width: 110px;
+  font-weight: 600;
+}
+
+.admin-studio .booking-status-control[data-status="Approved"],
+.admin-studio .booking-status-control[data-status="Attended"] {
+  background-color: #e9f6ee;
+  border-color: #a3cbb1;
+  color: #215b38;
+}
+
+.admin-studio .booking-status-control[data-status="Pending"],
+.admin-studio .booking-status-control[data-status="Waitlisted"] {
+  background-color: #fff5de;
+  border-color: #d8bb77;
+  color: #6d4707;
+}
+
+.admin-studio .booking-status-control[data-status="Declined"],
+.admin-studio .booking-status-control[data-status="Cancelled"],
+.admin-studio .booking-status-control[data-status="No-show"] {
+  background-color: #fcecec;
+  border-color: #dfadad;
+  color: #8d3030;
+}
+
+.admin-studio .booking-status-control option {
+  background-color: #fff;
+  color: var(--ink);
+}

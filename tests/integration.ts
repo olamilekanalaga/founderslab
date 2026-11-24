@@ -1684,7 +1684,14 @@ try {
     page.on("pageerror", (e) => errors.push(e.message));
     await page.goto(origin + "/signin");
     await page.getByLabel("Email").fill(env.BOOTSTRAP_ADMIN_EMAIL);
-    await page.getByLabel("Password", { exact: true }).fill(password);
+    const passwordInput = page.getByLabel("Password", { exact: true });
+    await passwordInput.fill(password);
+    assert.equal(await passwordInput.getAttribute("type"), "password");
+    await page.getByRole("button", { name: "Show password" }).click();
+    assert.equal(await passwordInput.getAttribute("type"), "text");
+    assert.ok((await passwordInput.inputValue()) === password);
+    await page.getByRole("button", { name: "Hide password" }).click();
+    assert.equal(await passwordInput.getAttribute("type"), "password");
     await page.getByRole("button", { name: "Sign in", exact: true }).click();
     await page.waitForURL("**/dashboard");
     await page.locator(".desk-grid").waitFor();
@@ -2677,11 +2684,51 @@ try {
     );
     const bookings = page.getByRole("button", { name: "Manage bookings" });
     await bookings.click();
-    await page
-      .locator(".workflow-mobile")
-      .getByLabel(/Booking status/)
-      .first()
-      .waitFor();
+    const bookingTable = page.getByRole("table", {
+      name: "Founder booking requests",
+    });
+    const status = bookingTable
+      .getByRole("combobox", { name: /Booking status/ })
+      .first();
+    await status.waitFor();
+    assert.equal(
+      await status.getAttribute("data-status"),
+      await status.inputValue(),
+    );
+    assert.ok(
+      await status.evaluate((control) =>
+        [
+          "rgb(233, 246, 238)",
+          "rgb(255, 245, 222)",
+          "rgb(252, 236, 236)",
+        ].includes(getComputedStyle(control).backgroundColor),
+      ),
+    );
+    assert.ok(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    );
+    const pendingStatus = bookingTable
+      .locator('select[data-status="Pending"]')
+      .first();
+    const updateBooking = page.waitForResponse(
+      (response) =>
+        response.url().endsWith("/api/workspace") &&
+        response.request().method() === "POST",
+    );
+    await pendingStatus.selectOption("Declined");
+    assert.equal((await updateBooking).status(), 200);
+    const declinedStatus = bookingTable
+      .locator('select[data-status="Declined"]')
+      .first();
+    await declinedStatus.waitFor();
+    assert.equal(
+      await declinedStatus.evaluate(
+        (control) => getComputedStyle(control).backgroundColor,
+      ),
+      "rgb(252, 236, 236)",
+    );
     await page.getByRole("button", { name: "BD details" }).click();
     await page
       .getByRole("heading", { name: "Register a BD partner" })

@@ -3,11 +3,12 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import BrandMark from "@/components/shared/BrandMark";
-import { ArrowRight, ShieldCheck } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, ShieldCheck } from "lucide-react";
 export default function AuthScreen({ configured }: { configured: boolean }) {
   const router = useRouter();
   const [email, setEmail] = useState(""),
     [password, setPassword] = useState(""),
+    [showPassword, setShowPassword] = useState(false),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
   return (
@@ -67,18 +68,36 @@ export default function AuthScreen({ configured }: { configured: boolean }) {
               />
             </label>
           }
-          <label>
-            Password
-            <input
-              type="password"
-              autoComplete="current-password"
-              minLength={1}
-              maxLength={200}
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </label>
+          <div className="signin-password">
+            <label htmlFor="signin-password">Password</label>
+            <div className="signin-password-input">
+              <input
+                id="signin-password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
+                autoCapitalize="none"
+                spellCheck={false}
+                minLength={1}
+                maxLength={200}
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <button
+                className="icon-button"
+                type="button"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-controls="signin-password"
+                onClick={() => setShowPassword((visible) => !visible)}
+              >
+                {showPassword ? (
+                  <EyeOff size={20} aria-hidden="true" />
+                ) : (
+                  <Eye size={20} aria-hidden="true" />
+                )}
+              </button>
+            </div>
+          </div>
           {error && (
             <p className="error" role="alert">
               {error}
