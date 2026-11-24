@@ -9,6 +9,7 @@
   --border: #2c3850;
   --palette-accent: #8ca6ff;
   --primary-text: #111726;
+  --accent-weight: 74%;
 }
 
 .admin-desk[data-workspace-theme="classic"] {
@@ -16,7 +17,7 @@
   --surface: #fcfcfc;
   --desk-soft: #f7f7f7;
   --ink: #1a1c1f;
-  --muted: #767676;
+  --muted: #656565;
   --border: #ededed;
   --palette-accent: #339cff;
 }
@@ -26,7 +27,7 @@
   --surface: #fff;
   --desk-soft: #f5f5f5;
   --ink: #1c1c1c;
-  --muted: #787878;
+  --muted: #656565;
   --border: #e8e8e8;
   --palette-accent: #0285ff;
 }
@@ -46,7 +47,7 @@
   --surface: #fff;
   --desk-soft: #fff0f8;
   --ink: #261526;
-  --muted: #856f80;
+  --muted: #735d6e;
   --border: #f2b9da;
   --palette-accent: #7450ff;
 }
@@ -61,6 +62,7 @@
   --border: #3f5138;
   --palette-accent: #b6ff3b;
   --primary-text: #121315;
+  --accent-weight: 74%;
 }
 
 .workspace-theme-picker {
@@ -79,7 +81,12 @@
 .admin-desk.app-shell[data-workspace-theme]:not(
     [data-workspace-theme="founders"]
   ) {
-  --accent: color-mix(in srgb, var(--palette-accent) 74%, var(--ink));
+  --accent: color-mix(
+    in srgb,
+    var(--palette-accent) var(--accent-weight, 58%),
+    var(--ink)
+  );
+  --control-border: color-mix(in srgb, var(--ink) 48%, var(--surface));
   --forest: var(--accent);
   --light: var(--desk-soft);
   --glass: var(--surface);
@@ -209,13 +216,101 @@
 }
 
 .admin-desk[data-workspace-theme]:not([data-workspace-theme="founders"]) {
-  :is(.table-wrap, tbody tr) {
+  :is(
+    .table-wrap,
+    tbody tr,
+    .empty,
+    .segmented,
+    .studio-segmented,
+    .search-input,
+    .workflow-card,
+    .studio-review-actions,
+    .record-form .form-actions,
+    .taxonomy-grid > button
+  ) {
     background: var(--surface);
     border-color: var(--border);
   }
 
   :is(thead, tbody tr:hover) {
     background: var(--desk-soft);
+  }
+
+  tbody th[scope="row"] {
+    background: transparent;
+  }
+
+  :is(.segmented, .studio-segmented) button {
+    background: transparent;
+    color: var(--muted);
+  }
+
+  :is(.segmented, .studio-segmented) button[aria-pressed="true"] {
+    background: var(--desk-soft);
+    color: var(--accent);
+  }
+
+  :is(
+    .empty > svg,
+    .studio-review-context,
+    .studio-review-table th,
+    .studio-applicant-comments,
+    .studio-review-approved,
+    .form-note,
+    .time-preview
+  ) {
+    background: var(--desk-soft);
+    border-color: var(--border);
+    color: var(--ink);
+  }
+
+  :is(
+    .empty p,
+    .search-input svg,
+    .directory-view-bar,
+    .account-detail p,
+    .workflow-card small,
+    .studio-review-actions > span,
+    .studio-review-extra summary,
+    .studio-applicant-comments b,
+    .studio-review-approved p,
+    .time-preview b
+  ) {
+    color: var(--muted);
+  }
+
+  :is(.page-heading .page-eyebrow, .studio-review-approved > svg) {
+    color: var(--accent);
+  }
+
+  :is(
+    .search-input,
+    .segmented,
+    .studio-segmented,
+    .button:not(.primary),
+    input:not([type="checkbox"]):not([type="radio"]),
+    textarea,
+    select:not(.booking-status-control)
+  ) {
+    border-color: var(--control-border);
+  }
+
+  :is(.filter-bar, .modal) .search-input input {
+    background: transparent;
+  }
+
+  .search-input:focus-within {
+    border-color: var(--accent);
+    outline-color: var(--accent);
+  }
+
+  :is(input, textarea)::placeholder {
+    color: var(--muted);
+    opacity: 1;
+  }
+
+  :is(.tabs, .tab-row) button.active {
+    border-bottom-color: var(--accent);
   }
 
   :is(td, th, .tabs, .tab-row, .workspace-footer) {
@@ -266,6 +361,68 @@
   }
 
   .desk-next :is(div, small, svg, strong) {
+    color: var(--ink);
+  }
+}
+
+.admin-desk:is(
+  [data-workspace-theme="superteam"],
+  [data-workspace-theme="pixel"]
+) {
+  --theme-success: #8bd6a6;
+  --theme-warning: #f2ca7c;
+  --theme-danger: #ffabae;
+
+  :is(
+    .status.success,
+    .booking-status-control[data-status="Approved"],
+    .booking-status-control[data-status="Attended"]
+  ) {
+    --status-color: var(--theme-success);
+  }
+
+  :is(
+    .status.warning,
+    .booking-status-control[data-status="Pending"],
+    .booking-status-control[data-status="Waitlisted"],
+    .space-managers-settings .notice,
+    .discard-note
+  ) {
+    --status-color: var(--theme-warning);
+  }
+
+  :is(
+    .status.danger,
+    .booking-status-control[data-status="Declined"],
+    .booking-status-control[data-status="Cancelled"],
+    .booking-status-control[data-status="No-show"]
+  ) {
+    --status-color: var(--theme-danger);
+  }
+
+  :is(
+    .status.success,
+    .status.warning,
+    .status.danger,
+    .booking-status-control,
+    .space-managers-settings .notice,
+    .discard-note
+  ) {
+    color: var(--status-color, var(--ink));
+    background-color: color-mix(
+      in srgb,
+      var(--status-color, var(--border)) 13%,
+      var(--surface)
+    );
+    border-color: color-mix(
+      in srgb,
+      var(--status-color, var(--border)) 42%,
+      var(--surface)
+    );
+  }
+
+  .booking-status-control option {
+    background-color: var(--surface);
     color: var(--ink);
   }
 }
