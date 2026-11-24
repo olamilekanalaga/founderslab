@@ -73,7 +73,9 @@ export default function Directory({
   const visibleCompanies = companies.filter(
     (c) =>
       (!country || c.country === country) &&
-      `${c.name} ${c.xHandle || ""} ${c.description}`.toLowerCase().includes(query.toLowerCase()),
+      `${c.name} ${c.xHandle || ""} ${c.description}`
+        .toLowerCase()
+        .includes(query.toLowerCase()),
   );
   const count = kind === "founders" ? founders.length : visibleCompanies.length;
   const currentPage = Math.min(
@@ -161,6 +163,22 @@ export default function Directory({
           </button>
         )}
       </div>
+      <nav className="heading-actions" aria-label="Directory views">
+        <Link
+          className={kind === "founders" ? "button primary" : "button"}
+          href={path("founders")}
+          aria-current={kind === "founders" ? "page" : undefined}
+        >
+          Founder
+        </Link>
+        <Link
+          className={kind === "companies" ? "button primary" : "button"}
+          href={path("companies")}
+          aria-current={kind === "companies" ? "page" : undefined}
+        >
+          Company
+        </Link>
+      </nav>
       <form
         className="filter-bar"
         onSubmit={(e) => {

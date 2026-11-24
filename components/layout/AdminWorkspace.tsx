@@ -7,7 +7,6 @@ import BrandMark from "@/components/shared/BrandMark";
 import {
   LayoutDashboard,
   Users,
-  Building2,
   Mic2,
   ChartNoAxesCombined,
   Search,
@@ -40,10 +39,8 @@ import SpaceManagersSettings from "@/features/space-managers/components/SpaceMan
 import TeamSettings from "@/features/settings/components/Settings";
 const navigation = [
   { id: "dashboard", label: "Overview", icon: LayoutDashboard },
-  { id: "founders", label: "Founders", icon: Users },
-  { id: "companies", label: "Companies", icon: Building2 },
+  { id: "founders", label: "Directory", icon: Users },
   { id: "operations", label: "Admin operations", icon: Mic2 },
-  { id: "owner-invitations", label: "Owner invitations", icon: ShieldCheck },
   { id: "reports", label: "Reports", icon: ChartNoAxesCombined },
   { id: "settings", label: "Settings", icon: SettingsIcon },
 ] as const;
@@ -141,12 +138,14 @@ function Shell({ section, id }: { section: Section; id?: string }) {
         <Link
           className={
             navId === section ||
+            (navId === "founders" && section === "companies") ||
             (navId === "operations" && section === "spaces")
               ? "active"
               : ""
           }
           aria-current={
             navId === section ||
+            (navId === "founders" && section === "companies") ||
             (navId === "operations" && section === "spaces")
               ? "page"
               : undefined
@@ -163,11 +162,15 @@ function Shell({ section, id }: { section: Section; id?: string }) {
     </nav>
   );
   const title =
-    section === "settings"
-      ? "Settings"
-      : section === "spaces"
-        ? "Founder Spaces"
-        : navigation.find((n) => n.id === section)?.label;
+    section === "owner-invitations"
+      ? "Owner invitations"
+      : section === "companies"
+        ? "Directory"
+        : section === "settings"
+          ? "Settings"
+          : section === "spaces"
+            ? "Founder Spaces"
+            : navigation.find((n) => n.id === section)?.label;
   const can = viewer.permissions.includes(SECTION_PERMISSIONS[section]);
   const role = ROLES[viewer.roleId]?.name || viewer.roleId;
   const logout = (
