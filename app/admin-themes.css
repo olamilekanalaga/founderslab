@@ -295,7 +295,7 @@
     border-color: var(--control-border);
   }
 
-  .search-input input {
+  :is(.filter-bar, .modal) .search-input input {
     background: transparent;
   }
 
