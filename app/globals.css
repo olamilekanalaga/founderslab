@@ -2550,6 +2550,25 @@ td select {
   font-size: 16px;
   min-height: 44px;
 }
+.signin-password {
+  display: grid;
+  gap: 8px;
+}
+.signin-password-input {
+  position: relative;
+}
+.auth-card .signin-password-input input {
+  width: 100%;
+  padding-inline-end: 48px;
+}
+.signin-password-input .icon-button {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 1px;
+  margin-block: auto;
+  width: 44px;
+  height: 44px;
+}
 .auth-card > .text-link {
   margin-top: 25px;
 }

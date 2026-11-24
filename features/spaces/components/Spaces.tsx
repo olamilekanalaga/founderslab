@@ -369,88 +369,94 @@ export default function Spaces({
               )}
             </section>
           ) : (
-            <section className="panel workflow-desktop">
-              <div
-                className="table-wrap"
-                tabIndex={0}
-                role="region"
-                aria-label="Founder booking requests"
-              >
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Project</th>
-                      <th>Space</th>
-                      <th>People expected</th>
-                      <th>Booking status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {visibleBookings.map((b) => (
-                      <tr key={b.id}>
-                        <td>
-                          <b>
-                            {
-                              s.applications.find(
-                                (a) => a.id === b.applicationId,
-                              )?.companyName
-                            }
-                          </b>
-                          <small>
-                            {
-                              s.applications.find(
-                                (a) => a.id === b.applicationId,
-                              )?.founderName
-                            }
-                          </small>
-                        </td>
-                        <td>
-                          <Link
-                            className="text-link"
-                            href={path("spaces", b.sessionId)}
-                          >
-                            {
-                              s.sessions.find((v) => v.id === b.sessionId)
-                                ?.title
-                            }
-                          </Link>
-                        </td>
-                        <td>{b.speakers}</td>
-                        <td>
-                          {can ? (
-                            <select
-                              aria-label={`Booking status ${b.id}`}
-                              disabled={busy}
-                              value={b.status}
-                              onChange={(e) =>
-                                void commit({
-                                  type: "booking.review",
-                                  payload: {
-                                    id: b.id,
-                                    status: e.target.value,
-                                  },
-                                })
-                              }
-                            >
-                              {BOOKING_STATUSES.map((v) => (
-                                <option key={v}>{v}</option>
-                              ))}
-                            </select>
-                          ) : (
-                            <Status value={b.status} />
-                          )}
-                        </td>
+            <section className="panel">
+              {visibleBookings.length ? (
+                <div
+                  className="table-wrap"
+                  tabIndex={0}
+                  role="region"
+                  aria-label="Booking requests table"
+                >
+                  <table
+                    className="studio-bookings-table"
+                    aria-label="Founder booking requests"
+                  >
+                    <thead>
+                      <tr>
+                        <th scope="col">Project / founder</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">People expected</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {!visibleBookings.length && (
-                  <Empty title="No matching bookings">
-                    Pending requests appear here. Approve a request to reserve a
-                    project seat.
-                  </Empty>
-                )}
-              </div>
+                    </thead>
+                    <tbody>
+                      {visibleBookings.map((booking) => {
+                        const application = s.applications.find(
+                          (item) => item.id === booking.applicationId,
+                        );
+                        const session = s.sessions.find(
+                          (item) => item.id === booking.sessionId,
+                        );
+                        const project =
+                          application?.companyName || "Founder project";
+                        return (
+                          <tr key={booking.id}>
+                            <th scope="row">
+                              {project}
+                              {application?.founderName && (
+                                <small>{application.founderName}</small>
+                              )}
+                            </th>
+                            <td>
+                              {can ? (
+                                <select
+                                  className="booking-status-control"
+                                  data-status={booking.status}
+                                  aria-label={`Booking status for ${project}`}
+                                  disabled={busy}
+                                  value={booking.status}
+                                  onChange={(e) =>
+                                    void commit({
+                                      type: "booking.review",
+                                      payload: {
+                                        id: booking.id,
+                                        status: e.target.value,
+                                      },
+                                    })
+                                  }
+                                >
+                                  {BOOKING_STATUSES.map((status) => (
+                                    <option key={status}>{status}</option>
+                                  ))}
+                                </select>
+                              ) : (
+                                <Status value={booking.status} />
+                              )}
+                            </td>
+                            <td>
+                              <Link
+                                className="text-link"
+                                href={path("spaces", booking.sessionId)}
+                              >
+                                {session?.title || "Open Space"}
+                              </Link>
+                              {session && (
+                                <small>{dateTime(session.startsAt)} UTC</small>
+                              )}
+                            </td>
+                            <td>{booking.speakers}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <Empty title="No matching bookings">
+                  Pending requests appear here. Approve a request to reserve a
+                  project seat.
+                </Empty>
+              )}
             </section>
           )}
           {tab === "applications" && (
@@ -487,64 +493,6 @@ export default function Spaces({
                 <section className="panel">
                   <Empty title="No applications to review">
                     New founder submissions will appear here.
-                  </Empty>
-                </section>
-              )}
-            </div>
-          )}
-          {tab === "bookings" && (
-            <div className="workflow-mobile">
-              {s.bookings
-                .filter((b) => filter === "All" || b.status === filter)
-                .map((b) => {
-                  const application = s.applications.find(
-                    (a) => a.id === b.applicationId,
-                  );
-                  return (
-                    <article className="workflow-card" key={b.id}>
-                      <b>{application?.companyName || "Founder project"}</b>
-                      <small>{application?.founderName}</small>
-                      <p>
-                        {s.sessions.find((v) => v.id === b.sessionId)?.title}
-                      </p>
-                      <Link
-                        className="text-link"
-                        href={path("spaces", b.sessionId)}
-                      >
-                        Open Space
-                        <ArrowLeft size={15} />
-                      </Link>
-                      {can ? (
-                        <label>
-                          Booking status
-                          <select
-                            aria-label={`Booking status ${b.id}`}
-                            disabled={busy}
-                            value={b.status}
-                            onChange={(e) =>
-                              void commit({
-                                type: "booking.review",
-                                payload: { id: b.id, status: e.target.value },
-                              })
-                            }
-                          >
-                            {BOOKING_STATUSES.map((v) => (
-                              <option key={v}>{v}</option>
-                            ))}
-                          </select>
-                        </label>
-                      ) : (
-                        <Status value={b.status} />
-                      )}
-                    </article>
-                  );
-                })}
-              {!s.bookings.some(
-                (b) => filter === "All" || b.status === filter,
-              ) && (
-                <section className="panel">
-                  <Empty title="No matching bookings">
-                    Requests appear here before project seats are approved.
                   </Empty>
                 </section>
               )}
