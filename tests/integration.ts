@@ -2994,6 +2994,190 @@ try {
   pass(
     "BD X username registration, protected bank details, two reward cycles, concurrent duplicate prevention and manager payment recording",
   );
+  const manualEmail = "manual-manager@integration.example.invalid";
+  const generateManual = { action: "manual", email: manualEmail };
+  const mailBeforeManual = mail.length;
+  assert.equal(
+    (await request("/api/space-managers", generateManual)).status,
+    401,
+  );
+  assert.equal(
+    (await request("/api/space-managers", generateManual, admin, false)).status,
+    403,
+  );
+  const manualInvite = await adminManagerRequest(generateManual);
+  assert.equal(manualInvite.status, 201);
+  assert.match(manualInvite.headers.get("cache-control") || "", /no-store/);
+  const manualUrl = new URL(manualInvite.data.link);
+  assert.equal(manualUrl.origin, origin);
+  assert.equal(manualUrl.pathname, "/manager/spaces");
+  assert.equal(manualUrl.search, "");
+  const manualToken = new URLSearchParams(manualUrl.hash.slice(1)).get(
+    "token",
+  )!;
+  assert.match(manualToken, /^[A-Za-z0-9_-]{43}$/);
+  const manualManagers = (
+    await request("/api/space-managers", undefined, admin)
+  ).data.managers;
+  const manualManager = manualManagers.find(
+    (row: { email: string }) => row.email === manualEmail,
+  );
+  assert.equal(manualManager.status, "Pending");
+  assert.equal(manualManager.lastEmailAcceptedAt, null);
+  assert.equal(manualManager.allSpaces, true);
+  assert.ok(!JSON.stringify(manualManagers).includes(manualToken));
+
+  const inviteDb = new Client({ connectionString: url.toString() });
+  await inviteDb.connect();
+  try {
+    const tokenHash = createHash("sha256").update(manualToken).digest("hex");
+    const {
+      rows: [stored],
+    } = await inviteDb.query(
+      'SELECT "tokenHash", "expiresAt", "createdAt", "deliveredAt", manual FROM "SpaceManagerLink" WHERE "managerId"=$1',
+      [manualManager.id],
+    );
+    assert.equal(stored.tokenHash, tokenHash);
+    assert.equal(stored.manual, true);
+    assert.equal(stored.deliveredAt, null);
+    assert.ok(
+      Math.abs(stored.expiresAt - stored.createdAt - 15 * 60_000) < 2000,
+    );
+    await inviteDb.query(
+      `UPDATE "SpaceManagerLink" SET "expiresAt"=NOW() - INTERVAL '1 second' WHERE "tokenHash"=$1`,
+      [tokenHash],
+    );
+    const expired = await request("/api/manager/verify", {
+      token: manualToken,
+    });
+    assert.equal(expired.status, 401);
+    assert.equal(expired.headers.get("set-cookie"), null);
+
+    const replacement = await adminManagerRequest(generateManual);
+    assert.equal(replacement.status, 201);
+    const replacedToken = new URLSearchParams(
+      new URL(replacement.data.link).hash.slice(1),
+    ).get("token")!;
+    const inviteBrowser = await chromium.launch({
+      executablePath:
+        process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || "/usr/bin/chromium",
+      headless: true,
+      args: ["--no-sandbox"],
+    });
+    let redeemedToken: string;
+    try {
+      const page = await inviteBrowser.newPage({
+        viewport: { width: 393, height: 852 },
+        permissions: ["clipboard-read", "clipboard-write"],
+      });
+      await page
+        .context()
+        .addCookies([
+          {
+            name: "fl_session",
+            value: admin.cookie.split("=")[1],
+            url: origin,
+          },
+        ]);
+      await page.goto(origin + "/owner-invitations");
+      await page.getByLabel("Manager’s email").fill(manualEmail);
+      await page
+        .getByRole("button", { name: "Generate & Copy Invitation Link" })
+        .click();
+      const dialog = page.getByRole("dialog", {
+        name: "Manual invitation link",
+      });
+      await dialog.getByRole("button", { name: "Copy", exact: true }).click();
+      await dialog.getByText("Invitation link copied.").waitFor();
+      const copiedUrl = await page.evaluate(() =>
+        navigator.clipboard.readText(),
+      );
+      redeemedToken = new URLSearchParams(new URL(copiedUrl).hash.slice(1)).get(
+        "token",
+      )!;
+      await dialog.getByRole("button", { name: "Close dialog" }).click();
+      assert.equal(
+        await page.getByRole("textbox", { name: "Invitation link" }).count(),
+        0,
+      );
+    } finally {
+      await inviteBrowser.close();
+    }
+    assert.equal(
+      (await request("/api/manager/verify", { token: replacedToken })).status,
+      401,
+    );
+
+    const jars = Array.from({ length: 2 }, (): Jar => ({
+      cookie: "",
+      csrf: "",
+    }));
+    const redeems = await Promise.all(
+      jars.map((jar) =>
+        request("/api/manager/verify", { token: redeemedToken }, jar),
+      ),
+    );
+    assert.deepEqual(
+      redeems.map((response) => response.status).sort(),
+      [200, 401],
+    );
+    const sessionJar =
+      jars[redeems.findIndex((response) => response.status === 200)];
+    const managerAccess = await request(
+      "/api/manager/spaces",
+      undefined,
+      sessionJar,
+    );
+    assert.equal(managerAccess.status, 200);
+    assert.equal(managerAccess.data.workspaceAccess, true);
+    assert.ok(
+      managerAccess.data.spaces.some(
+        (space: { id: string }) => space.id === futureId,
+      ),
+    );
+    assert.equal(
+      (await request("/api/workspace", undefined, sessionJar)).status,
+      200,
+    );
+    assert.equal(
+      (await request("/api/space-managers", undefined, sessionJar)).status,
+      401,
+    );
+    assert.equal(
+      (
+        await inviteDb.query(
+          'SELECT COUNT(*)::int AS count FROM "SpaceManagerSession" WHERE "managerId"=$1',
+          [manualManager.id],
+        )
+      ).rows[0].count,
+      1,
+    );
+    const pending = await adminManagerRequest(generateManual);
+    assert.equal(pending.status, 201);
+    const pendingToken = new URLSearchParams(
+      new URL(pending.data.link).hash.slice(1),
+    ).get("token")!;
+    assert.equal(
+      (await adminManagerRequest({ action: "revoke", id: manualManager.id }))
+        .status,
+      200,
+    );
+    assert.equal(
+      (await request("/api/manager/spaces", undefined, sessionJar)).status,
+      401,
+    );
+    assert.equal(
+      (await request("/api/manager/verify", { token: pendingToken })).status,
+      401,
+    );
+    assert.equal((await adminManagerRequest(generateManual)).status, 401);
+    assert.equal(mail.length, mailBeforeManual);
+  } finally {
+    await inviteDb.end();
+  }
+  pass(
+    "Manual invitations are owner-only, hashed, expiring, replaceable, single-use, revocable, and grant All Spaces without sending email",
+  );
   const oldCookie = admin.cookie;
   assert.equal(
     (await request("/api/auth/logout", {}, admin, false)).status,

@@ -30,16 +30,16 @@
   {
     "file": "server/handlers/manager.ts",
     "name": "POST",
-    "reason": "Allow owner-authorized all-Spaces saves and create-only BD registration after manager session, revocation and CSRF checks.",
+    "reason": "Use the existing atomic token claim and eight-hour session for manual links, retaining delivery checks for email and checking all-Spaces access for manual redemption.",
     "originalSha256": "13c3a41a412f9213038bfc3ca46bc77e915a63862774a368e210cbde92a310cf",
-    "sha256": "5616c7610e6477176a4cdeb2e5ecdc261bccdcafb4a2cd4e8c9e77009ab15021"
+    "sha256": "ddb90326610e62d6e88443535caf06dee33e60ae8e69b8cb93013344d0f35c5d"
   },
   {
     "file": "server/handlers/space-managers.ts",
     "name": "POST",
-    "reason": "Let the owner explicitly grant and narrow all-Spaces access using the existing manager-row lock.",
+    "reason": "Allow owner-only CSRF-protected issuance of an all-Spaces manual invitation and retain locked assignment changes and revocation.",
     "originalSha256": "61ac74cb943b1b43558187c5687d987c54b7ff63f960d2b68db7e342ba0e7607",
-    "sha256": "7393c9d352953ef630f95ea53e6ff820a4c5b747b43115d307b10fa9673e8c43"
+    "sha256": "23e7792d272d8e33f99a7eb395943cdac54f9677f8159b5688aa29af2710f49d"
   },
   {
     "file": "server/services/space-managers.ts",
@@ -68,5 +68,19 @@
     "originalSha256": "714e50f62f02baf27528bb45a11ec3087afcb19fe73227cbaf4b15b891e0f38b",
     "sha256": "e7b7b715b569d9a89c6716237348a6ca9dbba31394dc8f441477d5cb70c5be09",
     "reason": "Normalize and match an optional founder-submitted BD handle within the existing private application transaction, with no public lookup response."
+  },
+  {
+    "file": "server/services/space-managers.ts",
+    "name": "issueManagerLink",
+    "reason": "Keep Resend delivery checks and limit resend invalidation to email links so unauthenticated email requests cannot invalidate manual credentials.",
+    "originalSha256": "6fe1f1e1aa271a752a2f0d7972bc78de941866ca0de8dda59953c1c44cecef9e",
+    "sha256": "f4ecd2166a823ff83f6a72643e289ff8583015436ebe62c798cfa433326b13c0"
+  },
+  {
+    "file": "server/handlers/space-managers.ts",
+    "name": "GET",
+    "reason": "Show pending manual invitations without exposing stored hashes or treating a manual invite as email acceptance.",
+    "originalSha256": "0d9142d7ef03702f17c248546d773930bfc0fb35f2324afd9f23ce4409badce4",
+    "sha256": "9f0aebb93270618ee5a92dd2d7689807cb13c4f0dce8c89e2209a107d915f23d"
   }
 ]

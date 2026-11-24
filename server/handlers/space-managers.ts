@@ -4,22 +4,36 @@ import { requireViewer, requireCsrf, rateLimit } from "@/server/auth";
 import { body, json, failure } from "@/server/http";
 import { db } from "@/server/db";
 import { DomainError } from "@/lib/domain";
-import { issueManagerLink } from "@/server/services/space-managers";
+import {
+  issueManagerLink,
+  issueManualManagerLink,
+} from "@/server/services/space-managers";
 
 export async function GET() {
   try {
     await requireViewer("team.manage");
-    const managers = await db().spaceManager.findMany({
-      include: {
-        assignments: { select: { sessionId: true } },
-        links: {
-          orderBy: { createdAt: "desc" },
-          take: 1,
-          select: { expiresAt: true, deliveredAt: true, usedAt: true },
+    const now = new Date();
+    const [managers, manualLinks] = await Promise.all([
+      db().spaceManager.findMany({
+        include: {
+          assignments: { select: { sessionId: true } },
+          links: {
+            where: { manual: false },
+            orderBy: { createdAt: "desc" },
+            take: 1,
+            select: { expiresAt: true, deliveredAt: true, usedAt: true },
+          },
         },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+        orderBy: { createdAt: "desc" },
+      }),
+      db().spaceManagerLink.findMany({
+        where: { manual: true, usedAt: null, expiresAt: { gt: now } },
+        select: { managerId: true },
+      }),
+    ]);
+    const manualPending = new Set(
+      manualLinks.map(({ managerId }) => managerId),
+    );
     return json({
       managers: managers.map(({ links, ...m }) => ({
         ...m,
@@ -27,9 +41,10 @@ export async function GET() {
           ? "Revoked"
           : m.verifiedAt
             ? "Active"
-            : links[0]?.deliveredAt &&
-                !links[0]?.usedAt &&
-                links[0].expiresAt > new Date()
+            : (m.allSpaces && manualPending.has(m.id)) ||
+                (links[0]?.deliveredAt &&
+                  !links[0].usedAt &&
+                  links[0].expiresAt > now)
               ? "Pending"
               : "Expired",
         lastEmailAcceptedAt: links[0]?.deliveredAt || null,
@@ -61,6 +76,12 @@ export async function POST(request: Request) {
           .strict(),
         z
           .object({
+            action: z.literal("manual"),
+            email: z.email().transform((v) => v.trim().toLowerCase()),
+          })
+          .strict(),
+        z
+          .object({
             action: z.literal("assign"),
             id: z.string(),
             allSpaces: z.boolean().default(false),
@@ -72,6 +93,20 @@ export async function POST(request: Request) {
           .strict(),
       ])
       .parse(await body(request));
+    if (p.action === "manual") {
+      // requireCsrf already validated the request Origin against this deployment.
+      const link = new URL("/manager/spaces", request.headers.get("origin")!);
+      if (process.env.VERCEL === "1" && link.protocol !== "https:")
+        throw new DomainError(
+          "Invitation links require an HTTPS site origin.",
+          400,
+        );
+      link.hash = `token=${await issueManualManagerLink(p.email, viewer.name)}`;
+      return json(
+        { message: "Manual invitation generated.", link: link.href },
+        201,
+      );
+    }
     if (p.action === "invite") {
       if (!p.allSpaces && !p.sessionIds.length)
         throw new DomainError(
@@ -166,7 +201,7 @@ export async function POST(request: Request) {
           entityId: p.id,
           detail:
             p.action === "revoke"
-              ? "All sessions and unused email links invalidated; edit history preserved."
+              ? "All sessions and unused invitation links invalidated; edit history preserved."
               : p.action === "assign" && p.allSpaces
                 ? "Manager granted access to all current and future Spaces."
                 : "Space assignments replaced.",

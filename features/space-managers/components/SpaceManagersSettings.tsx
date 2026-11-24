@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import { useWorkspace } from "@/components/layout/WorkspaceContext";
+import { Modal } from "@/components/ui";
 type Manager = {
   id: string;
   email: string;
@@ -20,7 +21,9 @@ export default function SpaceManagersSettings() {
     [busy, setBusy] = useState(false),
     [configured, setConfigured] = useState<boolean | null>(null),
     [loading, setLoading] = useState(true),
-    [loadError, setLoadError] = useState("");
+    [loadError, setLoadError] = useState(""),
+    [manualLink, setManualLink] = useState(""),
+    [copyStatus, setCopyStatus] = useState("");
   const load = useCallback(async () => {
     setLoading(true);
     setLoadError("");
@@ -62,6 +65,10 @@ export default function SpaceManagersSettings() {
       const data = await r.json();
       if (!r.ok) throw new Error(data.error);
       setMessage(data.message);
+      if (typeof data.link === "string") {
+        setManualLink(data.link);
+        setCopyStatus("");
+      }
       await load();
     } catch (e) {
       setMessage(e instanceof Error ? e.message : "Unable to save.");
@@ -98,7 +105,7 @@ export default function SpaceManagersSettings() {
         {!loading && !loadError && configured === false && (
           <p className="notice">
             Email delivery is not connected. Connect the programme’s email
-            service before sending invitations.
+            service to send email invitations, or generate a manual link.
           </p>
         )}
         <form
@@ -106,12 +113,20 @@ export default function SpaceManagersSettings() {
           hidden={loading || Boolean(loadError)}
           onSubmit={(e) => {
             e.preventDefault();
-            void act({
-              action: "invite",
-              email,
-              allSpaces,
-              sessionIds: allSpaces ? [] : selected,
-            });
+            const submitter = (e.nativeEvent as SubmitEvent).submitter;
+            if (
+              submitter instanceof HTMLButtonElement &&
+              submitter.value === "manual"
+            ) {
+              void act({ action: "manual", email });
+            } else {
+              void act({
+                action: "invite",
+                email,
+                allSpaces,
+                sessionIds: allSpaces ? [] : selected,
+              });
+            }
           }}
         >
           <label>
@@ -164,7 +179,54 @@ export default function SpaceManagersSettings() {
           >
             Send invitation email
           </button>
+          <button
+            type="submit"
+            value="manual"
+            className="button"
+            disabled={busy || loading || Boolean(loadError)}
+          >
+            Generate &amp; Copy Invitation Link
+          </button>
+          <p className="muted">
+            Manual links grant access to all current and future Spaces.
+          </p>
         </form>
+        {manualLink && (
+          <Modal title="Manual invitation link" close={() => setManualLink("")}>
+            <div className="stack-form">
+              <p>
+                This link expires in 15 minutes and can be used once. Anyone who
+                has it can sign in as this Space Manager. Share it privately
+                with the intended person.
+              </p>
+              <label>
+                Invitation link
+                <input
+                  value={manualLink}
+                  readOnly
+                  onFocus={(e) => e.currentTarget.select()}
+                />
+              </label>
+              <button
+                className="button primary"
+                type="button"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(manualLink);
+                    setCopyStatus("Invitation link copied.");
+                  } catch {
+                    setCopyStatus(
+                      "Select the link above and copy it manually.",
+                    );
+                  }
+                }}
+              >
+                Copy
+              </button>
+              {copyStatus && <p role="status">{copyStatus}</p>}
+            </div>
+          </Modal>
+        )}
         {message && <p role="status">{message}</p>}
         <div
           className="table-wrap"
@@ -258,6 +320,17 @@ export default function SpaceManagersSettings() {
                     >
                       Resend email
                     </button>
+                    {m.status === "Expired" && (
+                      <button
+                        className="button"
+                        disabled={busy}
+                        onClick={() =>
+                          void act({ action: "manual", email: m.email })
+                        }
+                      >
+                        Generate replacement link
+                      </button>
+                    )}
                     <button
                       className="button"
                       disabled={busy || m.status === "Revoked"}

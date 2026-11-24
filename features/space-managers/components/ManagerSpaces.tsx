@@ -106,7 +106,7 @@ export default function ManagerSpaces() {
         <section className="panel padded">
           <h2>Open your assigned Spaces</h2>
           <p>
-            This email link can be used once. Your secure session lasts eight
+            This sign-in link can be used once. Your secure session lasts eight
             hours.
           </p>
           <button

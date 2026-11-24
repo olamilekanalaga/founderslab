@@ -99,11 +99,16 @@ export async function POST(
         csrf = token();
       await db().$transaction(async (tx) => {
         const manager = await lockManager(tx, found.managerId);
+        if (found.manual && !manager.allSpaces)
+          throw new DomainError(
+            "This link is invalid, expired or already used.",
+            401,
+          );
         const claimed = await tx.spaceManagerLink.updateMany({
           where: {
             id: found.id,
             usedAt: null,
-            deliveredAt: { not: null },
+            ...(found.manual ? {} : { deliveredAt: { not: null } }),
             expiresAt: { gt: new Date() },
           },
           data: { usedAt: new Date() },
@@ -130,7 +135,9 @@ export async function POST(
             actor: manager.email,
             action: "manager.login",
             entityId: manager.id,
-            detail: "Single-use email link verified.",
+            detail: found.manual
+              ? "Single-use manual invitation redeemed."
+              : "Single-use email link verified.",
           },
         });
       });
