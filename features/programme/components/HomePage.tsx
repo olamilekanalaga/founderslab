@@ -18,12 +18,12 @@ import HeroBookingPreview from "./HeroBookingPreview";
 import { ProgrammeAvailability } from "./ProgrammeAvailability";
 const questions = [
   [
-    "Who is Founders Lab for?",
-    "Founders Lab is for Web3 founders who want to introduce their products, share their journey and reach an audience interested in discovering what they’re building.",
+    "Who is FoundersLab for?",
+    "FoundersLab is for Web3 founders who want to talk openly about what they’re building, who it’s for and what they’re learning from users and the wider industry.",
   ],
   [
     "Will my information and Space appearance be public?",
-    "Your application details remain private.\n\nYour X Space appearance is public and recorded. After each session, we also publish a free weekly recap featuring the founders, their products and what they shared.\n\nThis gives your project additional exposure beyond the live Space, at no cost to you.",
+    "Your application details remain private.\n\nYour X Space appearance is public and recorded. After each session, we also publish a free weekly recap featuring the founders, their products and what they shared.",
   ],
   [
     "Does participation cost anything?",
@@ -54,17 +54,16 @@ export default function HomePage() {
           >
             <div className="fl-hero-copy">
               <span className="fl-eyebrow">
-                <Mic2 size={15} aria-hidden="true" /> FOUNDERS LAB · WEEKLY WEB3
+                <Mic2 size={15} aria-hidden="true" /> FoundersLab · WEEKLY WEB3
                 SPACES
               </span>
               <h1 id="programme-title">
-                Introduce your product. Share your journey.{" "}
-                <span>Reach your audience.</span>
+                What are you building, and <span>why does it matter?</span>
               </h1>
               <p>
-                Founders Lab is for Web3 founders who want to introduce their
-                products, share their journey and reach an audience interested
-                in discovering what they’re building.
+                Every Sunday, FoundersLab brings Web3 founders together to
+                discuss what’s happening across the industry, the problems
+                they’re solving and the thinking behind what they’re building.
               </p>
               <div className="fl-hero-actions">
                 <Link
@@ -118,16 +117,18 @@ export default function HomePage() {
             <div className="fl-about-intro">
               <span className="fl-eyebrow">Built around the conversation</span>
               <h2 id="about-title">
-                Reach people interested in what you’re building.
+                Beyond the product. Let’s talk about why it exists.
               </h2>
               <p>
-                Introduce your product to an audience that may include future
-                users, community members, collaborators or supporters. Share the
-                problem it solves and the journey behind it.
+                Markets change. New technologies emerge. User behaviour shifts.
+                Yet founders continue building. What problems are worth
+                solving? Who needs these products? Why are builders making
+                these decisions now?
               </p>
               <p>
-                Hosted by ⭕️La_Crrypt💰₿, each weekly X Space brings a small
-                group of founders into one conversation.
+                Each week, we bring different founders into one conversation to
+                explore these questions, share experiences and discuss the
+                realities of building in Web3.
               </p>
               <Link className="fl-inline-action" href="/#choose-a-sunday">
                 Find your conversation{" "}
@@ -141,8 +142,8 @@ export default function HomePage() {
                 </span>
                 <h3>Show people what you’re building.</h3>
                 <p>
-                  Introduce your product, explain the problem it solves and
-                  share why it matters with an audience interested in Web3.
+                  Explain the problem behind your product, who faces it and why
+                  it matters now.
                 </p>
                 <span className="fl-benefit-phrase">
                   Your product.
@@ -154,16 +155,16 @@ export default function HomePage() {
                 <MessageCircle size={23} aria-hidden="true" />
                 <h3>Talk through the real questions.</h3>
                 <p>
-                  Share lessons, trade perspectives and discuss the challenges
-                  you’re working through.
+                  Talk through what you’re learning from users, how the market
+                  is changing and what that means for your next decision.
                 </p>
               </article>
               <article className="fl-benefit-small">
                 <Network size={23} aria-hidden="true" />
                 <h3>Find common ground.</h3>
                 <p>
-                  Meet other builders and explore shared interests that are
-                  worth following up.
+                  Exchange perspectives with other builders and explore shared
+                  interests worth following up.
                 </p>
               </article>
             </div>
