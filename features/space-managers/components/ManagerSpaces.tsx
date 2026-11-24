@@ -20,6 +20,7 @@ export default function ManagerSpaces() {
     [csrf, setCsrf] = useState(""),
     [email, setEmail] = useState(""),
     [linkToken, setToken] = useState(""),
+    [setupToken, setSetupToken] = useState(""),
     [ready, setReady] = useState(false),
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false);
@@ -43,9 +44,12 @@ export default function ManagerSpaces() {
   }, []);
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      const raw = new URLSearchParams(location.hash.slice(1)).get("token");
-      if (raw) {
-        setToken(raw);
+      const credentials = new URLSearchParams(location.hash.slice(1));
+      const setup = credentials.get("setup");
+      const raw = credentials.get("token");
+      if (setup || raw) {
+        if (setup) setSetupToken(setup);
+        else if (raw) setToken(raw);
         history.replaceState(null, "", location.pathname);
         setReady(true);
       } else
@@ -102,6 +106,68 @@ export default function ManagerSpaces() {
       )}
       {!ready ? (
         <p role="status">Loading your access…</p>
+      ) : setupToken ? (
+        <section className="panel padded">
+          <h2>Set your manager password</h2>
+          <p>
+            Use at least 15 characters. After setup, bookmark this page to sign
+            in again.
+          </p>
+          <form
+            className="stack-form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const fields = new FormData(e.currentTarget);
+              void run(async () => {
+                if (fields.get("password") !== fields.get("confirmation"))
+                  throw new Error("The passwords do not match.");
+                await post("password-setup", {
+                  token: setupToken,
+                  password: fields.get("password"),
+                });
+                setSetupToken("");
+                await load();
+              });
+            }}
+          >
+            <label>
+              New password
+              <input
+                name="password"
+                type="password"
+                autoComplete="new-password"
+                required
+                minLength={15}
+                maxLength={128}
+              />
+            </label>
+            <label>
+              Confirm password
+              <input
+                name="confirmation"
+                type="password"
+                autoComplete="new-password"
+                required
+                minLength={15}
+                maxLength={128}
+              />
+            </label>
+            <button className="button primary" disabled={busy}>
+              Save password and sign in
+            </button>
+          </form>
+          <button
+            className="button"
+            type="button"
+            disabled={busy}
+            onClick={() => {
+              setSetupToken("");
+              setMessage("");
+            }}
+          >
+            Back to sign in
+          </button>
+        </section>
       ) : linkToken ? (
         <section className="panel padded">
           <h2>Open your assigned Spaces</h2>
@@ -130,23 +196,25 @@ export default function ManagerSpaces() {
               setMessage("");
             }}
           >
-            Request a new email link
+            Back to sign in
           </button>
         </section>
       ) : !csrf ? (
         <section className="panel padded">
-          <h2>Sign in by email</h2>
-          <p>
-            Use the email address invited by the administrator. No account
-            signup or password is needed.
-          </p>
+          <h2>Space Manager sign-in</h2>
           <form
             className="stack-form"
             onSubmit={(e) => {
               e.preventDefault();
+              const form = e.currentTarget;
+              const fields = new FormData(form);
               void run(async () => {
-                const d = await post("request-link", { email });
-                setMessage(d.message);
+                await post("password-login", {
+                  email,
+                  password: fields.get("password"),
+                });
+                form.reset();
+                await load();
               });
             }}
           >
@@ -154,21 +222,59 @@ export default function ManagerSpaces() {
               Email address
               <input
                 type="email"
-                autoComplete="email"
+                autoComplete="username"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </label>
-            <button
-              className="button"
-              name="intent"
-              value="draft"
-              disabled={busy}
-            >
-              Email me a sign-in link
+            <label>
+              Password
+              <input
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                maxLength={128}
+              />
+            </label>
+            <button className="button primary" disabled={busy}>
+              Sign in
             </button>
           </form>
+          <p>Forgot your password? Ask the owner for a one-time reset link.</p>
+          <details>
+            <summary>Sign in by email link</summary>
+            <form
+              className="stack-form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void run(async () => {
+                  const d = await post("request-link", { email });
+                  setMessage(d.message);
+                });
+              }}
+            >
+              <label>
+                Email address
+                <input
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </label>
+              <button
+                className="button"
+                name="intent"
+                value="draft"
+                disabled={busy}
+              >
+                Email me a sign-in link
+              </button>
+            </form>
+          </details>
         </section>
       ) : (
         <>

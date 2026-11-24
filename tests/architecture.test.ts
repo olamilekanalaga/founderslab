@@ -183,6 +183,11 @@ test("historical Prisma migrations remain byte-identical and BD tables are addit
             .replace(/\n  @@index\(\[bdPartnerId\]\)\n/, "")
             .replace(/^  allSpaces +Boolean +@default\(false\)\n/m, "")
             .replace(/^  (?:bdApprovedAt|founderBookingIds) +.*\n/gm, "")
+            .replace(
+              /(model SpaceManager \{\n)  passwordHash +String\?\n/,
+              "$1",
+            )
+            .replace(/^  passwordSetup +Boolean +@default\(false\)\n/m, "")
             .replace(/^  manual +Boolean +@default\(false\)\n/m, "")
             .replace(/\nmodel BdPartner \{[\s\S]*$/, "")
         : readFileSync(entry.file);
@@ -228,6 +233,7 @@ test("historical Prisma migrations remain byte-identical and BD tables are addit
         "prisma/migrations/202611240003_manual_manager_invitations/migration.sql",
         "prisma/migrations/202611240004_bd_intelligence/migration.sql",
         "prisma/migrations/202611240005_bd_verification_gate/migration.sql",
+        "prisma/migrations/202611240006_manager_password/migration.sql",
       )
       .sort(),
   );

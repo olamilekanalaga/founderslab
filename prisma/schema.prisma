@@ -452,6 +452,7 @@ model SpaceTeamAttendance {
 }
 
 model SpaceManager {
+  passwordHash   String?
   allSpaces      Boolean                  @default(false)
   id             String                   @id @default(cuid())
   email          String                   @unique
@@ -474,6 +475,7 @@ model SpaceManagerAssignment {
 }
 
 model SpaceManagerLink {
+  passwordSetup Boolean     @default(false)
   manual      Boolean     @default(false)
   id          String       @id @default(cuid())
   managerId   String
