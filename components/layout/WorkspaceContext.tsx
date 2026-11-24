@@ -2,6 +2,7 @@
 import {
   createContext,
   useContext,
+  useEffect,
   useRef,
   useState,
   type ReactNode,
@@ -16,7 +17,6 @@ interface Context {
   feedback: "success" | "error" | null;
   fieldErrors: Record<string, string>;
   lastUpdated: string | null;
-  refresh: () => Promise<boolean>;
   setMessage: (s: string) => void;
   commit: (c: Command) => Promise<boolean>;
   mutate: (
@@ -47,6 +47,7 @@ export function WorkspaceProvider({
     [fieldErrors, setFieldErrors] = useState<Record<string, string>>({}),
     [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const inFlight = useRef(false);
+  const background = useRef<AbortController | null>(null);
   if (snapshot.source !== initialState) {
     setSnapshot({ source: initialState, value: initialState });
     setViewer(initialViewer);
@@ -57,37 +58,43 @@ export function WorkspaceProvider({
     setFeedback(null);
     if (!value) setFieldErrors({});
   }
-  async function refresh() {
-    if (inFlight.current) return false;
-    inFlight.current = true;
-    setBusy(true);
-    try {
-      const response = await fetch("/api/workspace", { cache: "no-store" });
-      const result = await response.json();
-      if (!response.ok)
-        throw new Error(
-          response.status === 401
-            ? "Your session has expired. Sign in again."
-            : result.error || "Unable to refresh the workspace.",
-        );
-      setSnapshot({ source: initialState, value: result.state });
-      setViewer(result.viewer);
-      setLastUpdated(new Date().toISOString());
-      setMessage("Workspace refreshed.");
-      setFeedback("success");
-      return true;
-    } catch (error) {
-      setMessage(formError(error, "Unable to refresh. Try again.").message);
-      setFeedback("error");
-      return false;
-    } finally {
-      inFlight.current = false;
-      setBusy(false);
+  useEffect(() => {
+    async function refresh() {
+      if (document.hidden || inFlight.current || background.current) return;
+      const controller = new AbortController();
+      background.current = controller;
+      try {
+        const response = await fetch("/api/workspace", {
+          cache: "no-store",
+          signal: controller.signal,
+        });
+        if (!response.ok) return;
+        const result = await response.json();
+        if (controller.signal.aborted) return;
+        setSnapshot({ source: initialState, value: result.state });
+        setViewer(result.viewer);
+        setLastUpdated(new Date().toISOString());
+      } catch {
+        // Keep the last good snapshot. The next focus or interval can retry.
+      } finally {
+        if (background.current === controller) background.current = null;
+      }
     }
-  }
+    const interval = window.setInterval(refresh, 30_000);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+      background.current?.abort();
+      background.current = null;
+    };
+  }, [initialState]);
   async function mutate(endpoint: string, payload: unknown, method = "POST") {
     if (inFlight.current) return false;
     inFlight.current = true;
+    background.current?.abort();
     setBusy(true);
     setMessage("");
     setFieldErrors({});
@@ -139,7 +146,6 @@ export function WorkspaceProvider({
         feedback,
         fieldErrors,
         lastUpdated,
-        refresh,
         setMessage: showMessage,
         commit,
         mutate,

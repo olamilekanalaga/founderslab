@@ -1784,6 +1784,26 @@ try {
       ),
       true,
     );
+    const accountButton = page.getByRole("button", {
+      name: /Open account menu/,
+    });
+    const portrait = accountButton.locator("img");
+    await portrait.waitFor();
+    await page.waitForFunction(() => {
+      const image = document.querySelector<HTMLImageElement>(
+        ".account-trigger img",
+      );
+      return image?.complete && image.naturalWidth > 0;
+    });
+    assert.equal(
+      await page.getByRole("button", { name: "Refresh workspace" }).count(),
+      0,
+    );
+    const workspaceUpdate = page.waitForResponse(
+      (response) => response.url().endsWith("/api/workspace") && response.ok(),
+    );
+    await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+    await workspaceUpdate;
     await page.getByRole("button", { name: /Open account menu/ }).click();
     const account = page.getByRole("dialog", { name: "Your account" });
     await account.getByRole("button", { name: "Reduced effects" }).click();

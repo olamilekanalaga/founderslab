@@ -16,7 +16,6 @@ import {
   X,
   LogOut,
   ShieldCheck,
-  RefreshCw,
   CheckCircle2,
   CircleAlert,
   Settings as SettingsIcon,
@@ -37,6 +36,19 @@ import Spaces from "@/features/spaces/components/Spaces";
 import Reports from "@/features/reports/components/Reports";
 import SpaceManagersSettings from "@/features/space-managers/components/SpaceManagersSettings";
 import TeamSettings from "@/features/settings/components/Settings";
+const OWNER_NAME = "⭕️La_Crrypt💰₿";
+
+function OwnerPortrait({ size = 38 }: { size?: number }) {
+  return (
+    <Image
+      className={size === 72 ? "owner-avatar account-portrait" : "owner-avatar"}
+      src="/owner-portrait.jpg"
+      width={size}
+      height={size}
+      alt=""
+    />
+  );
+}
 const navigation = [
   { id: "dashboard", label: "Overview", icon: LayoutDashboard },
   { id: "founders", label: "Directory", icon: Users },
@@ -67,8 +79,6 @@ function Shell({ section, id }: { section: Section; id?: string }) {
       message,
       feedback,
       setMessage,
-      refresh,
-      busy,
       lastUpdated,
     } = useWorkspace(),
     router = useRouter();
@@ -233,9 +243,9 @@ function Shell({ section, id }: { section: Section; id?: string }) {
             <ArrowUpRight size={15} />
           </Link>
           <div className="sidebar-user">
-            <Avatar name={viewer.name} />
+            <OwnerPortrait />
             <div>
-              <b title={viewer.name}>{viewer.name}</b>
+              <b title={OWNER_NAME}>{OWNER_NAME}</b>
               <small>{role}</small>
             </div>
           </div>
@@ -281,24 +291,11 @@ function Shell({ section, id }: { section: Section; id?: string }) {
               </span>
             )}
             <button
-              className={`icon-button ${busy ? "refreshing" : ""}`}
-              aria-label="Refresh workspace"
-              title={
-                lastUpdated
-                  ? `Last updated ${new Date(lastUpdated).toLocaleTimeString()}`
-                  : "Refresh workspace data"
-              }
-              onClick={() => void refresh()}
-              disabled={busy}
-            >
-              <RefreshCw size={18} />
-            </button>
-            <button
               className="account-trigger"
-              aria-label={`Open account menu for ${viewer.name}`}
+              aria-label={`Open account menu for ${OWNER_NAME}`}
               onClick={() => setAccountOpen(true)}
             >
-              <Avatar name={viewer.name} />
+              <OwnerPortrait />
             </button>
           </div>
         </header>
@@ -348,9 +345,9 @@ function Shell({ section, id }: { section: Section; id?: string }) {
         >
           <div className="mobile-nav">{nav(true)}</div>
           <div className="mobile-account">
-            <Avatar name={viewer.name} />
+            <OwnerPortrait />
             <div>
-              <b>{viewer.name}</b>
+              <b>{OWNER_NAME}</b>
               <small>{role}</small>
             </div>
           </div>
@@ -368,14 +365,8 @@ function Shell({ section, id }: { section: Section; id?: string }) {
           className="account-dialog"
         >
           <div className="account-detail">
-            <Image
-              className="account-portrait"
-              src="/owner-portrait.jpg"
-              width={72}
-              height={72}
-              alt=""
-            />
-            <h3>⭕️La_Crrypt💰₿</h3>
+            <OwnerPortrait size={72} />
+            <h3>{OWNER_NAME}</h3>
             <p>{viewer.email}</p>
             <span className="small-tag">{role}</span>
           </div>

@@ -203,32 +203,29 @@ test.describe("Admin experience", () => {
       .getByRole("button", { name: "Discard changes", exact: true })
       .click();
   });
-  test("refresh errors are persistent and recover without losing the workspace", async ({
+  test("workspace refreshes on focus and keeps the last snapshot after a failure", async ({
     page,
   }) => {
+    await expect(
+      page.getByRole("button", { name: "Refresh workspace", exact: true }),
+    ).toHaveCount(0);
     await page.route("**/api/workspace", (route) =>
-      route.fulfill({
-        status: 503,
-        contentType: "application/json",
-        body: JSON.stringify({
-          error: "Acceptance simulation: refresh unavailable",
-        }),
-      }),
+      route.fulfill({ status: 503, json: { error: "Offline" } }),
     );
-    await page
-      .getByRole("button", { name: "Refresh workspace", exact: true })
-      .click();
-    await expect(page.locator(".toast[role=alert]")).toContainText(
-      "Acceptance simulation: refresh unavailable",
+    const failed = page.waitForResponse(
+      (response) =>
+        response.url().endsWith("/api/workspace") && response.status() === 503,
     );
+    await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+    await failed;
     await expect(page.locator(".desk-grid")).toBeVisible();
     await page.unroute("**/api/workspace");
-    await page
-      .getByRole("button", { name: "Refresh workspace", exact: true })
-      .click();
-    await expect(page.locator(".toast[role=status]")).toContainText(
-      "Workspace refreshed.",
+    const recovered = page.waitForResponse(
+      (response) => response.url().endsWith("/api/workspace") && response.ok(),
     );
+    await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+    await recovered;
+    await expect(page.locator(".workspace-freshness")).toContainText("Updated");
   });
   test("manager load failures provide retry and do not claim email is disconnected", async ({
     page,
