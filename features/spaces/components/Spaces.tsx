@@ -311,10 +311,10 @@ export default function Spaces({
                   <thead>
                     <tr>
                       <th scope="col">Founder / company</th>
-                      <th scope="col">Status</th>
                       <th scope="col">Country</th>
                       <th scope="col">Team</th>
                       <th scope="col">People expected</th>
+                      <th scope="col">Status</th>
                       <th scope="col">Review</th>
                     </tr>
                   </thead>
@@ -337,12 +337,12 @@ export default function Spaces({
                               </span>
                             </button>
                           </th>
-                          <td>
-                            <Status value={a.status} />
-                          </td>
                           <td>{a.country}</td>
                           <td>{a.teamSize}</td>
                           <td>{a.speakers}</td>
+                          <td>
+                            <Status value={a.status} />
+                          </td>
                           <td>
                             <button
                               className="button"
