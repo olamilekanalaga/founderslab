@@ -1962,6 +1962,36 @@ try {
         .getAttribute("aria-pressed"),
       "true",
     );
+    const themePicker = account.getByLabel("Workspace theme");
+    const workspace = page.locator(".app-shell");
+    for (const [name, color] of [
+      ["superteam", "rgb(17, 23, 38)"],
+      ["classic", "rgb(255, 255, 255)"],
+      ["neutral", "rgb(247, 247, 244)"],
+      ["scientific", "rgb(247, 250, 255)"],
+      ["sticker", "rgb(255, 248, 252)"],
+      ["pixel", "rgb(18, 19, 21)"],
+    ]) {
+      await themePicker.selectOption(name);
+      await expect(workspace).toHaveCSS("background-color", color);
+      await expect(account).toHaveCSS("backdrop-filter", "none");
+    }
+    await themePicker.selectOption("superteam");
+    await page.reload();
+    await expect(workspace).toHaveAttribute(
+      "data-workspace-theme",
+      "superteam",
+    );
+    await expect(workspace).toHaveAttribute("data-visual-effects", "system");
+    await page.goto(origin + "/dashboard");
+    await expect(workspace).toHaveAttribute("data-workspace-theme", "superteam");
+    await page.screenshot({
+      path: artifactPath("superteam-theme-mobile.png"),
+      fullPage: true,
+    });
+    await page.getByRole("button", { name: /Open account menu/ }).click();
+    await themePicker.selectOption("founders");
+    await expect(workspace).toHaveAttribute("data-workspace-theme", "founders");
     await account.getByRole("button", { name: "Close dialog" }).click();
     await page.setViewportSize({ width: 1440, height: 1000 });
     await page.goto(origin + "/spaces");
