@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Check, Minus, ArrowUpRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useWorkspace } from "@/components/layout/WorkspaceContext";
-import { currentSaturday } from "@/features/spaces/lib/current-saturday";
+import { currentSunday } from "@/features/spaces/lib/current-sunday";
 import type { DataState } from "@/lib/types";
 
 const londonDate = new Intl.DateTimeFormat("en-GB", {
@@ -12,7 +12,7 @@ const londonDate = new Intl.DateTimeFormat("en-GB", {
   dateStyle: "full",
 });
 
-export default function CurrentSaturdayCard() {
+export default function CurrentSundayCard() {
   const { state, path } = useWorkspace();
   const [snapshot, setSnapshot] = useState<{
     base: DataState;
@@ -62,7 +62,7 @@ export default function CurrentSaturdayCard() {
 
   const current =
     snapshot?.base === state && snapshot.data ? snapshot.data : state;
-  const { startsAt, session, filled } = currentSaturday(current, now);
+  const { startsAt, session, filled } = currentSunday(current, now);
   const failed = snapshot?.base === state && snapshot.failed;
   const remaining = session ? Math.max(0, session.capacity - filled) : 0;
   const projectIds = new Set(
@@ -75,10 +75,10 @@ export default function CurrentSaturdayCard() {
   const projects = current.companies.filter((c) => projectIds.has(c.id));
   return (
     <section
-      className="panel current-saturday"
-      aria-labelledby="current-saturday-title"
+      className="panel current-sunday"
+      aria-labelledby="current-sunday-title"
     >
-      <div className="current-saturday-heading">
+      <div className="current-sunday-heading">
         <div className="studio-space-date" aria-hidden="true">
           <b>
             {new Intl.DateTimeFormat("en-GB", {
@@ -94,7 +94,7 @@ export default function CurrentSaturdayCard() {
           </span>
         </div>
         <div className="studio-space-heading-copy">
-          <h2 id="current-saturday-title">Saturday Founder Space</h2>
+          <h2 id="current-sunday-title">Sunday Founder Space</h2>
           <p>{londonDate.format(startsAt)} · 7:00 PM UK</p>
         </div>
         {snapshot && !failed && session && session.status !== "Cancelled" && (
@@ -106,13 +106,13 @@ export default function CurrentSaturdayCard() {
       </div>
       {!snapshot ? (
         <div
-          className="current-saturday-skeleton"
+          className="current-sunday-skeleton"
           role="status"
           aria-label="Loading bookings"
         />
       ) : failed ? (
         <>
-          <p role="alert">Could not load bookings for this Saturday.</p>
+          <p role="alert">Could not load bookings for this Sunday.</p>
           <button
             className="button"
             onClick={() => {
@@ -124,14 +124,14 @@ export default function CurrentSaturdayCard() {
           </button>
         </>
       ) : !session ? (
-        <p>No Founder Space has been scheduled for this Saturday.</p>
+        <p>No Founder Space has been scheduled for this Sunday.</p>
       ) : (
         <>
           {session.status === "Cancelled" ? (
-            <p>This Saturday’s Founder Space is cancelled.</p>
+            <p>This Sunday’s Founder Space is cancelled.</p>
           ) : (
             <>
-              <div className="current-saturday-slots" aria-hidden="true">
+              <div className="current-sunday-slots" aria-hidden="true">
                 {Array.from({ length: session.capacity }, (_, index) => (
                   <span key={index} className={index < filled ? "filled" : ""}>
                     {index < filled ? <Check size={20} /> : <Minus size={20} />}
@@ -142,7 +142,7 @@ export default function CurrentSaturdayCard() {
                 {filled === 0
                   ? `No projects booked yet. ${session.capacity} project seats available.`
                   : remaining === 0
-                    ? `All ${session.capacity} project seats are filled for this Saturday.`
+                    ? `All ${session.capacity} project seats are filled for this Sunday.`
                     : `${remaining} project ${remaining === 1 ? "seat remaining" : "seats remaining"}. Pending requests do not reserve a seat.`}
               </p>
             </>

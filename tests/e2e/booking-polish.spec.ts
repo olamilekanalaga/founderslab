@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-import { saturdaySessions } from "@/lib/dates/saturday-schedule";
+import { sundaySessions } from "@/lib/dates/sunday-schedule";
 
 for (const [label, width, height] of [
   ["desktop", 1440, 900],
@@ -17,7 +17,7 @@ for (const [label, width, height] of [
       .first();
     await first.click();
     await expect(first).toHaveAttribute("aria-pressed", "true");
-    const next = page.getByRole("link", { name: "Choose this Saturday" });
+    const next = page.getByRole("link", { name: "Choose this Sunday" });
     const target = await next.getAttribute("href");
     expect(target).toMatch(/^\/apply\?session=/);
     await expect(page.locator(".fl-preview-time")).toContainText("London");
@@ -48,7 +48,7 @@ test("hero date choice is carried directly into the application and mobile Escap
   );
   await page.goto("/");
   await availabilityReady;
-  const preview = page.getByRole("link", { name: "Choose this Saturday" });
+  const preview = page.getByRole("link", { name: "Choose this Sunday" });
   await expect(preview).toBeVisible({ timeout: 15000 });
   const target = await preview.getAttribute("href");
   await preview.click();
@@ -68,9 +68,9 @@ test("hero date choice is carried directly into the application and mobile Escap
 test("the fourth published date appears when the first starts", async ({
   page,
 }) => {
-  const now = new Date("2026-11-28T18:59:50Z");
+  const now = new Date("2026-11-29T18:59:50Z");
   await page.clock.install({ time: now });
-  const sessions = saturdaySessions(now, 4).map((session) => ({
+  const sessions = sundaySessions(now, 4).map((session) => ({
     ...session,
     availableSeats: 4,
   }));

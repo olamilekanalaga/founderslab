@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://founderslab-orcin.vercel.app"),
   title: "Founders Lab with ⭕️La_Crrypt💰₿",
   description:
-    "Weekly Web3 founder conversations and connections. Saturdays at 7 PM London time, with participation subject to approval.",
+    "Weekly Web3 founder conversations and connections. Sundays at 7 PM London time, with participation subject to approval.",
 };
 export default function RootLayout({
   children,

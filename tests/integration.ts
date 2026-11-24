@@ -12,9 +12,9 @@ import { Client } from "pg";
 import AxeBuilder from "@axe-core/playwright";
 import { chromium, expect } from "@playwright/test";
 import {
-  saturdaySessions,
+  sundaySessions,
   isLondonProgrammeTime,
-} from "@/lib/dates/saturday-schedule";
+} from "@/lib/dates/sunday-schedule";
 import { rewardSummary } from "@/features/bd-partners/rewards";
 import type { DataState } from "@/lib/types";
 import {
@@ -187,8 +187,68 @@ try {
     ('legacy-bd', '@Legacy_BD', 'legacy-bd@example.invalid', '{}'),
     ('legacy-name', 'Legacy display name', 'legacy-name@example.invalid', '{}')`,
   );
+  const sunday = sundaySessions(new Date(Date.now() + 14 * 86400000), 1)[0]
+    .startsAt;
+  const saturday = new Date(+sunday - 86400000);
+  const saturdayDay = saturday.toISOString().slice(0, 10);
+  const oldDeadline = new Date(+saturday - 3 * 3600000);
+  await legacyDb.query(
+    `INSERT INTO "Session"(id,title,"startsAt",host,deadline,status,"updatedAt")
+     VALUES ('legacy-week','Programme Space',$1,'Host',$2,'Scheduled',now()),
+            ('legacy-custom','Custom Space',$1,'Host',$2,'Scheduled',now()),
+            ('legacy-completed','Completed Space',$1,'Host',$2,'Completed',now())`,
+    [saturday, oldDeadline],
+  );
+  await legacyDb.query(
+    `INSERT INTO "ProgrammeSchedule"(id,"anchorDay") VALUES ('main',$1)`,
+    [saturdayDay],
+  );
+  await legacyDb.query(
+    `INSERT INTO "ProgrammeWeek"("sessionId",position) VALUES ('legacy-week',0), ('legacy-completed',1)`,
+  );
+  await legacyDb.query(
+    `INSERT INTO "BookingRequest"(id,"applicationId","sessionId",speakers,status,"updatedAt")
+     VALUES ('legacy-booking','legacy-a','legacy-week',2,'Approved',now())`,
+  );
   run("scripts/migrate.ts");
   run("scripts/migrate.ts");
+  const changedSchedule = (
+    await legacyDb.query(
+      'SELECT "anchorDay" FROM "ProgrammeSchedule" WHERE id=$1',
+      ["main"],
+    )
+  ).rows[0];
+  assert.equal(changedSchedule.anchorDay, sunday.toISOString().slice(0, 10));
+  const shifted = (
+    await legacyDb.query(
+      'SELECT "startsAt",deadline,timezone FROM "Session" WHERE id=$1',
+      ["legacy-week"],
+    )
+  ).rows[0];
+  assert.equal(+shifted.startsAt, +sunday);
+  assert.equal(+shifted.deadline, +sunday - 3 * 3600000);
+  assert.equal(shifted.timezone, "Europe/London");
+  const untouched = (
+    await legacyDb.query(
+      'SELECT id, "startsAt" FROM "Session" WHERE id IN ($1,$2)',
+      ["legacy-custom", "legacy-completed"],
+    )
+  ).rows;
+  assert.equal(untouched.length, 2);
+  assert.ok(untouched.every((row) => +row.startsAt === +saturday));
+  assert.equal(
+    (
+      await legacyDb.query(
+        'SELECT "sessionId" FROM "BookingRequest" WHERE id=$1',
+        ["legacy-booking"],
+      )
+    ).rows[0].sessionId,
+    "legacy-week",
+  );
+  await legacyDb.query('DELETE FROM "BookingRequest"');
+  await legacyDb.query('DELETE FROM "ProgrammeWeek"');
+  await legacyDb.query('DELETE FROM "ProgrammeSchedule"');
+  await legacyDb.query('DELETE FROM "Session"');
   const legacyPartners = (
     await legacyDb.query(
       'SELECT "referralCode", active FROM "BdPartner" ORDER BY id',
@@ -245,7 +305,7 @@ try {
   assert.ok(
     slots.rows.every(
       (row) =>
-        new Date(row.startsAt).getUTCDay() === 6 &&
+        new Date(row.startsAt).getUTCDay() === 0 &&
         isLondonProgrammeTime(row.startsAt) &&
         row.capacity === 4,
     ),
@@ -283,8 +343,8 @@ try {
       ["up1"],
     )
   ).rows.map((r) => r.id);
-  run("scripts/publish-saturdays.ts");
-  run("scripts/publish-saturdays.ts");
+  run("scripts/publish-sundays.ts");
+  run("scripts/publish-sundays.ts");
   assert.equal(
     (
       await scheduleDb.query('SELECT timezone FROM "Session" WHERE id=$1', [
@@ -306,7 +366,7 @@ try {
     (
       await scheduleDb.query(
         'SELECT count(*)::int AS n FROM "Session" WHERE "startsAt"=$1',
-        ["2026-12-05T19:00:00Z"],
+        ["2026-12-06T19:00:00Z"],
       )
     ).rows[0].n,
     1,
@@ -550,11 +610,11 @@ try {
   const sessionPayload = {
     id: "up4",
     title: "Isolated concurrency session",
-    startsAt: "2026-12-26T19:00:00.000Z",
+    startsAt: "2026-12-27T19:00:00.000Z",
     timezone: "Africa/Lagos",
     host: "Fictional host",
     capacity: 5,
-    deadline: "2026-12-26T19:00:00.000Z",
+    deadline: "2026-12-27T19:00:00.000Z",
     status: "Scheduled",
     researchStatus: "Not started",
     liveUrl: "",
@@ -1256,8 +1316,8 @@ try {
     assert.ok(copied.includes(application.companyName));
     assert.ok(copied.includes(application.description));
     assert.ok(copied.includes("@" + application.xHandle.replace(/^@+/, "")));
-    await lineup.getByRole("button", { name: "Next Saturday" }).click();
-    assert.match(await lineup.innerText(), /2 January 2027/);
+    await lineup.getByRole("button", { name: "Next Sunday" }).click();
+    assert.match(await lineup.innerText(), /3 January 2027/);
     assert.equal(await managerPage.getByText("Manage invitations").count(), 0);
     await managerPage
       .getByRole("navigation", { name: "Workspace navigation" })
@@ -1816,12 +1876,12 @@ try {
     );
     await page.keyboard.press("Escape");
     await page.goto(origin + "/dashboard");
-    const [nextSaturday] = saturdaySessions(new Date(), 1);
+    const [nextSunday] = sundaySessions(new Date(), 1);
     const cardState = structuredClone(state);
     const mobileSpace = {
       ...cardState.sessions[0],
-      id: nextSaturday.id,
-      startsAt: nextSaturday.startsAt.toISOString(),
+      id: nextSunday.id,
+      startsAt: nextSunday.startsAt.toISOString(),
       capacity: 12,
       status: "Scheduled",
     };
@@ -1832,24 +1892,24 @@ try {
     );
     await page.reload();
     await page.locator(".desk-details > summary").click();
-    const saturdayCard = page.getByRole("region", {
-      name: "Saturday Founder Space",
+    const sundayCard = page.getByRole("region", {
+      name: "Sunday Founder Space",
     });
-    await saturdayCard
+    await sundayCard
       .getByText("No projects booked yet.", { exact: false })
       .waitFor();
     assert.equal(
-      await saturdayCard.locator(".current-saturday-slots span").count(),
+      await sundayCard.locator(".current-sunday-slots span").count(),
       12,
     );
     assert.equal(
-      await saturdayCard
+      await sundayCard
         .getByRole("link", { name: "View Bookings" })
         .getAttribute("href"),
       "/spaces?tab=bookings&session=" + mobileSpace.id,
     );
     assert.equal(
-      await saturdayCard.evaluate(
+      await sundayCard.evaluate(
         (card) =>
           card.getBoundingClientRect().right <= window.innerWidth &&
           card.scrollWidth <= card.clientWidth,
@@ -2217,7 +2277,7 @@ try {
   await cycleDb.connect();
   const cycleIds: string[] = [];
   for (let i = 0; i < 8; i++) {
-    const date = new Date("2026-10-03T19:00:00Z");
+    const date = new Date("2026-10-04T19:00:00Z");
     date.setUTCDate(date.getUTCDate() + i * 7);
     state = await command("session.save", {
       ...sessionPayload,
@@ -2239,7 +2299,7 @@ try {
   await cycleDb.query('DELETE FROM "ProgrammeWeek"');
   await cycleDb.query(
     'UPDATE "ProgrammeSchedule" SET "anchorDay"=$1,"activeStart"=0 WHERE id=$2',
-    ["2026-10-03", "main"],
+    ["2026-10-04", "main"],
   );
   for (let i = 0; i < 8; i++)
     await cycleDb.query(
@@ -2794,11 +2854,11 @@ try {
       const sessionId = `bd-test-space-${i}`;
       const bookingId = `bd-test-booking-${i}`;
       const attendanceId = `bd-test-report-${i}`;
-      const saturday = new Date(Date.UTC(2025, 0, 4 + (i - 1) * 7, 19));
+      const sunday = new Date(Date.UTC(2025, 0, 5 + (i - 1) * 7, 19));
       await bdDb.query(
         `INSERT INTO "Session"(id,title,"startsAt",host,capacity,deadline,status,"updatedAt")
          VALUES($1,'BD test Space',$2,'Test',4,$2,$3,now())`,
-        [sessionId, saturday, i === 1 ? "Scheduled" : "Completed"],
+        [sessionId, sunday, i === 1 ? "Scheduled" : "Completed"],
       );
       await bdDb.query(
         `INSERT INTO "BookingRequest"(id,"applicationId","sessionId",speakers,status,"updatedAt")
@@ -3173,7 +3233,7 @@ try {
     await page.goto(origin + "/apply");
     await expect(page.getByLabel("BD referrer")).toHaveCount(0);
     await page.goto(origin + "/book?ref=BD_Integration");
-    assert.match(page.url(), /#choose-a-saturday$/);
+    assert.match(page.url(), /#choose-a-sunday$/);
     await page.goto(origin + "/apply");
     const lockedHandle = page.getByLabel("BD referrer");
     await expect(lockedHandle).toHaveValue("@bd_integration");

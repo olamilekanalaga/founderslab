@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Founders Lab | Introduce your product. Reach your audience.",
     description:
-      "A weekly space for Web3 builders. Saturdays, 7 PM London. Free participation, subject to review.",
+      "A weekly space for Web3 builders. Sundays, 7 PM London. Free participation, subject to review.",
     type: "website",
   },
   twitter: {

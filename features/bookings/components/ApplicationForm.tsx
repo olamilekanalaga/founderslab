@@ -119,11 +119,11 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
               <span>{chosenSession?.title}</span>
               {chosenSession && !selectionValid && (
                 <span role="alert">
-                  This slot is no longer available. Choose another Saturday.
+                  This slot is no longer available. Choose another Sunday.
                 </span>
               )}
             </div>
-            <Link className="text-link" href="/#choose-a-saturday">
+            <Link className="text-link" href="/#choose-a-sunday">
               Change date
             </Link>
           </div>
@@ -145,7 +145,7 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
               });
               if (!selectionValid)
                 throw new Error(
-                  "Choose an available Saturday from the booking calendar.",
+                  "Choose an available Sunday from the booking calendar.",
                 );
               const result = await api("apply", {
                 ...p,

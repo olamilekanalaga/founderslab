@@ -19,8 +19,8 @@ import { useWorkspace } from "@/components/layout/WorkspaceContext";
 import { approvedSeats } from "@/lib/domain/queries";
 import { spaceTotals, durationLabel } from "@/features/spaces/lib/space-data";
 import { Avatar, Empty } from "@/components/ui";
-import CurrentSaturdayCard from "./CurrentSaturdayCard";
-import SaturdayLineup from "./SaturdayLineup";
+import CurrentSundayCard from "./CurrentSundayCard";
+import SundayLineup from "./SundayLineup";
 import OverviewActivity from "./OverviewActivity";
 
 const londonDate = (value: string, options: Intl.DateTimeFormatOptions) =>
@@ -120,7 +120,7 @@ export default function Overview({ addFounder }: { addFounder: () => void }) {
           )}
         </div>
       </div>
-      {viewer.roleId === "space-manager" && <SaturdayLineup now={now} />}
+      {viewer.roleId === "space-manager" && <SundayLineup now={now} />}
       <div className="desk-grid">
         {metrics.map(({ label, value, detail, icon: Icon, href }) => (
           <Link className="metric-card desk-metric" href={href} key={label}>
@@ -228,7 +228,7 @@ export default function Overview({ addFounder }: { addFounder: () => void }) {
           <div>
             <h2>Upcoming Spaces</h2>
             <p>
-              Saturdays, 7 PM London. Review applications before confirming
+              Sundays, 7 PM London. Review applications before confirming
               seats.
             </p>
             <Link
@@ -313,11 +313,11 @@ export default function Overview({ addFounder }: { addFounder: () => void }) {
       <details className="panel desk-details">
         <summary>
           <ListChecks size={18} />
-          Saturday roster & programme records{" "}
+          Sunday roster & programme records{" "}
           <span>{incomplete.length} reports to complete</span>
         </summary>
         <div className="desk-details-body">
-          <CurrentSaturdayCard />
+          <CurrentSundayCard />
           <section className="panel">
             <h2>Recorded programme results</h2>
             <p>

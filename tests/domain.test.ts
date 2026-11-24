@@ -543,14 +543,14 @@ test("Space growth follows event dates, combines same-day totals and omits missi
   assert.equal(spaceGrowth(s, "listeners")[0].value, 80);
 });
 
-test("calendar-first applications attach a pending Saturday booking atomically", async () => {
+test("calendar-first applications attach a pending Sunday booking atomically", async () => {
   const { createLocalBookingApplication } =
     await import("@/tests/fixtures/application-state");
-  const { isSaturday, publicSlotOpen } = await import("@/lib/dates/booking");
+  const { isSunday, publicSlotOpen } = await import("@/lib/dates/booking");
   const seed = makeSeed(),
     now = "2026-11-21T12:00:00.000Z";
   const session = seed.sessions.find((s) => s.id === "up1")!;
-  assert.equal(isSaturday(session), true);
+  assert.equal(isSunday(session), true);
   assert.equal(publicSlotOpen(session, 5, Date.parse(now)), true);
   const saved = createLocalBookingApplication(
     seed,
@@ -689,26 +689,26 @@ test("weekly profiles share one Space record but preserve per-company figures an
   );
 });
 
-test("Saturday eligibility follows London rather than the original session timezone", async () => {
-  const { isSaturday, sessionDay } = await import("@/lib/dates/booking");
-  const lateFriday = {
-    startsAt: "2026-12-04T23:30:00.000Z",
-    timezone: "Africa/Lagos",
-  };
-  assert.equal(isSaturday(lateFriday), false);
-  assert.equal(sessionDay(lateFriday), "2026-12-04");
+test("Sunday eligibility follows London rather than the original session timezone", async () => {
+  const { isSunday, sessionDay } = await import("@/lib/dates/booking");
   const lateSaturday = {
     startsAt: "2026-12-05T23:30:00.000Z",
     timezone: "Africa/Lagos",
   };
-  assert.equal(isSaturday(lateSaturday), true);
+  assert.equal(isSunday(lateSaturday), false);
   assert.equal(sessionDay(lateSaturday), "2026-12-05");
+  const lateSunday = {
+    startsAt: "2026-12-06T23:30:00.000Z",
+    timezone: "Africa/Lagos",
+  };
+  assert.equal(isSunday(lateSunday), true);
+  assert.equal(sessionDay(lateSunday), "2026-12-06");
 });
 
-test("approved Saturday schedule opens winter 7 PM London dates with four places", async () => {
-  const { saturdaySessions } = await import("@/lib/dates/saturday-schedule");
+test("approved Sunday schedule opens winter 7 PM London dates with four places", async () => {
+  const { sundaySessions } = await import("@/lib/dates/sunday-schedule");
   const { publicSlotOpen } = await import("@/lib/dates/booking");
-  const weeks = saturdaySessions(new Date("2026-11-22T10:00:00Z"));
+  const weeks = sundaySessions(new Date("2026-11-28T10:00:00Z"));
   assert.equal(weeks.length, 12);
   assert.ok(
     weeks.every((w) =>
@@ -719,59 +719,55 @@ test("approved Saturday schedule opens winter 7 PM London dates with four places
           deadline: w.deadline.toISOString(),
         },
         w.capacity,
-        Date.parse("2026-11-22T10:00:00Z"),
+        Date.parse("2026-11-28T10:00:00Z"),
       ),
     ),
   );
-  assert.equal(weeks[0].startsAt.toISOString(), "2026-11-28T19:00:00.000Z");
+  assert.equal(weeks[0].startsAt.toISOString(), "2026-11-29T19:00:00.000Z");
   assert.ok(
     weeks.every(
       (w) =>
-        w.startsAt.getUTCDay() === 6 &&
+        w.startsAt.getUTCDay() === 0 &&
         w.startsAt.getUTCHours() === 19 &&
         w.capacity === 4,
     ),
   );
   assert.equal(
-    saturdaySessions(
-      new Date("2026-11-28T18:59:00Z"),
-    )[0].startsAt.toISOString(),
-    "2026-11-28T19:00:00.000Z",
+    sundaySessions(new Date("2026-11-29T18:59:00Z"))[0].startsAt.toISOString(),
+    "2026-11-29T19:00:00.000Z",
   );
   assert.equal(
-    saturdaySessions(
-      new Date("2026-11-28T19:00:00Z"),
-    )[0].startsAt.toISOString(),
-    "2026-12-05T19:00:00.000Z",
+    sundaySessions(new Date("2026-11-29T19:00:00Z"))[0].startsAt.toISOString(),
+    "2026-12-06T19:00:00.000Z",
   );
   assert.equal(
-    saturdaySessions(new Date("2026-11-22T10:00:00Z"))[0].id,
+    sundaySessions(new Date("2026-11-28T10:00:00Z"))[0].id,
     weeks[0].id,
   );
 });
 
 test("London 7 PM recurrence crosses both DST boundaries and converts correctly for Nigeria", async () => {
-  const { saturdaySessions, londonSaturdayStart, londonDay } =
-    await import("@/lib/dates/saturday-schedule");
-  const { isSaturday } = await import("@/lib/dates/booking");
+  const { sundaySessions, londonSundayStart, londonDay } =
+    await import("@/lib/dates/sunday-schedule");
+  const { isSunday } = await import("@/lib/dates/booking");
   assert.equal(
-    londonSaturdayStart("2027-03-27").toISOString(),
-    "2027-03-27T19:00:00.000Z",
+    londonSundayStart("2027-03-21").toISOString(),
+    "2027-03-21T19:00:00.000Z",
   );
   assert.equal(
-    londonSaturdayStart("2027-04-03").toISOString(),
-    "2027-04-03T18:00:00.000Z",
+    londonSundayStart("2027-03-28").toISOString(),
+    "2027-03-28T18:00:00.000Z",
   );
   assert.equal(
-    londonSaturdayStart("2027-10-30").toISOString(),
-    "2027-10-30T18:00:00.000Z",
+    londonSundayStart("2027-10-24").toISOString(),
+    "2027-10-24T18:00:00.000Z",
   );
   assert.equal(
-    londonSaturdayStart("2027-11-06").toISOString(),
-    "2027-11-06T19:00:00.000Z",
+    londonSundayStart("2027-10-31").toISOString(),
+    "2027-10-31T19:00:00.000Z",
   );
   for (const now of ["2027-03-01T10:00:00Z", "2027-09-01T10:00:00Z"]) {
-    const slots = saturdaySessions(new Date(now));
+    const slots = sundaySessions(new Date(now));
     assert.equal(slots.length, 12);
     for (const slot of slots) {
       assert.equal(slot.timezone, "Europe/London");
@@ -784,10 +780,7 @@ test("London 7 PM recurrence crosses both DST boundaries and converts correctly 
         }).format(slot.startsAt),
         "19:00",
       );
-      assert.equal(
-        slot.id,
-        "founders-lab-saturday-" + londonDay(slot.startsAt),
-      );
+      assert.equal(slot.id, "founders-lab-sunday-" + londonDay(slot.startsAt));
     }
   }
   const nigeria = (day: string) =>
@@ -796,33 +789,31 @@ test("London 7 PM recurrence crosses both DST boundaries and converts correctly 
       hour: "2-digit",
       minute: "2-digit",
       hourCycle: "h23",
-    }).format(londonSaturdayStart(day));
-  assert.equal(nigeria("2027-01-02"), "20:00");
-  assert.equal(nigeria("2027-07-03"), "19:00");
+    }).format(londonSundayStart(day));
+  assert.equal(nigeria("2027-01-03"), "20:00");
+  assert.equal(nigeria("2027-07-04"), "19:00");
   assert.equal(
-    isSaturday({ startsAt: "2027-07-02T23:30:00Z", timezone: "UTC" }),
+    isSunday({ startsAt: "2027-07-03T23:30:00Z", timezone: "UTC" }),
     true,
   );
   assert.equal(
-    isSaturday({ startsAt: "2027-07-03T23:30:00Z", timezone: "UTC" }),
+    isSunday({ startsAt: "2027-07-04T23:30:00Z", timezone: "UTC" }),
     false,
   );
   assert.equal(
-    saturdaySessions(
-      new Date("2027-07-03T18:00:00Z"),
-    )[0].startsAt.toISOString(),
-    "2027-07-10T18:00:00.000Z",
+    sundaySessions(new Date("2027-07-04T18:00:00Z"))[0].startsAt.toISOString(),
+    "2027-07-11T18:00:00.000Z",
   );
 });
 
-test("Saturday reconciliation updates legacy times in place without duplicate dates or booking resets", async () => {
-  const { saturdaySessions, saturdaySchedulePlan } =
-    await import("@/lib/dates/saturday-schedule");
-  const candidates = saturdaySessions(new Date("2027-07-01T00:00:00Z"));
+test("Sunday reconciliation updates legacy times in place without duplicate dates or booking resets", async () => {
+  const { sundaySessions, sundaySchedulePlan } =
+    await import("@/lib/dates/sunday-schedule");
+  const candidates = sundaySessions(new Date("2027-07-01T00:00:00Z"));
   const original = {
     ...candidates[0],
-    startsAt: new Date("2027-07-03T19:00:00Z"),
-    deadline: new Date("2027-07-03T19:00:00Z"),
+    startsAt: new Date("2027-07-04T19:00:00Z"),
+    deadline: new Date("2027-07-04T19:00:00Z"),
     timezone: "UTC",
     capacity: 8,
     status: "Cancelled",
@@ -831,11 +822,11 @@ test("Saturday reconciliation updates legacy times in place without duplicate da
   const legacy = {
     ...candidates[1],
     id: "legacy-booked-session",
-    startsAt: new Date("2027-07-10T19:00:00Z"),
+    startsAt: new Date("2027-07-11T19:00:00Z"),
     deadline: customDeadline,
     timezone: "UTC",
   };
-  const plan = saturdaySchedulePlan([original, legacy], candidates);
+  const plan = sundaySchedulePlan([original, legacy], candidates);
   assert.equal(plan.create.length, 10);
   assert.equal(plan.update.length, 2);
   assert.deepEqual(Object.keys(plan.update[0]).sort(), [
@@ -847,7 +838,7 @@ test("Saturday reconciliation updates legacy times in place without duplicate da
   assert.equal(plan.update[0].id, original.id);
   assert.equal(
     plan.update[0].startsAt.toISOString(),
-    "2027-07-03T18:00:00.000Z",
+    "2027-07-04T18:00:00.000Z",
   );
   assert.equal(plan.update[1].deadline, undefined);
   assert.equal(original.status, "Cancelled");
@@ -857,7 +848,7 @@ test("Saturday reconciliation updates legacy times in place without duplicate da
     { ...legacy, ...plan.update[1] },
     ...plan.create,
   ];
-  const repeat = saturdaySchedulePlan(applied, candidates);
+  const repeat = sundaySchedulePlan(applied, candidates);
   assert.equal(repeat.create.length, 0);
   assert.equal(repeat.update.length, 0);
 });

@@ -31,7 +31,7 @@ const questions = [
   ],
   [
     "Where and when do we meet?",
-    "On X Spaces, every Saturday at 7 PM London time. The calendar also shows the time in your timezone, with GMT and BST handled automatically.",
+    "On X Spaces, every Sunday at 7 PM London time. The calendar also shows the time in your timezone, with GMT and BST handled automatically.",
   ],
   [
     "What happens after I apply?",
@@ -39,7 +39,7 @@ const questions = [
   ],
   [
     "Do I need an account?",
-    "No founder account is required. Choose an available Saturday and send your application. Your private confirmation link is your way to check the request.",
+    "No founder account is required. Choose an available Sunday and send your application. Your private confirmation link is your way to check the request.",
   ],
 ];
 export default function HomePage() {
@@ -69,7 +69,7 @@ export default function HomePage() {
               <div className="fl-hero-actions">
                 <Link
                   className="fl-action fl-action-primary"
-                  href="/#choose-a-saturday"
+                  href="/#choose-a-sunday"
                 >
                   Book a Founder Space{" "}
                   <ArrowRight size={18} aria-hidden="true" />
@@ -94,7 +94,7 @@ export default function HomePage() {
             <div>
               <Clock3 size={19} aria-hidden="true" />
               <span>
-                Saturdays, <strong>7 PM London</strong>
+                Sundays, <strong>7 PM London</strong>
               </span>
             </div>
             <div>
@@ -129,7 +129,7 @@ export default function HomePage() {
                 Hosted by ⭕️La_Crrypt💰₿, each weekly X Space brings a small
                 group of founders into one conversation.
               </p>
-              <Link className="fl-inline-action" href="/#choose-a-saturday">
+              <Link className="fl-inline-action" href="/#choose-a-sunday">
                 Find your conversation{" "}
                 <ArrowRight size={17} aria-hidden="true" />
               </Link>
@@ -175,14 +175,14 @@ export default function HomePage() {
           >
             <div className="fl-process-intro">
               <h2 id="process-title">How It Works</h2>
-              <p>Your next conversation starts with a Saturday.</p>
+              <p>Your next conversation starts with a Sunday.</p>
             </div>
             <ol className="fl-process-steps">
               <li>
                 <span>
                   <CalendarDays size={23} aria-hidden="true" />
                 </span>
-                <h3>Choose your Saturday</h3>
+                <h3>Choose your Sunday</h3>
                 <p>
                   Pick an available date. See the live places left and the time
                   where you are.
@@ -253,8 +253,8 @@ export default function HomePage() {
                 introductions are invitation-only.
               </p>
             </div>
-            <Link className="fl-inline-action" href="/#choose-a-saturday">
-              Choose a Saturday <ArrowRight size={17} aria-hidden="true" />
+            <Link className="fl-inline-action" href="/#choose-a-sunday">
+              Choose a Sunday <ArrowRight size={17} aria-hidden="true" />
             </Link>
           </section>
           <section
@@ -267,9 +267,9 @@ export default function HomePage() {
             </div>
             <Link
               className="fl-action fl-action-primary"
-              href="/#choose-a-saturday"
+              href="/#choose-a-sunday"
             >
-              Choose a Saturday <ArrowRight size={19} aria-hidden="true" />
+              Choose a Sunday <ArrowRight size={19} aria-hidden="true" />
             </Link>
             <p className="fl-final-note">
               Free participation. Application review required. No founder

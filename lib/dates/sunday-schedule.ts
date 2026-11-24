@@ -1,4 +1,4 @@
-/** Saturday 7 PM Europe/London; UTC storage follows GMT/BST automatically. */
+/** Sunday 7 PM Europe/London; UTC storage follows GMT/BST automatically. */
 export const LONDON_TIME_ZONE = "Europe/London";
 export function londonDay(date: Date | string) {
   return new Intl.DateTimeFormat("en-CA", {
@@ -8,7 +8,7 @@ export function londonDay(date: Date | string) {
     day: "2-digit",
   }).format(new Date(date));
 }
-export function londonSaturdayStart(day: string) {
+export function londonSundayStart(day: string) {
   const utc = new Date(`${day}T19:00:00.000Z`);
   // 19:00 is outside DST gaps/overlaps. The IANA timezone supplies the date's offset.
   const hour = Number(
@@ -22,13 +22,13 @@ export function londonSaturdayStart(day: string) {
 }
 export function isLondonProgrammeTime(date: Date | string) {
   const value = new Date(date);
-  return value.getTime() === londonSaturdayStart(londonDay(value)).getTime();
+  return value.getTime() === londonSundayStart(londonDay(value)).getTime();
 }
-export function saturdaySessions(now = new Date(), weeks = 12) {
+export function sundaySessions(now = new Date(), weeks = 12) {
   const first = new Date(`${londonDay(now)}T00:00:00Z`);
-  first.setUTCDate(first.getUTCDate() + ((6 - first.getUTCDay() + 7) % 7));
+  first.setUTCDate(first.getUTCDate() + ((7 - first.getUTCDay()) % 7));
   if (
-    londonSaturdayStart(first.toISOString().slice(0, 10)).getTime() <=
+    londonSundayStart(first.toISOString().slice(0, 10)).getTime() <=
     now.getTime()
   )
     first.setUTCDate(first.getUTCDate() + 7);
@@ -36,9 +36,9 @@ export function saturdaySessions(now = new Date(), weeks = 12) {
     const date = new Date(first);
     date.setUTCDate(date.getUTCDate() + index * 7);
     const day = date.toISOString().slice(0, 10),
-      startsAt = londonSaturdayStart(day);
+      startsAt = londonSundayStart(day);
     return {
-      id: `founders-lab-saturday-${day}`,
+      id: `founders-lab-sunday-${day}`,
       title: "Founders Lab with ⭕️La_Crrypt💰₿",
       startsAt,
       timezone: LONDON_TIME_ZONE,
@@ -61,9 +61,9 @@ type ExistingSlot = {
   timezone: string;
 };
 /** Reconcile by London date, preserving IDs, capacity, status and all relationships. */
-export function saturdaySchedulePlan(
+export function sundaySchedulePlan(
   existing: ExistingSlot[],
-  candidates = saturdaySessions(),
+  candidates = sundaySessions(),
 ) {
   const create: typeof candidates = [],
     update: {
@@ -84,6 +84,7 @@ export function saturdaySchedulePlan(
     }
     // Align managed slots and legacy fixed-UTC programme slots, not unrelated custom events.
     const recurring =
+      found.id.startsWith("founders-lab-sunday-") ||
       found.id.startsWith("founders-lab-saturday-") ||
       (["UTC", "GMT", "Etc/UTC"].includes(found.timezone) &&
         found.startsAt.getUTCHours() === 19 &&

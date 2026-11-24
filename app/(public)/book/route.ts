@@ -10,7 +10,7 @@ import {
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const response = NextResponse.redirect(new URL("/#choose-a-saturday", url));
+  const response = NextResponse.redirect(new URL("/#choose-a-sunday", url));
   response.headers.set("Cache-Control", "private, no-store");
   if (!url.searchParams.has("ref")) {
     response.cookies.delete(BD_REFERRAL_COOKIE);
