@@ -12,6 +12,8 @@ import { rewardSummary, REFERRALS_PER_CYCLE, REWARD_NAIRA } from "./rewards";
 import { naira, type Partner } from "./intelligence";
 import BdIntelligence from "./BdIntelligence";
 import ReferralLink from "./ReferralLink";
+import CommissionExample from "./CommissionExample";
+import { referralStatus } from "./referral-status";
 
 export default function Operations({
   edit,
@@ -148,7 +150,8 @@ export default function Operations({
       setBankDetails(null);
       setNotice("Saved.");
       setAttempt((value) => value + 1);
-      if (action === "attribute") router.refresh();
+      if (action === "attribute" || action === "review-referral")
+        router.refresh();
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Could not save.");
     } finally {
@@ -156,46 +159,9 @@ export default function Operations({
     }
   }
 
-  const claimed = new Set(
-    partners.flatMap((p) =>
-      p.appearances
-        .filter((a) => !a.reversedAt)
-        .map((a) => JSON.stringify([a.sessionId, a.companyId])),
-    ),
-  );
   const unmatched = state.applications.filter(
     (application) => application.bdReferrerXHandle && !application.bdPartnerId,
   );
-  const attendedBookings = state.bookings.flatMap((booking) => {
-    const application = state.applications.find(
-      (a) => a.id === booking.applicationId,
-    );
-    const session = state.sessions.find((s) => s.id === booking.sessionId);
-    const attendance = state.spaceData.find(
-      (report) => report.sessionId === booking.sessionId,
-    );
-    return booking.status === "Attended" &&
-      application?.status === "Approved" &&
-      application.bdPartnerId &&
-      session &&
-      session.status === "Completed" &&
-      attendance?.submittedAt &&
-      state.spaceAttendance.some(
-        (entry) =>
-          entry.spaceDataId === attendance.id &&
-          entry.companyId === application.companyId &&
-          entry.foundersCount > 0,
-      ) &&
-      !claimed.has(JSON.stringify([session.id, application.companyId]))
-      ? [
-          {
-            id: booking.id,
-            partnerId: application.bdPartnerId,
-            label: `${application.companyName} · ${session.startsAt.slice(0, 10)}`,
-          },
-        ]
-      : [];
-  });
 
   return (
     <>
@@ -243,6 +209,11 @@ export default function Operations({
         )}
         <div hidden={panel !== "bd"}>
           <BdIntelligence partners={partners} />
+          <CommissionExample />
+          <p>
+            Applications and attendance alone do not earn commission. Only
+            verified appearances after a completed Space’s final approval count.
+          </p>
           {accessLink && (
             <Modal
               title="Partner dashboard invitation"
@@ -330,9 +301,9 @@ export default function Operations({
             </form>
           </section>
           {notice && <p role="status">{notice}</p>}
-          {!!unmatched.length && (
+          {isOwner && !!unmatched.length && (
             <section className="panel padded">
-              <h2>Referrers to review</h2>
+              <h2>Historical referrals to review</h2>
               {unmatched.map((application) => (
                 <form
                   className="record-form"
@@ -384,9 +355,6 @@ export default function Operations({
               const referrals = state.applications.filter(
                 (application) => application.bdPartnerId === partner.id,
               );
-              const reviewedBookings = attendedBookings.filter(
-                (booking) => booking.partnerId === partner.id,
-              );
               const verifiedBookings = new Set(
                 partner.appearances
                   .filter((appearance) => !appearance.reversedAt)
@@ -396,6 +364,31 @@ export default function Operations({
                 verifiedBookings.size,
                 partner.payments,
               );
+              const statuses = referrals.map((application) => {
+                const bookings = state.bookings
+                  .filter((booking) => booking.applicationId === application.id)
+                  .map((booking) => ({
+                    ...booking,
+                    attended: state.spaceData.some(
+                      (report) =>
+                        report.sessionId === booking.sessionId &&
+                        report.founderBookingIds.includes(booking.id),
+                    ),
+                  }));
+                return {
+                  application,
+                  status: referralStatus(
+                    {
+                      status: application.status,
+                      ineligible: ["self", "host", "disqualified"].includes(
+                        application.bdReviewStatus || "",
+                      ),
+                    },
+                    bookings,
+                    verifiedBookings,
+                  ),
+                };
+              });
               const balance = (cycle: number) =>
                 REWARD_NAIRA -
                 partner.payments
@@ -487,6 +480,24 @@ export default function Operations({
                           (referral) => referral.status === "Approved",
                         ).length,
                       ],
+                      [
+                        "Scheduled appearances",
+                        statuses.filter(
+                          (row) => row.status === "Space scheduled",
+                        ).length,
+                      ],
+                      [
+                        "Attended, awaiting final approval",
+                        statuses.filter(
+                          (row) =>
+                            row.status === "Attendance pending verification",
+                        ).length,
+                      ],
+                      [
+                        "Rejected or disqualified referrals",
+                        statuses.filter((row) => row.status === "Not eligible")
+                          .length,
+                      ],
                       ["Verified referrals", reward.verified],
                       [
                         "Current cycle",
@@ -525,29 +536,7 @@ export default function Operations({
                           </tr>
                         </thead>
                         <tbody>
-                          {referrals.map((application) => {
-                            const bookings = state.bookings.filter(
-                              (booking) =>
-                                booking.applicationId === application.id,
-                            );
-                            const status = bookings.some((booking) =>
-                              verifiedBookings.has(booking.id),
-                            )
-                              ? "Verified"
-                              : application.status === "Approved"
-                                ? bookings.some(
-                                    (booking) => booking.status === "Attended",
-                                  )
-                                  ? "Attendance to verify"
-                                  : bookings.some(
-                                        (booking) =>
-                                          booking.status === "Approved",
-                                      )
-                                    ? "Booked"
-                                    : "Awaiting booking"
-                                : application.status === "Pending"
-                                  ? "Awaiting approval"
-                                  : application.status;
+                          {statuses.map(({ application, status }) => {
                             return (
                               <tr key={application.id}>
                                 <th scope="row">
@@ -560,6 +549,65 @@ export default function Operations({
                                 <td>{application.companyName}</td>
                                 <td>
                                   <Status value={status} />
+                                  {isOwner &&
+                                    application.bdReviewStatus === "review" && (
+                                      <p>Flagged for owner review</p>
+                                    )}
+                                  {isOwner &&
+                                    application.bdReviewStatus === "self" && (
+                                      <p>Self-referral blocked</p>
+                                    )}
+                                  {isOwner &&
+                                    application.bdReviewStatus !==
+                                      "disqualified" && (
+                                      <details>
+                                        <summary>Review referral</summary>
+                                        <form
+                                          className="record-form"
+                                          onSubmit={(event) =>
+                                            void submit(
+                                              event,
+                                              "review-referral",
+                                              partner.id,
+                                            )
+                                          }
+                                        >
+                                          <input
+                                            type="hidden"
+                                            name="applicationId"
+                                            value={application.id}
+                                          />
+                                          <label>
+                                            Decision
+                                            <select name="decision">
+                                              <option value="disqualify">
+                                                Disqualify referral
+                                              </option>
+                                              {application.bdReviewStatus ===
+                                                "review" && (
+                                                <option value="clear">
+                                                  Clear review flag
+                                                </option>
+                                              )}
+                                            </select>
+                                          </label>
+                                          <label>
+                                            Audit reason
+                                            <input
+                                              name="reason"
+                                              required
+                                              maxLength={200}
+                                            />
+                                          </label>
+                                          <button
+                                            className="button"
+                                            disabled={busy}
+                                          >
+                                            Record decision
+                                          </button>
+                                        </form>
+                                      </details>
+                                    )}
                                 </td>
                               </tr>
                             );
@@ -624,32 +672,9 @@ export default function Operations({
                       ))}
                     </ul>
                   </details>
-                  <form
-                    onSubmit={(event) =>
-                      void submit(event, "verify", partner.id)
-                    }
-                    className="record-form"
-                  >
-                    <label>
-                      Attended founder booking
-                      <select name="bookingId" required defaultValue="">
-                        <option value="" disabled>
-                          Select booking
-                        </option>
-                        {reviewedBookings.map((booking) => (
-                          <option value={booking.id} key={booking.id}>
-                            {booking.label}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <button
-                      className="button"
-                      disabled={busy || !reviewedBookings.length}
-                    >
-                      Verify referral
-                    </button>
-                  </form>
+                  <Link className="button" href="/operations?tab=sessions">
+                    Open Space sessions
+                  </Link>
                   {!!unpaid.length &&
                     (bankDetails?.partnerId === partner.id ? (
                       <div>

@@ -90,6 +90,7 @@ export const schemas = {
   }),
   "space-data.save": z.object({
     submit: z.boolean().optional().default(false),
+    founderBookingIds: z.array(required).max(500).optional(),
     postUrl: spaceLink,
     liveUrl: spaceLink,
     recordingUrl: spaceLink,

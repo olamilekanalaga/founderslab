@@ -2,6 +2,7 @@ import "server-only";
 import { createDecipheriv, randomUUID } from "node:crypto";
 import { z } from "zod";
 import { bdRegistration } from "@/lib/validation/bd-partner";
+import { approveSpaceReferrals } from "@/server/services/bd-verification";
 import { registerBdPartner } from "@/server/services/bd-registration";
 import { requireCsrf } from "@/server/auth";
 import { requireBdOperator } from "@/server/auth/workspace";
@@ -42,9 +43,16 @@ const command = z.discriminatedUnion("action", [
     applicationId: text,
   }),
   z.object({
-    action: z.literal("verify"),
+    action: z.literal("finalize"),
+    sessionId: text,
+    confirmed: z.literal(true),
+  }),
+  z.object({
+    action: z.literal("review-referral"),
     partnerId: z.uuid(),
-    bookingId: text,
+    applicationId: text,
+    decision: z.enum(["clear", "disqualify"]),
+    reason: text,
   }),
   z.object({
     action: z.literal("pay"),
@@ -134,11 +142,17 @@ export async function POST(request: Request) {
     requireCsrf(request, viewer);
     const payload = command.parse(await body(request));
     if (
-      ["access", "profile"].includes(payload.action) &&
+      [
+        "access",
+        "profile",
+        "finalize",
+        "review-referral",
+        "attribute",
+      ].includes(payload.action) &&
       !viewer.permissions.includes("team.manage")
     )
       throw new DomainError(
-        "Only the owner can manage partner access or identity.",
+        "Only the owner can approve attendance or manage referral and partner access decisions.",
         403,
       );
     const result = await db().$transaction(async (tx) => {
@@ -167,6 +181,8 @@ export async function POST(request: Request) {
           "Admin-assisted registration",
         );
       }
+      if (payload.action === "finalize")
+        return approveSpaceReferrals(tx, payload.sessionId, viewer.name);
       // Serialize verification and payments for the same partner.
       const locked = await tx.$queryRaw<
         { id: string; active: boolean }[]
@@ -263,6 +279,43 @@ export async function POST(request: Request) {
         });
         return;
       }
+      if (payload.action === "review-referral") {
+        const app = await tx.application.findFirst({
+          where: { id: payload.applicationId, bdPartnerId: payload.partnerId },
+          include: { bookings: { select: { id: true } } },
+        });
+        if (!app) throw new DomainError("Referral unavailable.", 404);
+        if (payload.decision === "clear" && app.bdReviewStatus !== "review")
+          throw new DomainError(
+            "Only a flagged referral awaiting review can be cleared.",
+            409,
+          );
+        await tx.application.update({
+          where: { id: app.id },
+          data: {
+            bdReviewStatus:
+              payload.decision === "clear" ? "cleared" : "disqualified",
+          },
+        });
+        if (payload.decision === "disqualify")
+          await tx.bdAppearance.updateMany({
+            where: {
+              partnerId: payload.partnerId,
+              bookingId: { in: app.bookings.map(({ id }) => id) },
+              reversedAt: null,
+            },
+            data: { reversedAt: new Date() },
+          });
+        await tx.auditLog.create({
+          data: {
+            actor: viewer.name,
+            action: `bd.review.${payload.decision}`,
+            entityId: app.id,
+            detail: payload.reason,
+          },
+        });
+        return;
+      }
       if (payload.action === "attribute") {
         if (!locked[0].active)
           throw new DomainError("This partner is inactive.", 409);
@@ -272,7 +325,7 @@ export async function POST(request: Request) {
             bdReferrerXHandle: { not: null },
             bdPartnerId: null,
           },
-          data: { bdPartnerId: payload.partnerId },
+          data: { bdPartnerId: payload.partnerId, bdReviewStatus: "review" },
         });
         if (!assigned.count)
           throw new DomainError(
@@ -292,84 +345,6 @@ export async function POST(request: Request) {
       const verified = await tx.bdAppearance.count({
         where: { partnerId: payload.partnerId, reversedAt: null },
       });
-      if (payload.action === "verify") {
-        const sessionTarget = await tx.bookingRequest.findUnique({
-          where: { id: payload.bookingId },
-          select: { sessionId: true },
-        });
-        if (!sessionTarget) throw new DomainError("Booking not found.", 404);
-        await tx.$queryRaw`SELECT id FROM "Session" WHERE id = ${sessionTarget.sessionId} FOR UPDATE`;
-        await tx.$queryRaw`SELECT id FROM "BookingRequest" WHERE id = ${payload.bookingId} FOR UPDATE`;
-        const booking = await tx.bookingRequest.findUnique({
-          where: { id: payload.bookingId },
-          include: {
-            application: true,
-            session: { include: { spaceData: { include: { teams: true } } } },
-          },
-        });
-        if (booking && booking.application.bdPartnerId !== payload.partnerId)
-          throw new DomainError(
-            "This booking is not attributed to this BD partner.",
-            409,
-          );
-        const companyId = booking?.application.companyId;
-        const founderId = booking?.application.founderId;
-        if (
-          !booking ||
-          booking.status !== "Attended" ||
-          booking.application.status !== "Approved" ||
-          !companyId ||
-          !founderId ||
-          booking.session.status !== "Completed" ||
-          !booking.session.spaceData?.submittedAt ||
-          !booking.session.spaceData.teams.some(
-            (team) => team.companyId === companyId && team.foundersCount > 0,
-          )
-        ) {
-          throw new DomainError(
-            "Choose an attended booking for an approved application with submitted founder attendance.",
-          );
-        }
-        const prior = await tx.bdAppearance.findUnique({
-          where: { bookingId: booking.id },
-        });
-        if (
-          prior &&
-          (!prior.reversedAt || prior.partnerId !== payload.partnerId)
-        )
-          throw new DomainError(
-            "This appearance has already been credited.",
-            409,
-          );
-        const latest = await tx.bdAppearance.aggregate({
-          where: { partnerId: payload.partnerId },
-          _max: { ordinal: true },
-        });
-        const appearance = prior
-          ? await tx.bdAppearance.update({
-              where: { id: prior.id },
-              data: { reversedAt: null, verifiedAt: new Date() },
-            })
-          : await tx.bdAppearance.create({
-              data: {
-                id: randomUUID(),
-                partnerId: payload.partnerId,
-                bookingId: booking.id,
-                sessionId: booking.sessionId,
-                companyId,
-                ordinal: (latest._max.ordinal ?? 0) + 1,
-              },
-            });
-        await tx.auditLog.create({
-          data: {
-            actor: viewer.name,
-            action: "bd.verify",
-            entityId: appearance.id,
-            detail: "Verified founder appearance",
-          },
-        });
-        return;
-      }
       if (payload.cycle > Math.floor(verified / REFERRALS_PER_CYCLE))
         throw new DomainError("This reward cycle is not complete.");
       if (payload.paidOn > new Date().toISOString().slice(0, 10))

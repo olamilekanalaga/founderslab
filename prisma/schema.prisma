@@ -154,6 +154,7 @@ model FounderCompanyMembership {
 model Application {
   projectXHandle      String?
   bdReferrerXHandle   String?
+  bdReviewStatus      String?
   bdPartnerId         String?
   bdPartner           BdPartner?       @relation(fields: [bdPartnerId], references: [id], onDelete: Restrict)
   id                  String           @id @default(cuid())
@@ -422,6 +423,8 @@ model Setting {
 }
 
 model SpaceData {
+  bdApprovedAt    DateTime?
+  founderBookingIds String[] @default([])
   submittedAt     DateTime?
   submittedBy     String?
   id              String                @id @default(cuid())

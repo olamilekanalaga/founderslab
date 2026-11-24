@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import ReferralLink from "./ReferralLink";
+import { referralStatus } from "./referral-status";
 import { naira } from "./intelligence";
 import { REFERRALS_PER_CYCLE, rewardSummary } from "./rewards";
 
@@ -12,7 +13,8 @@ type Dashboard = {
     founderName: string;
     companyName: string;
     status: string;
-    bookings: { id: string }[];
+    ineligible: boolean;
+    bookings: { id: string; status: string; attended: boolean }[];
   }[];
   appearances: { bookingId: string }[];
   payments: { id: string; cycle: number; amount: number; paidOn: string }[];
@@ -111,6 +113,10 @@ export default function PartnerDashboard() {
           </div>
           <section className="panel padded">
             <h2>Referral progress</h2>
+            <p>
+              Only verified appearances in completed, approved Spaces earn
+              commission. Four verified appearances earn ₦20,000.
+            </p>
             <dl className="facts">
               {[
                 ["Total referred founders", dashboard.applications.length],
@@ -126,7 +132,7 @@ export default function PartnerDashboard() {
                   `${reward.cycleProgress}/${REFERRALS_PER_CYCLE}`,
                 ],
                 ["Completed cycles", reward.completedCycles],
-                ["Earned", naira.format(reward.earned)],
+                ["Commission earned", naira.format(reward.earned)],
                 ["Paid", naira.format(reward.paid)],
                 ["Outstanding", naira.format(reward.outstanding)],
               ].map(([label, amount]) => (
@@ -145,9 +151,7 @@ export default function PartnerDashboard() {
                 {dashboard.applications.map((app) => (
                   <li key={app.id}>
                     {app.founderName} · {app.companyName} ·{" "}
-                    {app.bookings.some((booking) => verified.has(booking.id))
-                      ? "Verified"
-                      : app.status}
+                    {referralStatus(app, app.bookings, verified)}
                   </li>
                 ))}
               </ul>
@@ -159,8 +163,8 @@ export default function PartnerDashboard() {
               <ul>
                 {dashboard.payments.map((payment) => (
                   <li key={payment.id}>
-                    Cycle {payment.cycle} · {payment.paidOn} ·{" "}
-                    {naira.format(payment.amount)} paid
+                    Cycle {payment.cycle} · {payment.paidOn} · Payment completed
+                    · {naira.format(payment.amount)}
                   </li>
                 ))}
               </ul>

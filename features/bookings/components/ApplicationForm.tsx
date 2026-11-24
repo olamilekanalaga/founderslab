@@ -30,7 +30,6 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
     companyName: "",
     xHandle: "",
     projectXHandle: "",
-    bdReferrerXHandle: "",
     website: "",
     country: "",
     description: "",
@@ -194,33 +193,20 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
                 maxLength={50}
               />
             </label>
-            <label>
-              BD referrer’s X username
-              <input
-                name="bdReferrerXHandle"
-                value={
-                  referral?.locked
-                    ? referral.handle || ""
-                    : fields.bdReferrerXHandle
-                }
-                readOnly={referral?.locked}
-                onChange={(e) => change("bdReferrerXHandle", e.target.value)}
-                autoCapitalize="none"
-                autoCorrect="off"
-                spellCheck={false}
-                maxLength={16}
-                aria-describedby="bd-referrer-hint"
-              />
-              <small id="bd-referrer-hint">
-                Enter the X username of the BD partner who referred you, e.g.
-                @ola__crrypt. Leave blank if nobody referred you.
-                {referral?.locked &&
-                  !referral.valid &&
-                  " This referral link is unavailable. You can still apply."}
-                {referral?.valid &&
-                  " The referral from your link will be applied automatically."}
-              </small>
-            </label>
+            {referral?.valid && (
+              <label>
+                BD referrer
+                <input
+                  value={referral.handle || "Registered BD partner"}
+                  readOnly
+                />
+              </label>
+            )}
+            {referral?.locked && !referral.valid && (
+              <p className="muted">
+                This referral link is unavailable. You can still apply.
+              </p>
+            )}
             <label>
               Contact email (private)
               <input

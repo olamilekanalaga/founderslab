@@ -6,7 +6,7 @@ import { db, hash, token } from "@/server/db";
 import { body, failure, json } from "@/server/http";
 import { DomainError } from "@/lib/domain";
 
-const COOKIE = "fl_bd_session";
+import { BD_SESSION_COOKIE as COOKIE } from "@/server/services/bd-referral";
 const SESSION_SECONDS = 30 * 86400;
 
 export async function GET() {
@@ -32,7 +32,18 @@ export async function GET() {
                 founderName: true,
                 companyName: true,
                 status: true,
-                bookings: { select: { id: true } },
+                bdReviewStatus: true,
+                bookings: {
+                  select: {
+                    id: true,
+                    status: true,
+                    session: {
+                      select: {
+                        spaceData: { select: { founderBookingIds: true } },
+                      },
+                    },
+                  },
+                },
               },
             },
             appearances: {
@@ -49,7 +60,23 @@ export async function GET() {
     });
     if (!access)
       return json({ error: "Sign in with your partner invitation." }, 401);
-    return json(access.partner);
+    return json({
+      ...access.partner,
+      applications: access.partner.applications.map(
+        ({ bdReviewStatus, ...application }) => ({
+          ...application,
+          bookings: application.bookings.map(({ id, status, session }) => ({
+            id,
+            status,
+            attended:
+              session.spaceData?.founderBookingIds.includes(id) ?? false,
+          })),
+          ineligible: ["self", "host", "disqualified"].includes(
+            bdReviewStatus || "",
+          ),
+        }),
+      ),
+    });
   } catch (error) {
     return failure(error);
   }

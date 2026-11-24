@@ -65,9 +65,9 @@
   {
     "file": "server/handlers/public.ts",
     "name": "POST",
-    "reason": "Keep origin and application validation and resolve locked referral attribution on the server, ignoring submitted handles for a referral link.",
+    "reason": "Founder referral attribution comes from the server-issued grant, with private self-referral review flags.",
     "originalSha256": "714e50f62f02baf27528bb45a11ec3087afcb19fe73227cbaf4b15b891e0f38b",
-    "sha256": "d6739ddf1a41d608f9fa1e4835cc750e5492bc5525ffed725677e04e12a77564"
+    "sha256": "043cbee14c8709f8c46caaae027dd4fc2e26e3cd44e0ca5ac2701bd38951a09b"
   },
   {
     "file": "server/services/space-managers.ts",

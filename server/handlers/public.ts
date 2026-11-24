@@ -20,9 +20,9 @@ import {
   activeReferral,
   BD_REFERRAL_COOKIE,
   referralSelection,
+  signedInBdPartner,
 } from "@/server/services/bd-referral";
 import { defaultSettings } from "@/lib/catalog";
-import { findBdPartnersByHandle } from "@/server/services/bd-registration";
 
 export async function GET(
   _request: Request,
@@ -164,14 +164,9 @@ export async function POST(
     );
     if (action === "apply") {
       const selected = await referralSelection();
-      const input = await body(request);
       const { sessionId, ...p } = applicationSchema
         .extend({ sessionId: z.string().min(1).max(200).optional() })
-        .parse(
-          selected && input && typeof input === "object"
-            ? { ...input, bdReferrerXHandle: null }
-            : input,
-        );
+        .parse(await body(request));
       const configuration = await db().setting.findUnique({
         where: { key: "programme" },
       });
@@ -235,23 +230,25 @@ export async function POST(
         const linkedPartner = selected
           ? await activeReferral(tx, selected)
           : null;
-        const matchingPartners =
-          !selected && data.bdReferrerXHandle
-            ? await findBdPartnersByHandle(tx, `@${data.bdReferrerXHandle}`)
-            : [];
-        return tx.application.create({
+        const identity = linkedPartner ? await signedInBdPartner(tx) : null;
+        const selfReferral =
+          linkedPartner &&
+          (identity === linkedPartner.id ||
+            Boolean(
+              data.contact &&
+              data.contact.toLowerCase() === linkedPartner.email.toLowerCase(),
+            ));
+        const handleMatch =
+          linkedPartner?.name.toLowerCase() === `@${data.xHandle}`;
+        const review = selfReferral ? "self" : handleMatch ? "review" : null;
+        const created = await tx.application.create({
           data: {
             ...data,
-            bdReferrerXHandle: selected
-              ? linkedPartner?.name.startsWith("@")
-                ? linkedPartner.name.slice(1).toLowerCase()
-                : null
-              : data.bdReferrerXHandle,
-            bdPartnerId: selected
-              ? (linkedPartner?.id ?? null)
-              : matchingPartners.length === 1
-                ? matchingPartners[0].id
-                : null,
+            bdReferrerXHandle: linkedPartner?.name.startsWith("@")
+              ? linkedPartner.name.slice(1).toLowerCase()
+              : null,
+            bdPartnerId: linkedPartner?.id ?? null,
+            bdReviewStatus: review,
             id,
             reference: `FL-${id.slice(0, 8).toUpperCase()}`,
             dedupeKey: normaliseKey(p.xHandle, p.companyName),
@@ -270,6 +267,18 @@ export async function POST(
               : {}),
           },
         });
+        if (review)
+          await tx.auditLog.create({
+            data: {
+              actor: "Founder application",
+              action: "bd.review.flag",
+              entityId: created.id,
+              detail: selfReferral
+                ? "Partner session or contact email matches the referred founder."
+                : "Founder and partner X usernames match.",
+            },
+          });
+        return created;
       });
       if (selected) (await cookies()).delete(BD_REFERRAL_COOKIE);
       return json(

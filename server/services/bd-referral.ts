@@ -27,7 +27,23 @@ export async function activeReferral(
       expiresAt: { gt: new Date() },
       partner: { active: true },
     },
-    select: { partner: { select: { id: true, name: true } } },
+    select: { partner: { select: { id: true, name: true, email: true } } },
   });
   return row?.partner ?? null;
+}
+
+export const BD_SESSION_COOKIE = "fl_bd_session";
+
+export async function signedInBdPartner(client: Prisma.TransactionClient) {
+  const raw = (await cookies()).get(BD_SESSION_COOKIE)?.value;
+  if (!raw) return null;
+  const grant = await client.bdAccess.findFirst({
+    where: {
+      tokenHash: hash(raw),
+      purpose: "session",
+      expiresAt: { gt: new Date() },
+    },
+    select: { partnerId: true },
+  });
+  return grant?.partnerId ?? null;
 }

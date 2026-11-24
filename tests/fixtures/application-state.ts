@@ -76,6 +76,7 @@ export function createLocalApplication(
     reference: `FL-${id.slice(0, 8).toUpperCase()}`,
     status: "Pending",
     bdReferrerXHandle: null,
+    bdReviewStatus: null,
     bdPartnerId: null,
     founderId: null,
     companyId: null,
