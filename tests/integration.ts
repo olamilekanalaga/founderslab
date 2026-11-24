@@ -2609,8 +2609,10 @@ try {
       (await request(bdRoute, pay, paymentManager, false)).status,
       403,
     );
-    assert.equal((await request(bdRoute, pay, paymentManager)).status, 200);
-    assert.equal((await request(bdRoute, pay, admin)).status, 409);
+    const attempts = await Promise.all([
+      request(bdRoute, pay, paymentManager),
+      request(bdRoute, pay, paymentManager),
+    ]);
     assert.deepEqual(
       attempts.map((attempt) => attempt.status).sort(),
       [200, 409],
