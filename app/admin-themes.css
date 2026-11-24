@@ -236,3 +236,36 @@
     color: var(--muted);
   }
 }
+
+.admin-desk[data-workspace-theme]:not([data-workspace-theme="founders"]) {
+  --chart-grid: var(--border);
+  --chart-label: var(--muted);
+  --chart-surface: var(--surface);
+  --chart-ink: var(--ink);
+  --chart-accent: var(--palette-accent);
+
+  :is(.main-column h2, .main-column h3, .desk-metric strong, .topbar-left > b) {
+    color: var(--ink);
+  }
+
+  :is(.desk-metric > div svg, .desk-access > svg, .desk-queue .icon-button) {
+    color: var(--accent);
+  }
+
+  :is(
+    .desk-ticket small,
+    .desk-details > summary,
+    .desk-chart-loading,
+    .workspace-footer > span
+  ) {
+    color: var(--muted);
+  }
+
+  .desk-next {
+    background: var(--desk-soft);
+  }
+
+  .desk-next :is(div, small, svg, strong) {
+    color: var(--ink);
+  }
+}

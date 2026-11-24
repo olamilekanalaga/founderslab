@@ -1985,10 +1985,8 @@ try {
     await expect(workspace).toHaveAttribute("data-visual-effects", "system");
     await page.goto(origin + "/dashboard");
     await expect(workspace).toHaveAttribute("data-workspace-theme", "superteam");
-    await page.screenshot({
-      path: artifactPath("superteam-theme-mobile.png"),
-      fullPage: true,
-    });
+    await page.locator(".desk-activity .studio-chart").waitFor();
+    await page.screenshot({ path: artifactPath("superteam-theme-mobile.png") });
     await page.getByRole("button", { name: /Open account menu/ }).click();
     await themePicker.selectOption("founders");
     await expect(workspace).toHaveAttribute("data-workspace-theme", "founders");
