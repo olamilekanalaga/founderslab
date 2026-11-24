@@ -1304,6 +1304,18 @@ try {
     200,
   );
   const browserManagerToken = emailToken();
+  const mobileAttendanceDb = new Client({ connectionString: url.toString() });
+  await mobileAttendanceDb.connect();
+  const originalSpace = (
+    await mobileAttendanceDb.query(
+      'SELECT "startsAt", status FROM "Session" WHERE id=$1',
+      [session.id],
+    )
+  ).rows[0];
+  await mobileAttendanceDb.query(
+    'UPDATE "Session" SET "startsAt"=$1 WHERE id=$2',
+    [new Date(Date.now() - 3600000), session.id],
+  );
   const managerBrowser = await chromium.launch({
     executablePath:
       process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || "/usr/bin/chromium",
@@ -1325,7 +1337,7 @@ try {
       .waitFor();
     assert.equal(
       await page
-        .getByRole("button", { name: "Save Space data", exact: true })
+        .getByRole("button", { name: "Submit attendance", exact: true })
         .isVisible(),
       false,
     );
@@ -1337,8 +1349,14 @@ try {
       false,
     );
     await page
-      .getByRole("button", { name: "Save Space data", exact: true })
+      .getByRole("button", { name: "Submit attendance", exact: true })
       .waitFor();
+    assert.equal(
+      await page
+        .getByRole("button", { name: "Save Space data", exact: true })
+        .count(),
+      0,
+    );
     assert.equal(new URL(page.url()).hash, "");
     assert.equal(
       await page.getByText("Founders attended", { exact: true }).count(),
@@ -1350,13 +1368,21 @@ try {
     );
     await page.getByLabel("Live listeners", { exact: true }).fill("143");
     await page
-      .getByRole("button", { name: "Save Space data", exact: true })
+      .getByRole("button", { name: "Submit attendance", exact: true })
       .click();
     await page
       .getByText(
         "Space data saved. Shared founder and company profiles are updated.",
       )
       .waitFor();
+    const saved = (
+      await mobileAttendanceDb.query(
+        'SELECT "liveListeners", "submittedAt" FROM "SpaceData" WHERE "sessionId"=$1',
+        [session.id],
+      )
+    ).rows[0];
+    assert.equal(saved.liveListeners, 143);
+    assert.ok(saved.submittedAt);
     assert.equal(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
@@ -1390,6 +1416,15 @@ try {
     });
   } finally {
     await managerBrowser.close();
+    await mobileAttendanceDb.query(
+      'UPDATE "Session" SET "startsAt"=$1, status=$2 WHERE id=$3',
+      [originalSpace.startsAt, originalSpace.status, session.id],
+    );
+    await mobileAttendanceDb.query(
+      'UPDATE "SpaceData" SET "submittedAt"=NULL, "submittedBy"=NULL WHERE "sessionId"=$1',
+      [session.id],
+    );
+    await mobileAttendanceDb.end();
   }
   assert.equal(
     (await adminManagerRequest({ action: "resend", id: managerId })).status,
@@ -1736,6 +1771,47 @@ try {
       path: artifactPath("space-manager-settings-mobile.png"),
       fullPage: true,
     });
+    await page.goto(origin + "/settings");
+    await page.getByRole("button", { name: "Activity", exact: true }).click();
+    const activity = page.getByRole("table", { name: "Recent audit activity" });
+    await activity.getByRole("columnheader", { name: "Time (UTC)" }).waitFor();
+    assert.equal(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+      true,
+    );
+    await page.getByRole("button", { name: /Open account menu/ }).click();
+    const account = page.getByRole("dialog", { name: "Your account" });
+    await account.getByRole("button", { name: "Reduced effects" }).click();
+    assert.equal(
+      await account.evaluate((el) => getComputedStyle(el).backgroundColor),
+      "rgb(255, 255, 255)",
+    );
+    assert.equal(
+      await account.evaluate((el) => getComputedStyle(el).backdropFilter),
+      "none",
+    );
+    await account.getByRole("button", { name: "Glass", exact: true }).click();
+    assert.equal(
+      await account.evaluate((el) => getComputedStyle(el).backdropFilter),
+      "blur(10px)",
+    );
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await account.getByRole("button", { name: "System", exact: true }).click();
+    assert.equal(
+      await account.evaluate((el) => getComputedStyle(el).backdropFilter),
+      "none",
+    );
+    await page.reload();
+    await page.getByRole("button", { name: /Open account menu/ }).click();
+    assert.equal(
+      await account
+        .getByRole("button", { name: "System", exact: true })
+        .getAttribute("aria-pressed"),
+      "true",
+    );
+    await account.getByRole("button", { name: "Close dialog" }).click();
     await page.setViewportSize({ width: 1440, height: 1000 });
     await page.goto(origin + "/spaces");
     await page

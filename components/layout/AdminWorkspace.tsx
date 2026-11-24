@@ -394,6 +394,13 @@ function Shell({ section, id }: { section: Section; id?: string }) {
                 </button>
               ))}
             </div>
+            <p className="studio-appearance-note" aria-live="polite">
+              {effects === "glass"
+                ? "Translucent panels and a frosted account sheet."
+                : effects === "system"
+                  ? "Follows your device’s motion and transparency preferences."
+                  : "Solid panels with blur and animations turned off."}
+            </p>
           </fieldset>
           {viewer.permissions.includes("team.manage") && (
             <Link

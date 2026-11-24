@@ -318,10 +318,7 @@ function SpaceEditor({
         onSubmit={(e) => {
           e.preventDefault();
           void save({
-            submit:
-              (e.nativeEvent as SubmitEvent).submitter?.getAttribute(
-                "value",
-              ) === "complete",
+            submit: true,
             sessionId: space.id,
             liveListeners: listeners === "" ? null : Number(listeners),
             durationMinutes:
@@ -387,18 +384,17 @@ function SpaceEditor({
             onChange={(e) => setPost(e.target.value)}
           />
         </label>
-        <button className="button" name="intent" value="draft" disabled={busy}>
-          {busy ? "Saving…" : "Save Space data"}
-        </button>
+        {new Date(space.startsAt) > new Date() && (
+          <p className="muted">
+            You can submit attendance once this Space starts.
+          </p>
+        )}
         <button
           className="button primary"
-          name="intent"
-          value="complete"
+          type="submit"
           disabled={busy || new Date(space.startsAt) > new Date()}
         >
-          {space.spaceData?.submittedAt
-            ? "Update submitted attendance"
-            : "Submit attendance"}
+          {busy ? "Saving…" : "Submit attendance"}
         </button>
       </form>
     </section>

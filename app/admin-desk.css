@@ -1068,3 +1068,65 @@ html:has(.admin-desk)::-webkit-scrollbar-thumb:hover {
     transform: none;
   }
 }
+
+/* Keep this sheet's appearance responsive even on phones where other dialogs
+   deliberately use no blur. The workspace stays in light mode. */
+.admin-studio {
+  --account-surface: rgba(252, 248, 255, 0.88);
+  --account-blur: blur(10px);
+  --account-divider: #ddcdeb;
+}
+.admin-studio[data-visual-effects="reduced"] {
+  --account-surface: #fff;
+  --account-blur: none;
+  --account-divider: #dedce3;
+}
+@media (prefers-reduced-transparency: reduce), (prefers-reduced-motion: reduce) {
+  .admin-studio[data-visual-effects="system"] {
+    --account-surface: #fff;
+    --account-blur: none;
+    --account-divider: #dedce3;
+  }
+}
+.admin-studio .account-dialog {
+  background: var(--account-surface);
+  backdrop-filter: var(--account-blur);
+  -webkit-backdrop-filter: var(--account-blur);
+}
+.admin-studio .account-dialog .modal-heading {
+  background: transparent;
+  border-color: var(--account-divider);
+}
+.admin-studio[data-visual-effects="reduced"],
+.admin-studio[data-visual-effects="reduced"] *,
+.admin-studio[data-visual-effects="reduced"] *::before,
+.admin-studio[data-visual-effects="reduced"] *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+.admin-studio .studio-appearance-note {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+.admin-studio table.studio-audit-table {
+  width: 100%;
+  min-width: 0;
+  table-layout: fixed;
+}
+.admin-studio .studio-audit-table :is(th, td) {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  vertical-align: top;
+  text-align: left;
+}
+.admin-studio .studio-audit-table th:first-child {
+  width: 38%;
+}
+@media (max-width: 600px) {
+  .admin-studio .studio-audit-table :is(th, td) {
+    padding: 10px 8px;
+    font-size: 12px;
+  }
+}
