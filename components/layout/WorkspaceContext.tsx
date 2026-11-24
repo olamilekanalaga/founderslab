@@ -68,6 +68,13 @@ export function WorkspaceProvider({
           cache: "no-store",
           signal: controller.signal,
         });
+        if (
+          response.status === 401 &&
+          initialViewer.roleId === "space-manager"
+        ) {
+          window.location.replace("/manager/spaces");
+          return;
+        }
         if (!response.ok) return;
         const result = await response.json();
         if (controller.signal.aborted) return;
@@ -90,7 +97,7 @@ export function WorkspaceProvider({
       background.current?.abort();
       background.current = null;
     };
-  }, [initialState]);
+  }, [initialState, initialViewer.roleId]);
   async function mutate(endpoint: string, payload: unknown, method = "POST") {
     if (inFlight.current) return false;
     inFlight.current = true;

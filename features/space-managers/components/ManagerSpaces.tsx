@@ -33,6 +33,10 @@ export default function ManagerSpaces() {
       if (r.status !== 401) throw new Error(data.error);
       return;
     }
+    if (data.workspaceAccess) {
+      window.location.replace("/dashboard");
+      return;
+    }
     setCsrf(data.csrf);
     setSpaces(data.spaces);
     setReady(true);
@@ -225,8 +229,16 @@ export default function ManagerSpaces() {
               }}
             >
               <label>
-                Partner name
-                <input name="name" required maxLength={200} />
+                BD X handle
+                <input
+                  name="name"
+                  required
+                  maxLength={16}
+                  pattern="@?[A-Za-z0-9_]{1,15}"
+                  placeholder="@ola__crrypt"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                />
               </label>
               <label>
                 Email

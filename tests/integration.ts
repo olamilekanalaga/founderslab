@@ -1141,6 +1141,97 @@ try {
     ).status,
     200,
   );
+  const managerWorkspace = await request("/api/workspace", undefined, manager);
+  assert.equal(managerWorkspace.status, 200);
+  assert.equal(managerWorkspace.data.viewer.roleId, "space-manager");
+  assert.deepEqual(managerWorkspace.data.state.users, []);
+  assert.deepEqual(managerWorkspace.data.state.audit, []);
+  assert.equal(
+    (await request("/api/space-managers", undefined, manager)).status,
+    401,
+  );
+  assert.equal(
+    (await request("/api/bd-partners", undefined, manager)).status,
+    200,
+  );
+  assert.equal(
+    (
+      await request(
+        "/api/workspace",
+        { type: "user.permissions", payload: {} },
+        manager,
+      )
+    ).status,
+    403,
+  );
+  assert.equal(
+    (
+      await request(
+        "/api/workspace",
+        { type: "booking.review", payload: {} },
+        manager,
+        false,
+      )
+    ).status,
+    403,
+  );
+  const approved = managerWorkspace.data.state.bookings.find(
+    (booking: DataState["bookings"][number]) =>
+      booking.sessionId === session.id && booking.status === "Approved",
+  );
+  assert.ok(approved);
+  await command(
+    "booking.review",
+    { id: approved.id, status: "Approved" },
+    manager,
+  );
+  const operationsManagerBrowser = await chromium.launch({
+    executablePath:
+      process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || "/usr/bin/chromium",
+    headless: true,
+    args: ["--no-sandbox"],
+  });
+  try {
+    const managerPage = await operationsManagerBrowser.newPage({
+      viewport: { width: 393, height: 852 },
+      permissions: ["clipboard-read", "clipboard-write"],
+    });
+    await managerPage.clock.setFixedTime(new Date("2026-12-25T15:00:00Z"));
+    await managerPage.context().addCookies([
+      {
+        name: "fl_space_manager",
+        value: manager.cookie.split("=")[1],
+        url: origin,
+      },
+    ]);
+    await managerPage.goto(origin + "/manager/spaces");
+    await managerPage.waitForURL("**/dashboard");
+    const lineup = managerPage.getByRole("region", {
+      name: "Confirmed founder lineup",
+    });
+    await lineup.getByRole("button", { name: "Copy lineup" }).click();
+    await lineup.getByText("Lineup copied.").waitFor();
+    const copied = await managerPage.evaluate(() =>
+      navigator.clipboard.readText(),
+    );
+    const application = managerWorkspace.data.state.applications.find(
+      (record: DataState["applications"][number]) =>
+        record.id === approved.applicationId,
+    );
+    assert.ok(copied.includes(application.companyName));
+    assert.ok(copied.includes(application.description));
+    assert.ok(copied.includes("@" + application.xHandle.replace(/^@+/, "")));
+    await lineup.getByRole("button", { name: "Next Saturday" }).click();
+    assert.match(await lineup.innerText(), /2 January 2027/);
+    assert.equal(await managerPage.getByText("Manage invitations").count(), 0);
+    await managerPage
+      .getByRole("navigation", { name: "Workspace navigation" })
+      .getByRole("link", { name: /Admin operations/ })
+      .click();
+    await managerPage.getByLabel("BD X handle").waitFor();
+  } finally {
+    await operationsManagerBrowser.close();
+  }
   const subsequentSpace = await command("session.save", {
     ...sessionPayload,
     id: undefined,
@@ -1203,11 +1294,19 @@ try {
     ).status,
     403,
   );
+  assert.equal(
+    (await request("/api/workspace", undefined, manager)).status,
+    401,
+  );
+  assert.equal(
+    (await request("/api/bd-partners", undefined, manager)).status,
+    401,
+  );
   pass(
-    "All-Spaces grants cover future sessions, support scheme-free links and can be narrowed without another invitation",
+    "All-Spaces managers can copy confirmed founder lineups and run operations. Narrowing access blocks the full workspace and BD records.",
   );
   const managerBd = {
-    name: "ZZ Manager-entered BD",
+    name: "zz_manager_bd",
     email: "manager-entered-bd@example.invalid",
     bank: "Test bank",
     accountName: "Manager-entered partner",
@@ -1246,7 +1345,8 @@ try {
   const ownerPartners = await request("/api/bd-partners", undefined, admin);
   assert.ok(
     ownerPartners.data.some(
-      (partner: { email: string }) => partner.email === managerBd.email,
+      (partner: { email: string; name: string }) =>
+        partner.email === managerBd.email && partner.name === "@zz_manager_bd",
     ),
   );
   pass(
@@ -2392,7 +2492,7 @@ try {
   assert.equal((await request(bdRoute)).status, 401);
   const registerPartner = {
     action: "register",
-    name: "BD Integration Partner",
+    name: "@bd_integration",
     email: "bd-integration@example.invalid",
     bank: "Example Bank",
     accountName: "BD Integration Partner",
@@ -2480,9 +2580,38 @@ try {
       (await request(bdRoute, { ...pay, cycle: 3 }, admin)).status,
       400,
     );
+    const paymentManager: Jar = { cookie: "", csrf: "" };
+    assert.equal(
+      (
+        await adminManagerRequest({
+          action: "invite",
+          email: "payment-manager@integration.example.invalid",
+          allSpaces: true,
+          sessionIds: [],
+        })
+      ).status,
+      201,
+    );
+    assert.equal(
+      (
+        await request(
+          "/api/manager/verify",
+          { token: emailToken() },
+          paymentManager,
+        )
+      ).status,
+      200,
+    );
+    paymentManager.csrf = (
+      await request("/api/manager/spaces", undefined, paymentManager)
+    ).data.csrf;
+    assert.equal(
+      (await request(bdRoute, pay, paymentManager, false)).status,
+      403,
+    );
     const attempts = await Promise.all([
-      request(bdRoute, pay, admin),
-      request(bdRoute, pay, admin),
+      request(bdRoute, pay, paymentManager),
+      request(bdRoute, pay, paymentManager),
     ]);
     assert.deepEqual(
       attempts.map((attempt) => attempt.status).sort(),
@@ -2530,9 +2659,7 @@ try {
       .getByRole("navigation", { name: "Workspace navigation" })
       .getByRole("link", { name: /Admin operations/ })
       .click();
-    await page
-      .getByRole("heading", { name: "BD Integration Partner" })
-      .waitFor();
+    await page.getByRole("heading", { name: "@bd_integration" }).waitFor();
     const review = page.getByRole("button", {
       name: "Review founder applications",
     });
@@ -2579,7 +2706,7 @@ try {
     await operationsBrowser.close();
   }
   pass(
-    "BD registration, protected bank details, two reward cycles, concurrent duplicate prevention and manual payment recording",
+    "BD X username registration, protected bank details, two reward cycles, concurrent duplicate prevention and manager payment recording",
   );
   const oldCookie = admin.cookie;
   assert.equal(

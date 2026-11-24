@@ -2,8 +2,8 @@ import { saturdaySessions } from "@/lib/dates/saturday-schedule";
 import { approvedSeats } from "@/lib/domain/queries";
 import type { DataState } from "@/lib/types";
 
-export function currentSaturday(state: DataState, now: Date) {
-  const [upcoming] = saturdaySessions(now, 1);
+export function currentSaturday(state: DataState, now: Date, offset = 0) {
+  const upcoming = saturdaySessions(now, offset + 1)[offset];
   const matchesTime = (session: DataState["sessions"][number]) =>
     Date.parse(session.startsAt) === upcoming.startsAt.getTime();
   const session =

@@ -198,14 +198,16 @@ export default function ApplicationReview({
             </div>
           </div>
         )}
-        <details className="studio-review-delete">
-          <summary>Remove this application</summary>
-          <DeleteRecordButton
-            kind="application"
-            id={a.id}
-            name={a.founderName}
-          />
-        </details>
+        {viewer.roleId !== "space-manager" && (
+          <details className="studio-review-delete">
+            <summary>Remove this application</summary>
+            <DeleteRecordButton
+              kind="application"
+              id={a.id}
+              name={a.founderName}
+            />
+          </details>
+        )}
         {can && (
           <div className="studio-review-actions">
             <span>Review this application</span>

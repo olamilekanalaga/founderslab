@@ -11,7 +11,7 @@ export function applyCommand(
   actor: Viewer,
   now = new Date().toISOString(),
 ): DataState {
-  if (actor.roleId !== "admin")
+  if (actor.roleId !== "admin" && actor.roleId !== "space-manager")
     throw new DomainError("You need admin permission for this action.", 403);
   const permission = actionPermission(command.type);
   if (!permission || !actor.permissions.includes(permission))

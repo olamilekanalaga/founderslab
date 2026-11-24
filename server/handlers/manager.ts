@@ -36,6 +36,7 @@ export async function GET(
     return json({
       spaces: await assignedSpaces(session.managerId),
       csrf: session.csrf,
+      workspaceAccess: session.manager.allSpaces,
     });
   } catch (e) {
     return failure(e);

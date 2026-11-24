@@ -9,9 +9,9 @@
   {
     "file": "server/handlers/workspace.ts",
     "name": "POST",
-    "reason": "Reject retired campaign/award writes after existing authentication, permission and CSRF checks.",
     "originalSha256": "8fc73275e6caa624c60bf55675915d45192bb44a5b9ab461773ca9903a33aba1",
-    "sha256": "be8be0c34e7fcfac0b4bca43825df0a879be663a3ad15ede234b0877b1e481ae"
+    "sha256": "11c55b8b34e72045d122af68a53d249f957933b27f60c1cdf51f262cb89a1158",
+    "reason": "Allow active All Spaces managers to run existing operational commands with CSRF and command permission checks while keeping owner commands gated."
   },
   {
     "file": "server/handlers/monthly-winner.ts",
@@ -47,5 +47,19 @@
     "reason": "Validate invitation origin, refuse credential redirects, use per-link Resend idempotency and report safe provider error guidance.",
     "originalSha256": "5aabbf6cbba4a4ba7a4a1f94676af6c0177c5aff80e36497b4f5cdc16402b80a",
     "sha256": "0e206170fca42cbb184244e08d635041b9801699bac5e72ad64330b7a5d9e8f9"
+  },
+  {
+    "file": "server/handlers/manager.ts",
+    "name": "GET",
+    "originalSha256": "ebfd23c63a549da12d57364d4b1d8c88b09c0df72f24c550be826fa289ac1727",
+    "sha256": "f0495cf3a11f79d8245a6842375e1593b32b8e3bd6aff508d041bf4f0df00dcc",
+    "reason": "Return the current All Spaces grant to the authenticated manager so the sign-in page can open the operational workspace."
+  },
+  {
+    "file": "server/handlers/workspace.ts",
+    "name": "GET",
+    "originalSha256": "0584578bf8df0c0bcafacf6b0914d2a8e07fd3115a748f74d4f1b887a108634c",
+    "sha256": "ddbf655e67e9d3fbd4267f1f84a115420e4d7478a9a078d22ac730c80b1bfbc5",
+    "reason": "Allow scope-filtered workspace reads for active All Spaces managers with server-enforced operational permissions."
   }
 ]
