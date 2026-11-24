@@ -10,7 +10,7 @@ import { readFileSync, readdirSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { Client } from "pg";
 import AxeBuilder from "@axe-core/playwright";
-import { chromium } from "@playwright/test";
+import { chromium, expect } from "@playwright/test";
 import {
   saturdaySessions,
   isLondonProgrammeTime,
@@ -2712,6 +2712,9 @@ try {
     const pendingStatus = bookingTable
       .locator('select[data-status="Pending"]')
       .first();
+    const changedRow = await pendingStatus.evaluate(
+      (control) => control.closest("tr")!.sectionRowIndex,
+    );
     const updateBooking = page.waitForResponse(
       (response) =>
         response.url().endsWith("/api/workspace") &&
@@ -2719,14 +2722,10 @@ try {
     );
     await pendingStatus.selectOption("Declined");
     assert.equal((await updateBooking).status(), 200);
-    const declinedStatus = bookingTable
-      .locator('select[data-status="Declined"]')
-      .first();
-    await declinedStatus.waitFor();
-    assert.equal(
-      await declinedStatus.evaluate(
-        (control) => getComputedStyle(control).backgroundColor,
-      ),
+    const declinedStatus = bookingTable.locator("tbody select").nth(changedRow);
+    await expect(declinedStatus).toHaveValue("Declined");
+    await expect(declinedStatus).toHaveCSS(
+      "background-color",
       "rgb(252, 236, 236)",
     );
     await page.getByRole("button", { name: "BD details" }).click();
