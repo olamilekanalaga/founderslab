@@ -79,18 +79,40 @@ export default function Settings({
           title="Recent audit trail"
           detail="Changes retain actor, action and timestamp."
         />
-        <div className="audit-list">
-          {[...s.audit]
-            .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-            .slice(0, 20)
-            .map((a) => (
-              <div key={a.id}>
-                <b>{a.actor}</b>
-                <span>{a.action}</span>
-                <small>{a.createdAt.replace("T", " ").slice(0, 16)} UTC</small>
-              </div>
-            ))}
-        </div>
+        {s.audit.length ? (
+          <div className="table-wrap">
+            <table
+              className="studio-audit-table"
+              aria-label="Recent audit activity"
+            >
+              <thead>
+                <tr>
+                  <th scope="col">Who</th>
+                  <th scope="col">Action</th>
+                  <th scope="col">Time (UTC)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {s.audit
+                  .toSorted((a, b) => b.createdAt.localeCompare(a.createdAt))
+                  .slice(0, 20)
+                  .map((a) => (
+                    <tr key={a.id}>
+                      <th scope="row">{a.actor}</th>
+                      <td>{a.action}</td>
+                      <td>
+                        <time dateTime={a.createdAt}>
+                          {a.createdAt.replace("T", " ").slice(0, 16)}
+                        </time>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="padded">No recent activity.</p>
+        )}
       </section>
     </>
   );

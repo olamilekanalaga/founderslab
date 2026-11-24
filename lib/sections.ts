@@ -12,6 +12,5 @@ export const SECTION_PERMISSIONS: Record<Section, string> = {
   "market-map": "research.read",
   opportunities: "commercial.read",
   reports: "reports.read",
-  campaigns: "campaign.read",
   settings: "team.manage",
 };

@@ -111,7 +111,6 @@ export type Section =
   | "market-map"
   | "opportunities"
   | "reports"
-  | "campaigns"
   | "settings";
 export const SECTIONS: Section[] = [
   "owner-invitations",
@@ -121,6 +120,5 @@ export const SECTIONS: Section[] = [
   "companies",
   "spaces",
   "reports",
-  "campaigns",
   "settings",
 ];

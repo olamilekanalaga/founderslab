@@ -1398,11 +1398,13 @@
   text-align: center;
   margin-bottom: 25px;
 }
-.admin-experience .account-detail > .person-avatar {
+.admin-experience .account-portrait {
+  display: block;
   margin: 0 auto 14px;
-  height: 55px;
-  width: 55px;
-  font-size: 17px;
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+  object-fit: cover;
 }
 .admin-experience .account-detail h3 {
   font-size: 20px;
