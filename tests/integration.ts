@@ -1964,6 +1964,46 @@ try {
     );
     const themePicker = account.getByLabel("Workspace theme");
     const workspace = page.locator(".app-shell");
+    async function textContrast(selector: string) {
+      return page
+        .locator(selector)
+        .first()
+        .evaluate((element) => {
+          const context = document.createElement("canvas").getContext("2d")!;
+          const luminance = (color: string) => {
+            context.clearRect(0, 0, 1, 1);
+            context.fillStyle = color;
+            context.fillRect(0, 0, 1, 1);
+            const [r, g, b, alpha] = context.getImageData(0, 0, 1, 1).data;
+            const [red, green, blue] = [r, g, b].map((channel) => {
+              const value = channel / 255;
+              return value <= 0.04045
+                ? value / 12.92
+                : ((value + 0.055) / 1.055) ** 2.4;
+            });
+            return {
+              value: 0.2126 * red + 0.7152 * green + 0.0722 * blue,
+              alpha,
+            };
+          };
+          const foreground = luminance(getComputedStyle(element).color).value;
+          for (
+            let node: Element | null = element;
+            node;
+            node = node.parentElement
+          ) {
+            const background = luminance(
+              getComputedStyle(node).backgroundColor,
+            );
+            if (background.alpha === 255)
+              return (
+                (Math.max(foreground, background.value) + 0.05) /
+                (Math.min(foreground, background.value) + 0.05)
+              );
+          }
+          return 0;
+        });
+    }
     for (const [name, color] of [
       ["superteam", "rgb(17, 23, 38)"],
       ["classic", "rgb(255, 255, 255)"],
@@ -1975,6 +2015,33 @@ try {
       await themePicker.selectOption(name);
       await expect(workspace).toHaveCSS("background-color", color);
       await expect(account).toHaveCSS("backdrop-filter", "none");
+      await account.getByRole("button", { name: "Close dialog" }).click();
+      await page.getByRole("button", { name: "Activity", exact: true }).click();
+      await activity.getByRole("rowheader").first().waitFor();
+      await expect(activity.getByRole("rowheader").first()).toHaveCSS(
+        "background-color",
+        "rgba(0, 0, 0, 0)",
+      );
+      assert.ok(
+        (await textContrast(".studio-audit-table tbody th")) >= 4.5,
+        name + " audit text",
+      );
+      await page.goto(origin + "/founders?q=no-matching-founder-fixture");
+      await expect(workspace).toHaveAttribute("data-workspace-theme", name);
+      await expect(page.locator(".search-input input")).toHaveCSS(
+        "background-color",
+        "rgba(0, 0, 0, 0)",
+      );
+      for (const selector of [
+        ".empty h3",
+        ".empty p",
+        ".segmented button[aria-pressed=true]",
+        ".page-heading .button.primary",
+      ]) {
+        assert.ok((await textContrast(selector)) >= 4.5, name + " " + selector);
+      }
+      await page.goto(origin + "/settings");
+      await page.getByRole("button", { name: /Open account menu/ }).click();
     }
     await themePicker.selectOption("superteam");
     await page.reload();
@@ -1984,7 +2051,10 @@ try {
     );
     await expect(workspace).toHaveAttribute("data-visual-effects", "system");
     await page.goto(origin + "/dashboard");
-    await expect(workspace).toHaveAttribute("data-workspace-theme", "superteam");
+    await expect(workspace).toHaveAttribute(
+      "data-workspace-theme",
+      "superteam",
+    );
     await page.locator(".desk-activity .studio-chart").waitFor();
     await page.screenshot({ path: artifactPath("superteam-theme-mobile.png") });
     await page.getByRole("button", { name: /Open account menu/ }).click();
