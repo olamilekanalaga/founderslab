@@ -1127,6 +1127,128 @@ try {
   pass(
     "Manager saves reuse one shared Space record, preserve notes/bookings and update participating founder/company profiles; assignment removal applies immediately",
   );
+  assert.equal(
+    (
+      await adminManagerRequest({
+        action: "assign",
+        id: managerId,
+        allSpaces: true,
+        sessionIds: [],
+      })
+    ).status,
+    200,
+  );
+  const subsequentSpace = await command("session.save", {
+    ...sessionPayload,
+    id: undefined,
+    title: "Created after granting all Spaces",
+    startsAt: "2028-01-01T19:00:00Z",
+    deadline: "2028-01-01T19:00:00Z",
+  });
+  const futureId = subsequentSpace.sessions.find(
+    (s) => s.title === "Created after granting all Spaces",
+  )!.id;
+  const allAssigned = await request("/api/manager/spaces", undefined, manager);
+  assert.ok(
+    allAssigned.data.spaces.some(
+      (space: { id: string }) => space.id === futureId,
+    ),
+  );
+  assert.equal(
+    (
+      await request(
+        "/api/manager/save",
+        {
+          ...managerPayload,
+          sessionId: futureId,
+          recordingUrl: "x.com",
+          postUrl: "x.com/example/status/123",
+        },
+        manager,
+      )
+    ).status,
+    200,
+  );
+  const updated = await request("/api/manager/spaces", undefined, manager);
+  assert.equal(
+    updated.data.spaces.find((space: { id: string }) => space.id === futureId)
+      .recordingUrl,
+    "https://x.com",
+  );
+  assert.equal(
+    updated.data.spaces.find((space: { id: string }) => space.id === futureId)
+      .postUrl,
+    "https://x.com/example/status/123",
+  );
+  assert.equal(
+    (
+      await adminManagerRequest({
+        action: "assign",
+        id: managerId,
+        sessionIds: [session.id],
+      })
+    ).status,
+    200,
+  );
+  assert.equal(
+    (
+      await request(
+        "/api/manager/save",
+        { ...managerPayload, sessionId: futureId },
+        manager,
+      )
+    ).status,
+    403,
+  );
+  pass(
+    "All-Spaces grants cover future sessions, support scheme-free links and can be narrowed without another invitation",
+  );
+  const managerBd = {
+    name: "ZZ Manager-entered BD",
+    email: "manager-entered-bd@example.invalid",
+    bank: "Test bank",
+    accountName: "Manager-entered partner",
+    accountNumber: "0123456789",
+  };
+  assert.equal(
+    (await request("/api/manager/register-bd", managerBd)).status,
+    401,
+  );
+  assert.equal(
+    (await request("/api/manager/register-bd", managerBd, manager, false))
+      .status,
+    403,
+  );
+  assert.equal(
+    (
+      await request(
+        "/api/manager/register-bd",
+        { ...managerBd, paid: true },
+        manager,
+      )
+    ).status,
+    400,
+  );
+  const managerRegistration = await request(
+    "/api/manager/register-bd",
+    managerBd,
+    manager,
+  );
+  assert.equal(managerRegistration.status, 200);
+  assert.deepEqual(managerRegistration.data, { saved: true });
+  assert.equal(
+    (await request("/api/bd-partners", undefined, manager)).status,
+    401,
+  );
+  const ownerPartners = await request("/api/bd-partners", undefined, admin);
+  assert.ok(
+    ownerPartners.data.some(
+      (partner: { email: string }) => partner.email === managerBd.email,
+    ),
+  );
+  pass(
+    "A manager may register a BD partner without reading saved records or recording payments",
+  );
   // A rejected provider response never produces a usable authentication link.
   rejectEmail = true;
   assert.equal(

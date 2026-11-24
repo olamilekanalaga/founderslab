@@ -1,6 +1,8 @@
 import "server-only";
 import { createDecipheriv, randomUUID } from "node:crypto";
 import { z } from "zod";
+import { bdRegistration } from "@/lib/validation/bd-partner";
+import { registerBdPartner } from "@/server/services/bd-registration";
 import { requireViewer, requireCsrf } from "@/server/auth";
 import { db } from "@/server/db";
 import { body, failure, json } from "@/server/http";
@@ -12,14 +14,7 @@ import {
 
 const text = z.string().trim().min(1).max(200);
 const command = z.discriminatedUnion("action", [
-  z.object({
-    action: z.literal("register"),
-    name: text,
-    email: z.email().max(200),
-    bank: text,
-    accountName: text,
-    accountNumber: z.string().regex(/^\d{10}$/),
-  }),
+  bdRegistration.extend({ action: z.literal("register") }),
   z.object({ action: z.literal("bank"), partnerId: z.uuid() }),
   z.object({
     action: z.literal("verify"),
@@ -123,28 +118,12 @@ export async function POST(request: Request) {
         return { details };
       }
       if (payload.action === "register") {
-        const { name, email, bank, accountName, accountNumber } = payload;
-        const partner = await tx.bdPartner.create({
-          data: {
-            id: randomUUID(),
-            name,
-            email: email.toLowerCase(),
-            bankDetails: JSON.stringify({
-              bank,
-              accountName,
-              accountNumber,
-            }),
-          },
-          select: { id: true },
-        });
-        await tx.auditLog.create({
-          data: {
-            actor: viewer.id,
-            action: "bd.register",
-            entityId: partner.id,
-            detail: "Admin-assisted registration",
-          },
-        });
+        await registerBdPartner(
+          tx,
+          payload,
+          viewer.id,
+          "Admin-assisted registration",
+        );
         return;
       }
       // Serialize verification and payments for the same partner.

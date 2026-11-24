@@ -177,7 +177,8 @@ function SpaceForm({
             Shared X post URL
             <input
               aria-label="Shared X post URL"
-              type="url"
+              type="text"
+              inputMode="url"
               value={postUrl}
               onChange={(e) => setPostUrl(e.target.value)}
               placeholder="https://x.com/…"
@@ -187,7 +188,8 @@ function SpaceForm({
             Shared Space URL
             <input
               aria-label="Shared Space URL"
-              type="url"
+              type="text"
+              inputMode="url"
               value={liveUrl}
               onChange={(e) => setLiveUrl(e.target.value)}
               placeholder="https://x.com/i/spaces/…"
@@ -197,7 +199,8 @@ function SpaceForm({
             Shared recording URL
             <input
               aria-label="Shared recording URL"
-              type="url"
+              type="text"
+              inputMode="url"
               value={recordingUrl}
               onChange={(e) => setRecordingUrl(e.target.value)}
               placeholder="https://…"

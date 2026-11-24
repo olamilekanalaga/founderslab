@@ -4,6 +4,8 @@ import {
   ensureProgrammeWindow,
 } from "@/server/services/programme-window";
 import { z } from "zod";
+import { bdRegistration } from "@/lib/validation/bd-partner";
+import { registerBdPartner } from "@/server/services/bd-registration";
 import { cookies } from "next/headers";
 import { db, hash, token } from "@/server/db";
 import { body, json, failure } from "@/server/http";
@@ -148,6 +150,25 @@ export async function POST(
       (await cookies()).delete(MANAGER_COOKIE);
       return json({ ok: true });
     }
+    if (action === "register-bd") {
+      await rateLimit(`manager-bd:${session.managerId}`, 15, 60 * 60000);
+      const details = bdRegistration.strict().parse(await body(request));
+      await db().$transaction(async (tx) => {
+        const manager = await lockManager(tx, session.managerId);
+        const active = await tx.spaceManagerSession.findUnique({
+          where: { id: session.id },
+        });
+        if (!active || active.expiresAt <= new Date())
+          throw new DomainError("Session expired.", 401);
+        await registerBdPartner(
+          tx,
+          details,
+          `Space Manager ${manager.id}`,
+          "Space Manager entered an owner-approved BD partner",
+        );
+      });
+      return json({ saved: true });
+    }
     if (action !== "save") return json({ error: "Not found" }, 404);
     const p = saveSchema.parse(await body(request));
     await db().$transaction(async (tx) => {
@@ -158,21 +179,22 @@ export async function POST(
       });
       if (!liveSession || liveSession.expiresAt <= new Date())
         throw new DomainError("Session expired.", 401);
-      const assignment = await tx.spaceManagerAssignment.findUnique({
-        where: {
-          managerId_sessionId: {
-            managerId: manager.id,
-            sessionId: p.sessionId,
+      if (!manager.allSpaces) {
+        const assignment = await tx.spaceManagerAssignment.findUnique({
+          where: {
+            managerId_sessionId: {
+              managerId: manager.id,
+              sessionId: p.sessionId,
+            },
           },
-        },
-      });
-      if (!assignment)
-        throw new DomainError("This Space is not assigned to you.", 403);
-      await tx.$queryRaw`SELECT id FROM "Session" WHERE id = ${p.sessionId} FOR UPDATE`;
-      if (p.submit) {
-        const event = await tx.session.findUniqueOrThrow({
-          where: { id: p.sessionId },
         });
+        if (!assignment)
+          throw new DomainError("This Space is not assigned to you.", 403);
+      }
+      await tx.$queryRaw`SELECT id FROM "Session" WHERE id = ${p.sessionId} FOR UPDATE`;
+      const event = await tx.session.findUnique({ where: { id: p.sessionId } });
+      if (!event) throw new DomainError("Space not found.", 404);
+      if (p.submit) {
         if (event.startsAt > new Date())
           throw new DomainError(
             "Attendance can only be submitted after the Space starts.",

@@ -6,6 +6,7 @@ type Manager = {
   email: string;
   status: string;
   lastActivityAt: string | null;
+  allSpaces: boolean;
   assignments: { sessionId: string }[];
   lastEmailAcceptedAt: string | null;
 };
@@ -13,6 +14,7 @@ export default function SpaceManagersSettings() {
   const { viewer, state } = useWorkspace();
   const [managers, setManagers] = useState<Manager[]>([]),
     [email, setEmail] = useState(""),
+    [allSpaces, setAllSpaces] = useState(true),
     [selected, setSelected] = useState<string[]>([]),
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false),
@@ -102,7 +104,12 @@ export default function SpaceManagersSettings() {
           hidden={loading || Boolean(loadError)}
           onSubmit={(e) => {
             e.preventDefault();
-            void act({ action: "invite", email, sessionIds: selected });
+            void act({
+              action: "invite",
+              email,
+              allSpaces,
+              sessionIds: allSpaces ? [] : selected,
+            });
           }}
         >
           <label>
@@ -115,8 +122,16 @@ export default function SpaceManagersSettings() {
             />
           </label>
           <fieldset>
-            <legend>Assigned Spaces</legend>
-            <div className="manager-assignments">
+            <legend>Space access</legend>
+            <label className="check-label">
+              <input
+                type="checkbox"
+                checked={allSpaces}
+                onChange={(e) => setAllSpaces(e.target.checked)}
+              />
+              All current and future Spaces
+            </label>
+            <div className="manager-assignments" hidden={allSpaces}>
               {state.sessions.map((s) => (
                 <label className="check-label" key={s.id}>
                   <input
@@ -142,7 +157,7 @@ export default function SpaceManagersSettings() {
               loading ||
               Boolean(loadError) ||
               !configured ||
-              !selected.length
+              (!allSpaces && !selected.length)
             }
           >
             Send invitation email
@@ -187,16 +202,25 @@ export default function SpaceManagersSettings() {
                     <form
                       onSubmit={(e) => {
                         e.preventDefault();
-                        const values = new FormData(e.currentTarget).getAll(
-                          "session",
-                        );
+                        const form = new FormData(e.currentTarget);
+                        const allSpaces = form.has("allSpaces");
                         void act({
                           action: "assign",
                           id: m.id,
-                          sessionIds: values,
+                          allSpaces,
+                          sessionIds: allSpaces ? [] : form.getAll("session"),
                         });
                       }}
                     >
+                      <label className="check-label" key={String(m.allSpaces)}>
+                        <input
+                          type="checkbox"
+                          name="allSpaces"
+                          defaultChecked={m.allSpaces}
+                          disabled={m.status === "Revoked"}
+                        />
+                        All current and future Spaces
+                      </label>
                       <div className="manager-assignments">
                         {state.sessions.map((s) => (
                           <label
