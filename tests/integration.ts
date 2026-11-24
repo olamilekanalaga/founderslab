@@ -1263,6 +1263,7 @@ try {
       .getByRole("navigation", { name: "Workspace navigation" })
       .getByRole("link", { name: /Admin operations/ })
       .click();
+    await managerPage.getByRole("button", { name: "BD details" }).click();
     await managerPage.getByLabel("BD X handle").waitFor();
   } finally {
     await operationsManagerBrowser.close();
@@ -2946,6 +2947,20 @@ try {
       .getByRole("navigation", { name: "Workspace navigation" })
       .getByRole("link", { name: /Admin operations/ })
       .click();
+    const operationsTabs = page.getByRole("navigation", {
+      name: "Admin operations sections",
+    });
+    await expect(operationsTabs.getByRole("button")).toHaveText([
+      "Applications",
+      "Bookings",
+      "Spaces",
+      "BD details",
+      "BD Performance",
+    ]);
+    await expect(
+      operationsTabs.getByRole("button", { name: "Applications" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await operationsTabs.getByRole("button", { name: "BD details" }).click();
     await page.getByRole("heading", { name: "@bd_integration" }).waitFor();
     const referralTable = page
       .getByRole("region", { name: "Founder referrals for @bd_integration" })
@@ -2957,15 +2972,18 @@ try {
       .getByText("Verified — counts towards payment", { exact: true })
       .waitFor();
     const review = page.getByRole("button", {
-      name: "Review founder applications",
+      name: "Applications",
     });
     await review.click();
     const applications = page.getByRole("table", {
       name: "Founder applications",
     });
-    await expect(
-      applications.getByRole("columnheader", { name: "Status" }),
-    ).toBeVisible();
+    await expect(applications.getByRole("columnheader")).toHaveText([
+      "Project / Founder",
+      "Country",
+      "Status",
+      "Review",
+    ]);
     const statusFilter = page.getByLabel("Space workflow status");
     await statusFilter.selectOption("Approved");
     const approvedRow = applications
@@ -2987,7 +3005,7 @@ try {
         .isVisible(),
       false,
     );
-    const bookings = page.getByRole("button", { name: "Manage bookings" });
+    const bookings = page.getByRole("button", { name: "Bookings" });
     await bookings.click();
     const bookingTable = page.getByRole("table", {
       name: "Founder booking requests",
@@ -3075,7 +3093,7 @@ try {
         url: origin,
       },
     ]);
-    await managerPage.goto(origin + "/operations");
+    await managerPage.goto(origin + "/operations?tab=bd");
     const partnerPanel = managerPage.locator("section").filter({
       has: managerPage.getByRole("heading", {
         name: "@bd_integration",

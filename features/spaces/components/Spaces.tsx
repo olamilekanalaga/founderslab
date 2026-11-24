@@ -30,12 +30,12 @@ export default function Spaces({
 }: {
   id?: string;
   edit: Editor;
-  embedded?: { tab: SpaceTab; onChange: (tab: SpaceTab) => void };
+  embedded?: SpaceTab;
 }) {
   const { state: s, viewer, path, commit, busy } = useWorkspace(),
     router = useRouter(),
     params = useSearchParams();
-  const tab = embedded?.tab ?? (params.get("tab") || "sessions");
+  const tab = embedded ?? (params.get("tab") || "sessions");
   const requestedReview = params.get("review");
   const [reviewState, setReviewState] = useState({
     url: requestedReview,
@@ -212,53 +212,54 @@ export default function Spaces({
         </>
       ) : (
         <>
-          <div className="page-heading">
-            <div>
-              {embedded ? <h2>Founder Spaces</h2> : <h1>Founder Spaces</h1>}
-              <p>
-                Prepare your sessions, review applications and manage project
-                seats.
-              </p>
-            </div>
-            <div className="heading-actions">
-              {can && (
-                <button
-                  className="button primary"
-                  onClick={() => edit("session")}
-                >
-                  <Plus size={16} /> Create Space
-                </button>
-              )}
-            </div>
-          </div>
-          <div className="tab-row">
-            {[
-              ["sessions", "Sessions"],
-              ["applications", "Applications"],
-              ["bookings", "Bookings"],
-            ].map(([value, label]) => (
-              <button
-                key={value}
-                className={tab === value ? "active" : ""}
-                aria-pressed={tab === value}
-                onClick={() => {
-                  if (embedded) embedded.onChange(value as SpaceTab);
-                  else router.replace(`${path("spaces")}?tab=${value}`);
-                }}
-              >
-                {label}
-                {value === "applications" && (
-                  <span>
-                    {
-                      s.applications.filter((a) => a.status === "Pending")
-                        .length
-                    }
-                  </span>
+          {!embedded && (
+            <>
+              <div className="page-heading">
+                <div>
+                  <h1>Founder Spaces</h1>
+                  <p>
+                    Prepare your sessions, review applications and manage
+                    project seats.
+                  </p>
+                </div>
+                {can && (
+                  <button
+                    className="button primary"
+                    onClick={() => edit("session")}
+                  >
+                    <Plus size={16} /> Create Space
+                  </button>
                 )}
-              </button>
-            ))}
-          </div>
-          <div className="filter-bar">
+              </div>
+              <div className="tab-row">
+                {[
+                  ["sessions", "Sessions"],
+                  ["applications", "Applications"],
+                  ["bookings", "Bookings"],
+                ].map(([value, label]) => (
+                  <button
+                    key={value}
+                    className={tab === value ? "active" : ""}
+                    aria-pressed={tab === value}
+                    onClick={() =>
+                      router.replace(`${path("spaces")}?tab=${value}`)
+                    }
+                  >
+                    {label}
+                    {value === "applications" && (
+                      <span>
+                        {
+                          s.applications.filter((a) => a.status === "Pending")
+                            .length
+                        }
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+          <div className={embedded ? "operations-filter" : "filter-bar"}>
             <label>
               Status
               <select
@@ -281,18 +282,30 @@ export default function Spaces({
             {tab === "bookings" && bookingSessionId && (
               <Link
                 className="text-link"
-                href={path("spaces") + "?tab=bookings"}
+                href={
+                  path(embedded ? "operations" : "spaces") + "?tab=bookings"
+                }
               >
                 View all bookings
               </Link>
             )}
-            <span className="muted">
-              {tab === "sessions"
-                ? "Default capacity: four founder projects, not five speakers."
-                : tab === "bookings"
-                  ? "Requests need approval; a pending request does not reserve a seat."
-                  : "Review founder applications and booking requests."}
-            </span>
+            {embedded && tab === "sessions" && can && (
+              <button
+                className="button primary"
+                onClick={() => edit("session")}
+              >
+                <Plus size={16} /> Create Space
+              </button>
+            )}
+            {!embedded && (
+              <span className="muted">
+                {tab === "sessions"
+                  ? "Default capacity: four founder projects, not five speakers."
+                  : tab === "bookings"
+                    ? "Requests need approval; a pending request does not reserve a seat."
+                    : "Review founder applications and booking requests."}
+              </span>
+            )}
           </div>
           {tab === "sessions" ? (
             <SessionList sessions={s.sessions} filter={filter} />
@@ -305,15 +318,21 @@ export default function Spaces({
                 aria-label="Applications table"
               >
                 <table
-                  className="studio-applications-table"
+                  className={
+                    embedded
+                      ? "studio-applications-table operations-applications"
+                      : "studio-applications-table"
+                  }
                   aria-label="Founder applications"
                 >
                   <thead>
                     <tr>
-                      <th scope="col">Founder / company</th>
+                      <th scope="col">
+                        {embedded ? "Project / Founder" : "Founder / company"}
+                      </th>
                       <th scope="col">Country</th>
-                      <th scope="col">Team</th>
-                      <th scope="col">People expected</th>
+                      {!embedded && <th scope="col">Team</th>}
+                      {!embedded && <th scope="col">People expected</th>}
                       <th scope="col">Status</th>
                       <th scope="col">Review</th>
                     </tr>
@@ -328,27 +347,38 @@ export default function Spaces({
                               className="table-person align-left"
                               onClick={() => setSelected(a.id)}
                             >
-                              <Avatar name={a.founderName} index={i} />
+                              {!embedded && (
+                                <Avatar name={a.founderName} index={i} />
+                              )}
                               <span>
-                                <b>{a.founderName}</b>
+                                <b>
+                                  {embedded ? a.companyName : a.founderName}
+                                </b>
                                 <small>
-                                  {a.companyName} · {a.reference}
+                                  {embedded
+                                    ? a.founderName
+                                    : `${a.companyName} · ${a.reference}`}
                                 </small>
                               </span>
                             </button>
                           </th>
                           <td>{a.country}</td>
-                          <td>{a.teamSize}</td>
-                          <td>{a.speakers}</td>
+                          {!embedded && <td>{a.teamSize}</td>}
+                          {!embedded && <td>{a.speakers}</td>}
                           <td>
                             <Status value={a.status} />
                           </td>
                           <td>
                             <button
-                              className="button"
+                              className={
+                                embedded
+                                  ? "operations-review text-link"
+                                  : "button"
+                              }
+                              aria-label="Review application"
                               onClick={() => setSelected(a.id)}
                             >
-                              Review application
+                              {embedded ? "Review" : "Review application"}
                             </button>
                           </td>
                         </tr>

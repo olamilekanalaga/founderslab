@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import Spaces, { type SpaceTab } from "@/features/spaces/components/Spaces";
@@ -32,7 +32,13 @@ export default function Operations({
     requestedPanel === "bookings" ||
     requestedPanel === "sessions"
       ? requestedPanel
-      : "bd";
+      : requestedPanel === "bd" || selectedPartner
+        ? "bd"
+        : "applications";
+  const activeTab = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    activeTab.current?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }, [panel]);
   function setPanel(value: OperationsTab) {
     const next = new URLSearchParams(params.toString());
     next.set("tab", value);
@@ -174,38 +180,31 @@ export default function Operations({
       <div className="page-heading">
         <h1>Admin operations</h1>
       </div>
-      <section className="panel padded">
-        <h2>Founder Spaces</h2>
-        <p>Review applications, manage bookings and enter weekly attendance.</p>
-        <div className="heading-actions">
-          {(
-            [
-              ["bd", "BD details"],
-              ["performance", "BD Performance"],
-              ["applications", "Review founder applications"],
-              ["bookings", "Manage bookings"],
-              ["sessions", "Enter Space data"],
-            ] as const
-          ).map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              className={panel === value ? "button primary" : "button"}
-              aria-pressed={panel === value}
-              aria-controls="operations-panel"
-              onClick={() => {
-                setBankDetails(null);
-                setPanel(value);
-              }}
-            >
-              {label}
-            </button>
-          ))}
-          <Link className="button" href="/settings">
-            Settings
-          </Link>
-        </div>
-      </section>
+      <nav className="operations-tabs" aria-label="Admin operations sections">
+        {(
+          [
+            ["applications", "Applications"],
+            ["bookings", "Bookings"],
+            ["sessions", "Spaces"],
+            ["bd", "BD details"],
+            ["performance", "BD Performance"],
+          ] as const
+        ).map(([value, label]) => (
+          <button
+            key={value}
+            ref={panel === value ? activeTab : undefined}
+            type="button"
+            aria-pressed={panel === value}
+            aria-controls="operations-panel"
+            onClick={() => {
+              setBankDetails(null);
+              setPanel(value);
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </nav>
       <div id="operations-panel">
         {panel === "performance" && (
           <>
@@ -225,11 +224,7 @@ export default function Operations({
           </>
         )}
         {panel !== "bd" && panel !== "performance" && (
-          <Spaces
-            key={panel}
-            edit={edit}
-            embedded={{ tab: panel, onChange: setPanel }}
-          />
+          <Spaces key={panel} edit={edit} embedded={panel} />
         )}
         <div hidden={panel !== "bd"}>
           {accessLink && (
