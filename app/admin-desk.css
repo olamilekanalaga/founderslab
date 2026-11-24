@@ -1090,8 +1090,8 @@ html:has(.admin-desk)::-webkit-scrollbar-thumb:hover {
 }
 .admin-studio .account-dialog {
   background: var(--account-surface);
-  backdrop-filter: var(--account-blur);
   -webkit-backdrop-filter: var(--account-blur);
+  backdrop-filter: var(--account-blur);
 }
 .admin-studio .account-dialog .modal-heading {
   background: transparent;
