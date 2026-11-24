@@ -30,16 +30,16 @@
   {
     "file": "server/handlers/manager.ts",
     "name": "POST",
-    "reason": "Use the existing atomic token claim and eight-hour session for manual links, retaining delivery checks for email and checking all-Spaces access for manual redemption.",
+    "reason": "Route origin-checked manager password authentication separately and reject setup links in the one-time sign-in handler.",
     "originalSha256": "13c3a41a412f9213038bfc3ca46bc77e915a63862774a368e210cbde92a310cf",
-    "sha256": "ddb90326610e62d6e88443535caf06dee33e60ae8e69b8cb93013344d0f35c5d"
+    "sha256": "5b6c4025f8961655b7f01f10ebabfc489ba4b7346f8702de898e0bb2aa08e483"
   },
   {
     "file": "server/handlers/space-managers.ts",
     "name": "POST",
-    "reason": "Allow owner-only CSRF-protected issuance of an all-Spaces manual invitation and retain locked assignment changes and revocation.",
+    "reason": "Allow owner-only CSRF-protected password setup and reset link issuance, and clear credentials when revoking access.",
     "originalSha256": "61ac74cb943b1b43558187c5687d987c54b7ff63f960d2b68db7e342ba0e7607",
-    "sha256": "23e7792d272d8e33f99a7eb395943cdac54f9677f8159b5688aa29af2710f49d"
+    "sha256": "1d4a6a89af131dee8adfada9541ae21e9942d3b6f08ce9d14dd90ea0871b3ace"
   },
   {
     "file": "server/services/space-managers.ts",
@@ -79,8 +79,15 @@
   {
     "file": "server/handlers/space-managers.ts",
     "name": "GET",
-    "reason": "Show pending manual invitations without exposing stored hashes or treating a manual invite as email acceptance.",
+    "reason": "Show owner-visible setup status while omitting all password and invitation hashes.",
     "originalSha256": "0d9142d7ef03702f17c248546d773930bfc0fb35f2324afd9f23ce4409badce4",
-    "sha256": "9f0aebb93270618ee5a92dd2d7689807cb13c4f0dce8c89e2209a107d915f23d"
+    "sha256": "19f561ebee5c87d6c461689bd7a248e68516c4d49cd3cea80d83f77df921262b"
+  },
+  {
+    "file": "server/services/space-managers.ts",
+    "name": "requireManager",
+    "reason": "Guide users back to sign-in when a manager session has expired.",
+    "originalSha256": "632e5db02353800276e0a9dabc5f1f790ee4c6322327acae65f47963611582d3",
+    "sha256": "1720f9fbbfa8dfc8d3e60791cd42f063bbac4bcdf2708834d0cdab948d6b8fe9"
   }
 ]

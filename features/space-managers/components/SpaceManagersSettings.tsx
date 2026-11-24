@@ -8,6 +8,7 @@ type Manager = {
   status: string;
   lastActivityAt: string | null;
   allSpaces: boolean;
+  passwordConfigured: boolean;
   assignments: { sessionId: string }[];
   lastEmailAcceptedAt: string | null;
 };
@@ -116,9 +117,10 @@ export default function SpaceManagersSettings() {
             const submitter = (e.nativeEvent as SubmitEvent).submitter;
             if (
               submitter instanceof HTMLButtonElement &&
-              submitter.value === "manual"
+              (submitter.value === "manual" ||
+                submitter.value === "password-link")
             ) {
-              void act({ action: "manual", email });
+              void act({ action: submitter.value, email });
             } else {
               void act({
                 action: "invite",
@@ -187,17 +189,34 @@ export default function SpaceManagersSettings() {
           >
             Generate &amp; Copy Invitation Link
           </button>
+          <button
+            type="submit"
+            value="password-link"
+            className="button"
+            disabled={busy || loading || Boolean(loadError)}
+          >
+            Generate password setup link
+          </button>
           <p className="muted">
-            Manual links grant access to all current and future Spaces.
+            New managers created by a manual or password setup link get All
+            Spaces access. A password link for an existing manager keeps their
+            current assignments.
           </p>
         </form>
         {manualLink && (
-          <Modal title="Manual invitation link" close={() => setManualLink("")}>
+          <Modal
+            title={
+              manualLink.includes("#setup=")
+                ? "Manager password link"
+                : "Manual invitation link"
+            }
+            close={() => setManualLink("")}
+          >
             <div className="stack-form">
               <p>
                 This link expires in 15 minutes and can be used once. Anyone who
-                has it can sign in as this Space Manager. Share it privately
-                with the intended person.
+                has it can access this manager account. Share it privately with
+                the intended person.
               </p>
               <label>
                 Invitation link
@@ -331,6 +350,17 @@ export default function SpaceManagersSettings() {
                         Generate replacement link
                       </button>
                     )}
+                    <button
+                      className="button"
+                      disabled={busy || m.status === "Revoked"}
+                      onClick={() =>
+                        void act({ action: "password-link", email: m.email })
+                      }
+                    >
+                      {m.passwordConfigured
+                        ? "Generate password reset link"
+                        : "Set up password"}
+                    </button>
                     <button
                       className="button"
                       disabled={busy || m.status === "Revoked"}

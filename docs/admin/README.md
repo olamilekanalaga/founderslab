@@ -21,3 +21,11 @@ The laptop layout also fits a native1366×768screen at100%zoom (1358×644browser
 ![Desktop admin overview](desktop.png)
 
 ![Phone admin overview](mobile.png)
+
+## Space Manager passwords
+
+In **Overview → Manage invitations**, use **Set up password** for an existing manager or **Generate password setup link** for a new manager. Share the link privately. Anyone holding it can set the account password before it expires in 15 minutes. Once used, the link cannot be replayed. New managers receive All Spaces access. Existing assignments are preserved.
+
+The manager chooses a password and can sign in again at `/manager/spaces` using the invited email and that password. Sessions expire after eight hours. Generate a **password reset link** if needed. Completing a reset invalidates old sessions and unused links. Revoking access removes the password and invalidates every session and unused invitation.
+
+The release adds two columns through the existing Neon migration pipeline. No email provider or new Vercel settings are required.

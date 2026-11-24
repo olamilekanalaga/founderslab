@@ -10,6 +10,7 @@ import { cookies } from "next/headers";
 import { db, hash, token } from "@/server/db";
 import { body, json, failure } from "@/server/http";
 import { requireOrigin, rateLimit } from "@/server/auth";
+import { managerPasswordAuth } from "@/server/services/manager-password";
 import { DomainError } from "@/lib/domain";
 import { schemas } from "@/lib/validation";
 import {
@@ -59,6 +60,8 @@ export async function POST(
   try {
     requireOrigin(request);
     const { action } = await params;
+    if (action === "password-login" || action === "password-setup")
+      return await managerPasswordAuth(request, action);
     if (action === "request-link") {
       const { email } = z
         .object({ email: z.email().transform((v) => v.toLowerCase()) })
@@ -93,7 +96,7 @@ export async function POST(
       const found = await db().spaceManagerLink.findUnique({
         where: { tokenHash: hash(raw) },
       });
-      if (!found)
+      if (!found || found.passwordSetup)
         throw new DomainError("This link is invalid or expired.", 401);
       const sessionToken = token(),
         csrf = token();

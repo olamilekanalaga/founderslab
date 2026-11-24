@@ -3778,6 +3778,198 @@ try {
   pass(
     "Manual invitations are owner-only, hashed, expiring, replaceable, single-use, revocable, and grant All Spaces without sending email",
   );
+  const passwordEmail = "password-manager@integration.example.invalid";
+  const credentials = {
+    email: passwordEmail,
+    password: "Manager test phrase 1",
+  };
+  const resetPassword = "Manager reset phrase 2";
+  const passwordLink = { action: "password-link", email: passwordEmail };
+  const mailBeforePassword = mail.length;
+  assert.equal(
+    (await request("/api/space-managers", passwordLink)).status,
+    401,
+  );
+  assert.equal(
+    (await request("/api/space-managers", passwordLink, admin, false)).status,
+    403,
+  );
+  async function createPasswordLink() {
+    const response = await adminManagerRequest(passwordLink);
+    assert.equal(response.status, 201);
+    const link = new URL(response.data.link);
+    assert.equal(link.pathname, "/manager/spaces");
+    assert.match(link.hash, /^#setup=[A-Za-z0-9_-]{43}$/);
+    return link;
+  }
+  const setupToken = (link: URL) =>
+    new URLSearchParams(link.hash.slice(1)).get("setup")!;
+  const passwordDb = new Client({ connectionString: url.toString() });
+  await passwordDb.connect();
+  try {
+    const expired = setupToken(await createPasswordLink());
+    await passwordDb.query(
+      `UPDATE "SpaceManagerLink" SET "expiresAt"=now() - interval '1 minute' WHERE "tokenHash"=$1`,
+      [createHash("sha256").update(expired).digest("hex")],
+    );
+    assert.equal(
+      (
+        await request("/api/manager/password-setup", {
+          token: expired,
+          password: credentials.password,
+        })
+      ).status,
+      401,
+    );
+
+    const setup = await createPasswordLink();
+    const raw = setupToken(setup);
+    assert.equal(
+      (await request("/api/manager/verify", { token: raw })).status,
+      401,
+    );
+    const passwordBrowser = await chromium.launch({
+      executablePath:
+        process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || "/usr/bin/chromium",
+      headless: true,
+      args: ["--no-sandbox"],
+    });
+    try {
+      const browserPage = await passwordBrowser.newPage({
+        viewport: { width: 393, height: 852 },
+      });
+      await browserPage.goto(setup.href);
+      await browserPage.getByLabel("New password").fill(credentials.password);
+      await browserPage
+        .getByLabel("Confirm password")
+        .fill(credentials.password);
+      await browserPage
+        .getByRole("button", { name: "Save password and sign in" })
+        .click();
+      await browserPage.waitForURL("**/dashboard");
+      await browserPage.context().clearCookies();
+      await browserPage.goto(origin + "/manager/spaces");
+      await browserPage
+        .getByLabel("Email address", { exact: true })
+        .first()
+        .fill(passwordEmail);
+      await browserPage
+        .getByLabel("Password", { exact: true })
+        .fill(credentials.password);
+      await browserPage
+        .getByRole("button", { name: "Sign in", exact: true })
+        .click();
+      await browserPage.waitForURL("**/dashboard");
+    } finally {
+      await passwordBrowser.close();
+    }
+    assert.equal(
+      (
+        await request("/api/manager/password-setup", {
+          token: raw,
+          password: resetPassword,
+        })
+      ).status,
+      401,
+    );
+    assert.equal(
+      (
+        await request("/api/manager/password-login", {
+          ...credentials,
+          password: "wrong",
+        })
+      ).status,
+      401,
+    );
+
+    const ownerRecord = (
+      await request("/api/space-managers", undefined, admin)
+    ).data.managers.find(
+      (manager: { email: string }) => manager.email === passwordEmail,
+    );
+    assert.equal(ownerRecord.passwordConfigured, true);
+    assert.equal(ownerRecord.passwordHash, undefined);
+    const stored = (
+      await passwordDb.query(
+        'SELECT "passwordHash" FROM "SpaceManager" WHERE id=$1',
+        [ownerRecord.id],
+      )
+    ).rows[0].passwordHash;
+    assert.match(stored, /^[a-f0-9]{32}:[a-f0-9]{128}$/);
+
+    const previousSession: Jar = { cookie: "", csrf: "" };
+    assert.equal(
+      (
+        await request(
+          "/api/manager/password-login",
+          credentials,
+          previousSession,
+        )
+      ).status,
+      200,
+    );
+    const resetPayload = {
+      token: setupToken(await createPasswordLink()),
+      password: resetPassword,
+    };
+    const resetResults = await Promise.all([
+      request("/api/manager/password-setup", resetPayload),
+      request("/api/manager/password-setup", resetPayload),
+    ]);
+    assert.deepEqual(
+      resetResults.map(({ status }) => status).sort(),
+      [200, 401],
+    );
+    assert.equal(
+      (await request("/api/manager/spaces", undefined, previousSession)).status,
+      401,
+    );
+    assert.equal(
+      (await request("/api/manager/password-login", credentials)).status,
+      401,
+    );
+    const newSession: Jar = { cookie: "", csrf: "" };
+    assert.equal(
+      (
+        await request(
+          "/api/manager/password-login",
+          { ...credentials, password: resetPassword },
+          newSession,
+        )
+      ).status,
+      200,
+    );
+    assert.equal(
+      (await request("/api/manager/spaces", undefined, newSession)).data
+        .workspaceAccess,
+      true,
+    );
+    assert.equal(
+      (await adminManagerRequest({ action: "revoke", id: ownerRecord.id }))
+        .status,
+      200,
+    );
+    assert.equal(
+      (await request("/api/manager/spaces", undefined, newSession)).status,
+      401,
+    );
+    assert.equal(
+      (
+        await request("/api/manager/password-login", {
+          ...credentials,
+          password: resetPassword,
+        })
+      ).status,
+      401,
+    );
+    assert.equal(mail.length, mailBeforePassword);
+  } finally {
+    await passwordDb.end();
+  }
+  pass(
+    "Manager passwords support single-use setup, repeat sign-in, reset, session invalidation and owner revocation without email",
+  );
+
   const oldCookie = admin.cookie;
   assert.equal(
     (await request("/api/auth/logout", {}, admin, false)).status,

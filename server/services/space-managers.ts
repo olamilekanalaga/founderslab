@@ -26,7 +26,7 @@ export async function requireManager() {
   const session = await managerSession();
   if (!session)
     throw new DomainError(
-      "Your manager access has expired or was revoked. Request a new email link.",
+      "Your manager session has expired or access was revoked. Sign in again.",
       401,
     );
   return session;
@@ -178,7 +178,11 @@ export async function issueManagerLink(managerId: string, actor: string) {
     });
   });
 }
-export async function issueManualManagerLink(email: string, actor: string) {
+export async function issueManualManagerLink(
+  email: string,
+  actor: string,
+  passwordSetup = false,
+) {
   const raw = token();
   await db().$transaction(async (tx) => {
     const { id } = await tx.spaceManager.upsert({
@@ -189,19 +193,22 @@ export async function issueManualManagerLink(email: string, actor: string) {
     });
     await lockManager(tx, id);
     const now = new Date();
-    await tx.spaceManager.update({
-      where: { id },
-      data: { allSpaces: true },
-    });
-    await tx.spaceManagerAssignment.deleteMany({ where: { managerId: id } });
+    if (!passwordSetup) {
+      await tx.spaceManager.update({
+        where: { id },
+        data: { allSpaces: true },
+      });
+      await tx.spaceManagerAssignment.deleteMany({ where: { managerId: id } });
+    }
     await tx.spaceManagerLink.updateMany({
-      where: { managerId: id, manual: true, usedAt: null },
+      where: { managerId: id, manual: true, passwordSetup, usedAt: null },
       data: { usedAt: now },
     });
     await tx.spaceManagerLink.create({
       data: {
         managerId: id,
         manual: true,
+        passwordSetup,
         tokenHash: hash(raw),
         expiresAt: new Date(now.getTime() + 15 * 60000),
       },
@@ -209,10 +216,13 @@ export async function issueManualManagerLink(email: string, actor: string) {
     await tx.auditLog.create({
       data: {
         actor,
-        action: "manager.manual.created",
+        action: passwordSetup
+          ? "manager.password.link"
+          : "manager.manual.created",
         entityId: id,
-        detail:
-          "Single-use manual invitation created for all current and future Spaces.",
+        detail: passwordSetup
+          ? "Single-use manager password setup or reset link issued."
+          : "Single-use manual invitation created for all current and future Spaces.",
       },
     });
   });

@@ -35,8 +35,9 @@ export async function GET() {
       manualLinks.map(({ managerId }) => managerId),
     );
     return json({
-      managers: managers.map(({ links, ...m }) => ({
+      managers: managers.map(({ links, passwordHash, ...m }) => ({
         ...m,
+        passwordConfigured: Boolean(passwordHash),
         status: m.revokedAt
           ? "Revoked"
           : m.verifiedAt
@@ -82,6 +83,12 @@ export async function POST(request: Request) {
           .strict(),
         z
           .object({
+            action: z.literal("password-link"),
+            email: z.email().transform((v) => v.trim().toLowerCase()),
+          })
+          .strict(),
+        z
+          .object({
             action: z.literal("assign"),
             id: z.string(),
             allSpaces: z.boolean().default(false),
@@ -93,7 +100,8 @@ export async function POST(request: Request) {
           .strict(),
       ])
       .parse(await body(request));
-    if (p.action === "manual") {
+    if (p.action === "manual" || p.action === "password-link") {
+      const passwordSetup = p.action === "password-link";
       // requireCsrf already validated the request Origin against this deployment.
       const link = new URL("/manager/spaces", request.headers.get("origin")!);
       if (process.env.VERCEL === "1" && link.protocol !== "https:")
@@ -101,9 +109,19 @@ export async function POST(request: Request) {
           "Invitation links require an HTTPS site origin.",
           400,
         );
-      link.hash = `token=${await issueManualManagerLink(p.email, viewer.name)}`;
+      const raw = await issueManualManagerLink(
+        p.email,
+        viewer.name,
+        passwordSetup,
+      );
+      link.hash = `${passwordSetup ? "setup" : "token"}=${raw}`;
       return json(
-        { message: "Manual invitation generated.", link: link.href },
+        {
+          message: passwordSetup
+            ? "Password link generated."
+            : "Manual invitation generated.",
+          link: link.href,
+        },
         201,
       );
     }
@@ -168,7 +186,7 @@ export async function POST(request: Request) {
       if (p.action === "revoke") {
         await tx.spaceManager.update({
           where: { id: p.id },
-          data: { revokedAt: new Date() },
+          data: { revokedAt: new Date(), passwordHash: null },
         });
         await tx.spaceManagerSession.deleteMany({ where: { managerId: p.id } });
         await tx.spaceManagerLink.updateMany({
