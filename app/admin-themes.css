@@ -364,3 +364,65 @@
     color: var(--ink);
   }
 }
+
+.admin-desk:is(
+  [data-workspace-theme="superteam"],
+  [data-workspace-theme="pixel"]
+) {
+  --theme-success: #8bd6a6;
+  --theme-warning: #f2ca7c;
+  --theme-danger: #ffabae;
+
+  :is(
+    .status.success,
+    .booking-status-control[data-status="Approved"],
+    .booking-status-control[data-status="Attended"]
+  ) {
+    --status-color: var(--theme-success);
+  }
+
+  :is(
+    .status.warning,
+    .booking-status-control[data-status="Pending"],
+    .booking-status-control[data-status="Waitlisted"],
+    .space-managers-settings .notice,
+    .discard-note
+  ) {
+    --status-color: var(--theme-warning);
+  }
+
+  :is(
+    .status.danger,
+    .booking-status-control[data-status="Declined"],
+    .booking-status-control[data-status="Cancelled"],
+    .booking-status-control[data-status="No-show"]
+  ) {
+    --status-color: var(--theme-danger);
+  }
+
+  :is(
+    .status.success,
+    .status.warning,
+    .status.danger,
+    .booking-status-control,
+    .space-managers-settings .notice,
+    .discard-note
+  ) {
+    color: var(--status-color, var(--ink));
+    background-color: color-mix(
+      in srgb,
+      var(--status-color, var(--border)) 13%,
+      var(--surface)
+    );
+    border-color: color-mix(
+      in srgb,
+      var(--status-color, var(--border)) 42%,
+      var(--surface)
+    );
+  }
+
+  .booking-status-control option {
+    background-color: var(--surface);
+    color: var(--ink);
+  }
+}
