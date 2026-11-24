@@ -1609,17 +1609,12 @@ try {
       [],
       "Populated full application review is accessible on mobile",
     );
-    await fullReview
-      .getByRole("button", { name: "Assign session", exact: true })
-      .click();
-    await page
-      .getByRole("dialog")
-      .getByLabel("Application / project")
-      .waitFor();
+    await fullReview.getByRole("table", { name: "Project answers" }).waitFor();
     assert.equal(
-      await page.getByLabel("Application / project").inputValue(),
-      app.id,
-      "Review hands the exact approved application to BookingEditor",
+      await fullReview
+        .getByRole("button", { name: "Assign session", exact: true })
+        .count(),
+      0,
     );
     await page.keyboard.press("Escape");
     await page.goto(origin + "/dashboard");

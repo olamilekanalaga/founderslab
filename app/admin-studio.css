@@ -1112,32 +1112,29 @@
 .admin-studio .studio-review-section h4 svg {
   color: #9a73bc;
 }
-.admin-studio .studio-review-description {
-  font-size: 14px;
-  line-height: 1.8;
-  color: #695774;
+.admin-studio table.studio-review-table {
+  width: 100%;
+  min-width: 0;
+  table-layout: fixed;
+  margin: 8px 0 0;
+  border: 1px solid #e9dfef;
+}
+.admin-studio .studio-review-table th,
+.admin-studio .studio-review-table td {
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+  font-size: 13px;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
-.admin-studio .studio-review-facts {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 17px 24px;
-  margin: 16px 0;
+.admin-studio .studio-review-table th {
+  width: 42%;
+  background: #f7f2fb;
+  font-weight: 600;
 }
-.admin-studio .studio-review-facts dt {
-  color: #8a739a;
-  font-size: 11px;
-}
-.admin-studio .studio-review-facts dd {
-  margin: 5px 0 0;
-  font-size: 13px;
-  color: #5e4a6c;
-  overflow-wrap: anywhere;
-}
-.admin-studio .studio-review-section .text-link {
-  margin-right: 17px;
-  font-size: 12px;
+.admin-studio .studio-review-table a {
+  white-space: normal;
 }
 .admin-studio .studio-review-extra {
   border-bottom: 1px solid #e9dfef;
@@ -1263,9 +1260,6 @@
   }
   .admin-studio .studio-review-identity h3 {
     font-size: 22px;
-  }
-  .admin-studio .studio-review-facts {
-    gap: 17px 15px;
   }
   .admin-studio .studio-review-actions {
     margin: 0 -18px;
@@ -1617,4 +1611,19 @@
     transition: none !important;
     scroll-behavior: auto !important;
   }
+}
+
+.admin-studio .studio-sessions-table {
+  min-width: 580px;
+}
+.admin-studio .studio-sessions-table th[scope="row"] {
+  text-align: left;
+  font-size: 13px;
+}
+.admin-studio .studio-sessions-table td:last-child a {
+  display: flex;
+  width: fit-content;
+}
+.admin-studio .studio-sessions-table td:last-child a + a {
+  margin-top: 6px;
 }

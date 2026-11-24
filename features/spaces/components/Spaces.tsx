@@ -1,5 +1,4 @@
 "use client";
-import BookingEditor from "@/features/bookings/components/BookingEditor";
 import ApplicationReview from "./ApplicationReview";
 import { useState } from "react";
 import Link from "next/link";
@@ -46,12 +45,10 @@ export default function Spaces({
     setReviewState({ url: requestedReview, id: requestedReview || "" });
   const setSelected = (id: string | null) =>
     setReviewState({ url: requestedReview, id: id || "" });
-  const [bookingApplication, setBookingApplication] = useState("");
-  const [booking, setBooking] = useState(false),
-    [filterState, setFilterState] = useState({
-      tab,
-      value: params.get("status") || "All",
-    });
+  const [filterState, setFilterState] = useState({
+    tab,
+    value: params.get("status") || "All",
+  });
   const statuses =
     tab === "sessions"
       ? ["Scheduled", "Completed", "Cancelled"]
@@ -165,16 +162,7 @@ export default function Spaces({
             <p>{session.notes || "No internal notes."}</p>
           </section>
           <section className="panel">
-            <SectionHeading
-              title="Booked founders"
-              action={
-                can ? (
-                  <button className="button" onClick={() => setBooking(true)}>
-                    <Plus size={14} /> Assign booking
-                  </button>
-                ) : null
-              }
-            />
+            <SectionHeading title="Booked founders" />
             <div className="table-wrap">
               <table>
                 <thead>
@@ -234,17 +222,12 @@ export default function Spaces({
             </div>
             <div className="heading-actions">
               {can && (
-                <>
-                  <button className="button" onClick={() => setBooking(true)}>
-                    New booking
-                  </button>
-                  <button
-                    className="button primary"
-                    onClick={() => edit("session")}
-                  >
-                    <Plus size={16} /> Create Space
-                  </button>
-                </>
+                <button
+                  className="button primary"
+                  onClick={() => edit("session")}
+                >
+                  <Plus size={16} /> Create Space
+                </button>
               )}
             </div>
           </div>
@@ -576,26 +559,8 @@ export default function Spaces({
           wide
           className="application-dialog"
         >
-          <ApplicationReview
-            application={a}
-            onSelect={setSelected}
-            onAssign={() => {
-              setBookingApplication(a.id);
-              closeReview();
-              setBooking(true);
-            }}
-          />
+          <ApplicationReview application={a} onSelect={setSelected} />
         </Modal>
-      )}
-      {booking && (
-        <BookingEditor
-          sessionId={id}
-          preferredApplicationId={bookingApplication}
-          close={() => {
-            setBooking(false);
-            setBookingApplication("");
-          }}
-        />
       )}
     </>
   );

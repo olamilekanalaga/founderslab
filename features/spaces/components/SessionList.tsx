@@ -2,9 +2,15 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { useWorkspace } from "@/components/layout/WorkspaceContext";
-import { Avatar, Status, Empty, ExternalLink } from "@/components/ui";
+import { Status, Empty, ExternalLink } from "@/components/ui";
 import { approvedSeats } from "@/lib/domain";
-import { dateTime } from "@/lib/dates/format";
+import { LONDON_TIME_ZONE } from "@/lib/dates/saturday-schedule";
+
+const sessionDate = new Intl.DateTimeFormat("en-GB", {
+  dateStyle: "medium",
+  timeStyle: "short",
+  timeZone: LONDON_TIME_ZONE,
+});
 import type { DataState } from "@/lib/types";
 export default function SessionList({
   sessions,
@@ -29,47 +35,60 @@ export default function SessionList({
         <h2>Sessions</h2>
         <span className="small-tag">{rows.length} Spaces</span>
       </div>
-      {rows.map((v, i) => {
-        const people = s.participants.filter(
-          (p) => p.sessionId === v.id && p.attendance !== "Cancelled",
-        );
-        return (
-          <article className="agenda-session" key={v.id}>
-            <div className="row-between">
-              <Link href={path("spaces", v.id)}>
-                <h3>{v.title}</h3>
-              </Link>
-              <Status value={v.status} />
-            </div>
-            <p>{dateTime(v.startsAt)} · UTC / GMT</p>
-            <div className="row-between">
-              <div className="participant-stack">
-                {people.slice(0, 5).map((p, j) => (
-                  <Avatar
-                    key={p.id}
-                    name={
-                      s.founders.find((f) => f.id === p.founderId)?.name ||
-                      "Founder"
-                    }
-                    index={i + j}
-                  />
-                ))}
-                <span>
-                  {approvedSeats(s, v.id)} / {v.capacity} projects
-                </span>
-              </div>
-              {v.recordingUrl ? (
-                <ExternalLink href={v.recordingUrl}>Recording</ExternalLink>
-              ) : (
-                <Link className="text-link" href={path("spaces", v.id)}>
-                  Manage
-                  <ArrowUpRight size={13} />
-                </Link>
-              )}
-            </div>
-          </article>
-        );
-      })}
+      {rows.length > 0 && (
+        <div
+          className="table-wrap"
+          role="region"
+          aria-label="Space sessions"
+          tabIndex={0}
+        >
+          <table
+            className="studio-sessions-table"
+            aria-label="Scheduled and past Spaces"
+          >
+            <thead>
+              <tr>
+                <th scope="col">Space</th>
+                <th scope="col">Date and time (UK)</th>
+                <th scope="col">Status</th>
+                <th scope="col">Projects booked</th>
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((session) => (
+                <tr key={session.id}>
+                  <th scope="row">
+                    <Link href={path("spaces", session.id)}>
+                      {session.title}
+                    </Link>
+                  </th>
+                  <td>{sessionDate.format(new Date(session.startsAt))}</td>
+                  <td>
+                    <Status value={session.status} />
+                  </td>
+                  <td>
+                    {approvedSeats(s, session.id)} / {session.capacity}
+                  </td>
+                  <td>
+                    <Link
+                      className="text-link"
+                      href={path("spaces", session.id)}
+                    >
+                      Manage <ArrowUpRight size={13} aria-hidden="true" />
+                    </Link>
+                    {session.recordingUrl && (
+                      <ExternalLink href={session.recordingUrl}>
+                        Recording
+                      </ExternalLink>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
       {!rows.length && <Empty>No sessions match this status.</Empty>}
     </section>
   );
