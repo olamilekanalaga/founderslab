@@ -386,10 +386,10 @@ export default function Spaces({
                   >
                     <thead>
                       <tr>
-                        <th scope="col">Project / founder</th>
-                        <th scope="col">Status</th>
                         <th scope="col">Space</th>
+                        <th scope="col">Project / Founder</th>
                         <th scope="col">People expected</th>
+                        <th scope="col">Status</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -404,12 +404,24 @@ export default function Spaces({
                           application?.companyName || "Founder project";
                         return (
                           <tr key={booking.id}>
+                            <td>
+                              <Link
+                                className="text-link"
+                                href={path("spaces", booking.sessionId)}
+                              >
+                                {session?.title || "Open Space"}
+                              </Link>
+                              {session && (
+                                <small>{dateTime(session.startsAt)} UTC</small>
+                              )}
+                            </td>
                             <th scope="row">
                               {project}
                               {application?.founderName && (
                                 <small>{application.founderName}</small>
                               )}
                             </th>
+                            <td>{booking.speakers}</td>
                             <td>
                               {can ? (
                                 <select
@@ -436,18 +448,6 @@ export default function Spaces({
                                 <Status value={booking.status} />
                               )}
                             </td>
-                            <td>
-                              <Link
-                                className="text-link"
-                                href={path("spaces", booking.sessionId)}
-                              >
-                                {session?.title || "Open Space"}
-                              </Link>
-                              {session && (
-                                <small>{dateTime(session.startsAt)} UTC</small>
-                              )}
-                            </td>
-                            <td>{booking.speakers}</td>
                           </tr>
                         );
                       })}

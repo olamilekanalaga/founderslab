@@ -142,17 +142,11 @@ export async function POST(request: Request) {
     requireCsrf(request, viewer);
     const payload = command.parse(await body(request));
     if (
-      [
-        "access",
-        "profile",
-        "finalize",
-        "review-referral",
-        "attribute",
-      ].includes(payload.action) &&
+      payload.action === "finalize" &&
       !viewer.permissions.includes("team.manage")
     )
       throw new DomainError(
-        "Only the owner can approve attendance or manage referral and partner access decisions.",
+        "Only the owner can give final attendance approval.",
         403,
       );
     const result = await db().$transaction(async (tx) => {

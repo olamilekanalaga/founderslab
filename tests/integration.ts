@@ -2685,6 +2685,7 @@ try {
   assert.equal(bank.details.accountNumber, registerPartner.accountNumber);
   const bdDb = new Client({ connectionString: url.toString() });
   await bdDb.connect();
+  const paymentManager: Jar = { cookie: "", csrf: "" };
   try {
     const storedBankDetails = (
       await bdDb.query('SELECT "bankDetails" FROM "BdPartner" WHERE id=$1', [
@@ -2856,23 +2857,19 @@ try {
       (await request(bdRoute, { ...pay, cycle: 3 }, admin)).status,
       400,
     );
-    const paymentManager: Jar = { cookie: "", csrf: "" };
-    assert.equal(
-      (
-        await adminManagerRequest({
-          action: "invite",
-          email: "payment-manager@integration.example.invalid",
-          allSpaces: true,
-          sessionIds: [],
-        })
-      ).status,
-      201,
-    );
+    const managerInvite = await adminManagerRequest({
+      action: "manual",
+      email: "payment-manager@integration.example.invalid",
+    });
+    assert.equal(managerInvite.status, 201);
+    const managerToken = new URLSearchParams(
+      new URL(managerInvite.data.link).hash.slice(1),
+    ).get("token");
     assert.equal(
       (
         await request(
           "/api/manager/verify",
-          { token: emailToken() },
+          { token: managerToken },
           paymentManager,
         )
       ).status,
@@ -3017,6 +3014,12 @@ try {
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     );
+    await expect(bookingTable.getByRole("columnheader")).toHaveText([
+      "Space",
+      "Project / Founder",
+      "People expected",
+      "Status",
+    ]);
     const pendingStatus = bookingTable
       .locator('select[data-status="Pending"]')
       .first();
@@ -3056,17 +3059,62 @@ try {
       ),
       true,
     );
-    await page.goto(origin + "/dashboard");
-    const performanceLink = page
-      .getByRole("navigation", { name: "Workspace navigation" })
-      .getByRole("link", { name: "BD Performance", exact: true });
-    await performanceLink.click();
-    await expect(page).toHaveURL(/\/bd-performance$/);
-    await expect(performanceLink).toHaveAttribute("aria-current", "page");
     await expect(
-      page.getByRole("heading", { name: "BD Performance", level: 1 }),
+      page
+        .getByRole("navigation", { name: "Workspace navigation" })
+        .getByRole("link", { name: "BD Performance", exact: true }),
+    ).toHaveCount(0);
+
+    const managerPage = await operationsBrowser.newPage({
+      viewport: { width: 393, height: 852 },
+    });
+    await managerPage.context().addCookies([
+      {
+        name: "fl_space_manager",
+        value: paymentManager.cookie.split("=")[1],
+        url: origin,
+      },
+    ]);
+    await managerPage.goto(origin + "/operations");
+    const partnerPanel = managerPage.locator("section").filter({
+      has: managerPage.getByRole("heading", {
+        name: "@bd_integration",
+        exact: true,
+      }),
+    });
+    await partnerPanel
+      .getByText("Edit partner and private access", { exact: true })
+      .click();
+    await partnerPanel
+      .getByLabel("Full name", { exact: true })
+      .fill("Updated BD profile");
+    await partnerPanel.getByRole("button", { name: "Save partner" }).click();
+    await expect(
+      partnerPanel.getByText(
+        "Updated BD profile · bd-integration@example.invalid",
+      ),
     ).toBeVisible();
-    const metrics = page.locator(".bd-performance-metrics");
+    await partnerPanel
+      .getByRole("button", { name: "Generate private dashboard invitation" })
+      .click();
+    await expect(
+      managerPage.getByRole("dialog", { name: "Partner dashboard invitation" }),
+    ).toBeVisible();
+
+    await page.goto(origin + "/bd-performance");
+    await expect(page).toHaveURL(/\/operations\?tab=performance$/);
+    await managerPage.goto(origin + "/operations");
+    const performanceButton = managerPage.getByRole("button", {
+      name: "BD Performance",
+      exact: true,
+    });
+    await performanceButton.click();
+    await expect(managerPage).toHaveURL(/\/operations\?tab=performance$/);
+    await expect(performanceButton).toHaveAttribute("aria-pressed", "true");
+    await expect(
+      managerPage.getByRole("heading", { name: "BD Performance", exact: true }),
+    ).toBeVisible();
+    const metrics = managerPage.locator(".bd-performance-metrics");
     for (const [label, value] of [
       ["Verified appearances", "8"],
       ["Commission earned", "₦40,000"],
@@ -3081,10 +3129,10 @@ try {
     }
     assert.equal(await metrics.locator(".metric-card").count(), 10);
     await expect(
-      page.getByRole("region", { name: "BD performance leaderboard" }),
+      managerPage.getByRole("region", { name: "BD performance leaderboard" }),
     ).toBeVisible();
     assert.ok(
-      await page.evaluate(
+      await managerPage.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     );

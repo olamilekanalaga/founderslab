@@ -23,6 +23,7 @@ export default async function PrivateWorkspace({
     ].includes(section)
   )
     redirect("/founders");
+  if (section === "bd-performance") redirect("/operations?tab=performance");
   if (!SECTIONS.includes(section as Section)) notFound();
   const viewer = await getWorkspaceViewer();
   if (!viewer) redirect("/signin");

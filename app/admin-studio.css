@@ -1637,7 +1637,7 @@
   font-size: 13px;
 }
 
-.admin-studio .studio-bookings-table th small {
+.admin-studio .studio-bookings-table :is(th, td) small {
   display: block;
   margin-top: 4px;
   color: var(--muted);

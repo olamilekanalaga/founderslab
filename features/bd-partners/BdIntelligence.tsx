@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useWorkspace } from "@/components/layout/WorkspaceContext";
-import CommissionExample from "./CommissionExample";
 import { bdIntelligence, naira, type Partner } from "./intelligence";
 
 function Metrics({ data }: { data: ReturnType<typeof bdIntelligence> }) {
@@ -35,56 +34,14 @@ export function BdOverview() {
   return (
     <section className="panel padded">
       <h2>BD performance</h2>
-      <Link className="button" href="/bd-performance">
+      <Link className="button" href="/operations?tab=performance">
         Open BD Performance
       </Link>
     </section>
   );
 }
 
-export default function BdPerformance() {
-  const { lastUpdated } = useWorkspace();
-  const [partners, setPartners] = useState<Partner[]>();
-  const [error, setError] = useState(false);
-  useEffect(() => {
-    const controller = new AbortController();
-    void fetch("/api/bd-partners", {
-      signal: controller.signal,
-      cache: "no-store",
-    })
-      .then(async (response) => {
-        if (!response.ok) throw new Error();
-        const records: Partner[] = await response.json();
-        setPartners(records);
-        setError(false);
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) setError(true);
-      });
-    return () => controller.abort();
-  }, [lastUpdated]);
-
-  return (
-    <>
-      <div className="page-heading">
-        <h1>BD Performance</h1>
-        <Link className="button" href="/operations?tab=bd">
-          Manage BD partners
-        </Link>
-      </div>
-      {partners && !error ? (
-        <BdIntelligence partners={partners} />
-      ) : (
-        <p role="status">
-          {error ? "Could not load BD performance." : "Loading BD performance…"}
-        </p>
-      )}
-      <CommissionExample />
-    </>
-  );
-}
-
-function BdIntelligence({ partners }: { partners: Partner[] }) {
+export default function BdIntelligence({ partners }: { partners: Partner[] }) {
   const { state } = useWorkspace();
   const [month, setMonth] = useState("");
   const [partner, setPartner] = useState("");
