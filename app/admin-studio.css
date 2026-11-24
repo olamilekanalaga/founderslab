@@ -1676,3 +1676,16 @@
   background-color: #fff;
   color: var(--ink);
 }
+
+.admin-studio .studio-applications-table {
+  min-width: 630px;
+}
+
+.admin-studio .studio-applications-table th[scope="row"] {
+  text-align: left;
+}
+
+.admin-studio .studio-applications-table .table-person {
+  min-height: 44px;
+  text-align: left;
+}
