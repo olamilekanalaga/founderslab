@@ -280,6 +280,7 @@ export function makeSeed(): DataState {
       xHandle: s.founders[i].xHandle,
       projectXHandle: null,
       bdReferrerXHandle: null,
+      bdReviewStatus: null,
       bdPartnerId: null,
       website: s.companies[i].website,
       country: countries[i],

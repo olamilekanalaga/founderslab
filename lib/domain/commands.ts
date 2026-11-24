@@ -260,6 +260,29 @@ export function applyCommand(
       s.spaceAttendance ||= [];
       const old = s.spaceData.find((row) => row.sessionId === v.sessionId),
         id = old?.id || crypto.randomUUID();
+      const founderBookingIds = [
+        ...new Set(v.founderBookingIds ?? old?.founderBookingIds ?? []),
+      ];
+      if (v.founderBookingIds) {
+        check(
+          founderBookingIds.every((id) =>
+            s.bookings.some(
+              (booking) =>
+                booking.id === id &&
+                booking.sessionId === v.sessionId &&
+                ["Approved", "Attended"].includes(booking.status) &&
+                s.applications.some(
+                  (app) =>
+                    app.id === booking.applicationId &&
+                    app.status === "Approved" &&
+                    app.founderId &&
+                    app.companyId,
+                ),
+            ),
+          ),
+          "Record attendance only for approved founders booked for this Space.",
+        );
+      }
       put(s.spaceData, {
         id,
         sessionId: v.sessionId,
@@ -268,6 +291,8 @@ export function applyCommand(
         notes: v.notes,
         recordedBy: actor.name,
         submittedAt: old?.submittedAt || (v.submit ? now : null),
+        bdApprovedAt: old?.bdApprovedAt ?? null,
+        founderBookingIds,
         submittedBy: old?.submittedBy || (v.submit ? actor.name : null),
         createdAt: old?.createdAt || now,
         updatedAt: now,

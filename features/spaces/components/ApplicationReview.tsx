@@ -115,6 +115,23 @@ export default function ApplicationReview({
               {fact("Founder role", a.founderRole)}
               {fact("Country", a.country)}
               {fact("Contact", a.contact)}
+              {a.bdPartnerId
+                ? fact(
+                    "Credited BD partner",
+                    <Link
+                      href={`/operations?tab=bd&partner=${encodeURIComponent(a.bdPartnerId)}`}
+                    >
+                      {a.bdReferrerXHandle
+                        ? `@${a.bdReferrerXHandle}`
+                        : "View BD partner"}
+                    </Link>,
+                  )
+                : a.bdReferrerXHandle
+                  ? fact(
+                      "BD referral",
+                      `@${a.bdReferrerXHandle} · Awaiting review`,
+                    )
+                  : null}
               {fact(
                 "Founder X",
                 a.xHandle ? (

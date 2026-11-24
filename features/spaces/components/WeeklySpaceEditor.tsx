@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Plus, Save, Trash2, Pencil } from "lucide-react";
 import { useWorkspace } from "@/components/layout/WorkspaceContext";
 import { Status, Modal } from "@/components/ui";
+import BdSpaceApproval from "@/features/bd-partners/BdSpaceApproval";
 import { dateTime } from "@/lib/dates/format";
 import type { DataState } from "@/lib/types";
 export default function WeeklySpaceEditor({
@@ -20,6 +21,7 @@ export default function WeeklySpaceEditor({
         <Pencil size={15} />
         Edit weekly Space data
       </button>
+      <BdSpaceApproval sessionId={session.id} />
       {open && (
         <Modal
           title="Weekly Space data"
@@ -96,6 +98,23 @@ function SpaceForm({
         };
       });
     });
+  const [founderBookingIds, setFounderBookingIds] = useState(
+    record?.founderBookingIds ?? [],
+  );
+  const roster = s.bookings
+    .filter(
+      (booking) =>
+        booking.sessionId === session.id &&
+        ["Approved", "Attended"].includes(booking.status),
+    )
+    .flatMap((booking) => {
+      const application = s.applications.find(
+        (app) => app.id === booking.applicationId,
+      );
+      return application?.status === "Approved"
+        ? [{ booking, application }]
+        : [];
+    });
   const can = viewer.permissions.includes("booking.write");
   const count = teams.reduce(
     (n, t) => n + Number(t.foundersCount || 0) + Number(t.otherTeamCount || 0),
@@ -135,6 +154,9 @@ function SpaceForm({
                 "value",
               ) === "complete",
             sessionId: session.id,
+            founderBookingIds: founderBookingIds.filter((id) =>
+              roster.some(({ booking }) => booking.id === id),
+            ),
             postUrl,
             liveUrl,
             recordingUrl,
@@ -341,6 +363,67 @@ function SpaceForm({
             </div>
           ))}
         </div>
+        <fieldset>
+          <legend>Founder attendance</legend>
+          <p>
+            Mark each founder who actually participated. BD commission stays
+            pending until the owner approves the completed Space.
+          </p>
+          {roster.length ? (
+            <div
+              className="table-wrap"
+              tabIndex={0}
+              role="region"
+              aria-label="Founder attendance roster"
+            >
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Founder X username</th>
+                    <th scope="col">Project</th>
+                    <th scope="col">Referred by</th>
+                    <th scope="col">Attendance</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {roster.map(({ booking, application }) => (
+                    <tr key={booking.id}>
+                      <th scope="row">@{application.xHandle}</th>
+                      <td>{application.companyName}</td>
+                      <td>
+                        {application.bdPartnerId
+                          ? application.bdReferrerXHandle
+                            ? `@${application.bdReferrerXHandle}`
+                            : "Registered BD partner"
+                          : "None"}
+                      </td>
+                      <td>
+                        <label className="check-label">
+                          <input
+                            type="checkbox"
+                            aria-label={`Attended: @${application.xHandle} · ${application.companyName}`}
+                            checked={founderBookingIds.includes(booking.id)}
+                            onChange={(event) => {
+                              const checked = event.target.checked;
+                              setFounderBookingIds((ids) =>
+                                checked
+                                  ? [...ids, booking.id]
+                                  : ids.filter((id) => id !== booking.id),
+                              );
+                            }}
+                          />{" "}
+                          Attended
+                        </label>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p>No approved founders are booked for this Space.</p>
+          )}
+        </fieldset>
         <label>
           Notes
           <textarea
