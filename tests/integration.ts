@@ -1970,7 +1970,14 @@ try {
         .first()
         .evaluate((element) => {
           const context = document.createElement("canvas").getContext("2d")!;
-          const luminance = (color: string) => {
+          const colors = [getComputedStyle(element).color];
+          for (
+            let node: Element | null = element;
+            node;
+            node = node.parentElement
+          )
+            colors.push(getComputedStyle(node).backgroundColor);
+          const [foreground, ...backgrounds] = colors.map((color) => {
             context.clearRect(0, 0, 1, 1);
             context.fillStyle = color;
             context.fillRect(0, 0, 1, 1);
@@ -1985,22 +1992,13 @@ try {
               value: 0.2126 * red + 0.7152 * green + 0.0722 * blue,
               alpha,
             };
-          };
-          const foreground = luminance(getComputedStyle(element).color).value;
-          for (
-            let node: Element | null = element;
-            node;
-            node = node.parentElement
-          ) {
-            const background = luminance(
-              getComputedStyle(node).backgroundColor,
+          });
+          const background = backgrounds.find(({ alpha }) => alpha === 255);
+          if (background)
+            return (
+              (Math.max(foreground.value, background.value) + 0.05) /
+              (Math.min(foreground.value, background.value) + 0.05)
             );
-            if (background.alpha === 255)
-              return (
-                (Math.max(foreground, background.value) + 0.05) /
-                (Math.min(foreground, background.value) + 0.05)
-              );
-          }
           return 0;
         });
     }
