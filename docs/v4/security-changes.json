@@ -23,8 +23,22 @@
   {
     "file": "server/services/space-managers.ts",
     "name": "assignedSpaces",
-    "reason": "Remove founder and company roster data from the assigned Space Manager response. Assignment and session checks are preserved.",
+    "reason": "Add owner-granted persistent all-Spaces access to the existing restricted manager projection.",
     "originalSha256": "cd4ac99b1f447b9c258a836505f499cd5633014786eb1bb214c48e0692981899",
-    "sha256": "85558602c97cc5bdacccd08d305ca8510fcd8f06edc8cdb5f346b0c234f17faf"
+    "sha256": "54e24ebfd260eb6e4175f47e1272678b00524b27ed277ef2c37aab705d3fa56f"
+  },
+  {
+    "file": "server/handlers/manager.ts",
+    "name": "POST",
+    "reason": "Allow owner-authorized all-Spaces saves and create-only BD registration after manager session, revocation and CSRF checks.",
+    "originalSha256": "13c3a41a412f9213038bfc3ca46bc77e915a63862774a368e210cbde92a310cf",
+    "sha256": "5616c7610e6477176a4cdeb2e5ecdc261bccdcafb4a2cd4e8c9e77009ab15021"
+  },
+  {
+    "file": "server/handlers/space-managers.ts",
+    "name": "POST",
+    "reason": "Let the owner explicitly grant and narrow all-Spaces access using the existing manager-row lock.",
+    "originalSha256": "61ac74cb943b1b43558187c5687d987c54b7ff63f960d2b68db7e342ba0e7607",
+    "sha256": "7393c9d352953ef630f95ea53e6ff820a4c5b747b43115d307b10fa9673e8c43"
   }
 ]

@@ -23,6 +23,16 @@ import {
   optionalXHandle,
 } from "./primitives";
 
+const spaceLink = z
+  .string()
+  .trim()
+  .max(2000)
+  .transform((value) =>
+    value && !/^[a-z][a-z0-9+.-]*:/i.test(value) ? `https://${value}` : value,
+  )
+  .pipe(z.union([safeUrl, z.literal("")]))
+  .optional();
+
 export const schemas = {
   "founder.save": z.object({
     id,
@@ -80,9 +90,9 @@ export const schemas = {
   }),
   "space-data.save": z.object({
     submit: z.boolean().optional().default(false),
-    postUrl: z.union([safeUrl, z.literal("")]).optional(),
-    liveUrl: z.union([safeUrl, z.literal("")]).optional(),
-    recordingUrl: z.union([safeUrl, z.literal("")]).optional(),
+    postUrl: spaceLink,
+    liveUrl: spaceLink,
+    recordingUrl: spaceLink,
     sessionId: required,
     liveListeners: z.number().int().min(0).max(100000000).nullable(),
     durationMinutes: z.number().int().min(0).max(1000000).nullable(),

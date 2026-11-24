@@ -155,29 +155,34 @@ export async function issueManagerLink(managerId: string, actor: string) {
   });
 }
 export async function assignedSpaces(managerId: string) {
-  const assignments = await db().spaceManagerAssignment.findMany({
-    where: { managerId },
-    include: {
-      session: {
-        select: {
-          id: true,
-          title: true,
-          startsAt: true,
-          timezone: true,
-          recordingUrl: true,
-          postUrl: true,
-          spaceData: {
-            select: {
-              liveListeners: true,
-              durationMinutes: true,
-              submittedAt: true,
-            },
+  const manager = await db().spaceManager.findFirst({
+    where: { id: managerId, revokedAt: null },
+    select: { allSpaces: true },
+  });
+  if (!manager) return [];
+  return db().session.findMany({
+    where: manager.allSpaces
+      ? undefined
+      : {
+          managerAssignments: {
+            some: { managerId, manager: { revokedAt: null } },
           },
+        },
+    select: {
+      id: true,
+      title: true,
+      startsAt: true,
+      timezone: true,
+      recordingUrl: true,
+      postUrl: true,
+      spaceData: {
+        select: {
+          liveListeners: true,
+          durationMinutes: true,
+          submittedAt: true,
         },
       },
     },
+    orderBy: { startsAt: "asc" },
   });
-  return assignments
-    .map((a) => a.session)
-    .sort((a, b) => +a.startsAt - +b.startsAt);
 }

@@ -1,0 +1,1 @@
+ALTER TABLE "SpaceManager" ADD COLUMN "allSpaces" BOOLEAN NOT NULL DEFAULT false;

@@ -444,6 +444,7 @@ model SpaceTeamAttendance {
 }
 
 model SpaceManager {
+  allSpaces      Boolean                  @default(false)
   id             String                   @id @default(cuid())
   email          String                   @unique
   revokedAt      DateTime?

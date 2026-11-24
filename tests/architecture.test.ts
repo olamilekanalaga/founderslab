@@ -176,6 +176,7 @@ test("historical Prisma migrations remain byte-identical and BD tables are addit
         ? readFileSync(entry.file, "utf8")
             .replace(/^  xHandle +String\?\n/m, "")
             .replace(/^  projectXHandle +String\?\n/m, "")
+            .replace(/^  allSpaces +Boolean +@default\(false\)\n/m, "")
             .replace(/\nmodel BdPartner \{[\s\S]*$/, "")
         : readFileSync(entry.file);
     assert.equal(digest(contents), entry.sha256, entry.file);
@@ -200,6 +201,13 @@ test("historical Prisma migrations remain byte-identical and BD tables are addit
     digest(readFileSync(bdMigration)),
     "06b897cc6ed1b3f1c8bd367870db000dce7e9fea486ba972f6b05acc467b2725",
   );
+  assert.equal(
+    readFileSync(
+      "prisma/migrations/202611240001_manager_all_spaces/migration.sql",
+      "utf8",
+    ).trim(),
+    'ALTER TABLE "SpaceManager" ADD COLUMN "allSpaces" BOOLEAN NOT NULL DEFAULT false;',
+  );
   assert.deepEqual(
     sql,
     manifest.database
@@ -208,6 +216,7 @@ test("historical Prisma migrations remain byte-identical and BD tables are addit
       .concat(
         "prisma/migrations/202611220004_project_x_identity/migration.sql",
         bdMigration,
+        "prisma/migrations/202611240001_manager_all_spaces/migration.sql",
       )
       .sort(),
   );

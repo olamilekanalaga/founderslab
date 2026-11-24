@@ -189,6 +189,53 @@ export default function ManagerSpaces() {
               weekly sessions.
             </section>
           )}
+          <details className="panel padded">
+            <summary>Add approved BD partner</summary>
+            <form
+              className="stack-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                const form = event.currentTarget;
+                const details = Object.fromEntries(new FormData(form));
+                void run(async () => {
+                  await post("register-bd", details);
+                  form.reset();
+                  setMessage("BD partner saved.");
+                });
+              }}
+            >
+              <label>
+                Partner name
+                <input name="name" required maxLength={200} />
+              </label>
+              <label>
+                Email
+                <input name="email" type="email" required maxLength={200} />
+              </label>
+              <label>
+                Bank
+                <input name="bank" required maxLength={200} />
+              </label>
+              <label>
+                Account holder
+                <input name="accountName" required maxLength={200} />
+              </label>
+              <label>
+                Account number
+                <input
+                  name="accountNumber"
+                  inputMode="numeric"
+                  pattern="[0-9]{10}"
+                  maxLength={10}
+                  autoComplete="off"
+                  required
+                />
+              </label>
+              <button className="button primary" disabled={busy}>
+                Save BD partner
+              </button>
+            </form>
+          </details>
           {spaces.map((space) => (
             <SpaceEditor
               key={`${space.id}:${space.spaceData?.durationMinutes}:${space.recordingUrl}:${space.postUrl}`}
@@ -297,7 +344,8 @@ function SpaceEditor({
         <label>
           X Spaces recording URL
           <input
-            type="url"
+            type="text"
+            inputMode="url"
             value={recording}
             onChange={(e) => setRecording(e.target.value)}
           />
@@ -305,7 +353,8 @@ function SpaceEditor({
         <label>
           Weekly X post URL
           <input
-            type="url"
+            type="text"
+            inputMode="url"
             value={post}
             onChange={(e) => setPost(e.target.value)}
           />

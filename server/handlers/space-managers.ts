@@ -55,13 +55,15 @@ export async function POST(request: Request) {
           .object({
             action: z.literal("invite"),
             email: z.email().transform((v) => v.trim().toLowerCase()),
-            sessionIds: z.array(z.string().min(1)).min(1).max(100),
+            sessionIds: z.array(z.string().min(1)).max(100),
+            allSpaces: z.boolean().default(false),
           })
           .strict(),
         z
           .object({
             action: z.literal("assign"),
             id: z.string(),
+            allSpaces: z.boolean().default(false),
             sessionIds: z.array(z.string().min(1)).max(100),
           })
           .strict(),
@@ -71,6 +73,10 @@ export async function POST(request: Request) {
       ])
       .parse(await body(request));
     if (p.action === "invite") {
+      if (!p.allSpaces && !p.sessionIds.length)
+        throw new DomainError(
+          "Choose All Spaces or select at least one Space.",
+        );
       const manager = await db().$transaction(async (tx) => {
         const found = await tx.spaceManager.findUnique({
           where: { email: p.email },
@@ -83,10 +89,13 @@ export async function POST(request: Request) {
         const manager = await tx.spaceManager.create({
           data: {
             email: p.email,
+            allSpaces: p.allSpaces,
             assignments: {
-              create: [...new Set(p.sessionIds)].map((sessionId) => ({
-                sessionId,
-              })),
+              create: [...new Set(p.allSpaces ? [] : p.sessionIds)].map(
+                (sessionId) => ({
+                  sessionId,
+                }),
+              ),
             },
           },
         });
@@ -134,14 +143,20 @@ export async function POST(request: Request) {
       } else if (p.action === "assign") {
         if (manager.revokedAt)
           throw new DomainError("This manager has been revoked.", 403);
+        await tx.spaceManager.update({
+          where: { id: p.id },
+          data: { allSpaces: p.allSpaces },
+        });
         await tx.spaceManagerAssignment.deleteMany({
           where: { managerId: p.id },
         });
         await tx.spaceManagerAssignment.createMany({
-          data: [...new Set(p.sessionIds)].map((sessionId) => ({
-            managerId: p.id,
-            sessionId,
-          })),
+          data: [...new Set(p.allSpaces ? [] : p.sessionIds)].map(
+            (sessionId) => ({
+              managerId: p.id,
+              sessionId,
+            }),
+          ),
         });
       }
       await tx.auditLog.create({
@@ -152,7 +167,9 @@ export async function POST(request: Request) {
           detail:
             p.action === "revoke"
               ? "All sessions and unused email links invalidated; edit history preserved."
-              : "Space assignments replaced.",
+              : p.action === "assign" && p.allSpaces
+                ? "Manager granted access to all current and future Spaces."
+                : "Space assignments replaced.",
         },
       });
     });
