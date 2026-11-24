@@ -15,6 +15,7 @@ type Space = {
   };
 };
 export default function ManagerSpaces() {
+  const [panel, setPanel] = useState<"spaces" | "bd">("spaces");
   const [spaces, setSpaces] = useState<Space[]>([]),
     [csrf, setCsrf] = useState(""),
     [email, setEmail] = useState(""),
@@ -177,20 +178,39 @@ export default function ManagerSpaces() {
                   await post("logout", {});
                   setCsrf("");
                   setSpaces([]);
+                  setPanel("spaces");
                 })
               }
             >
               Sign out
             </button>
           </div>
-          {!spaces.length && (
-            <section className="panel padded">
-              No Spaces assigned yet. Ask the administrator to assign your
-              weekly sessions.
-            </section>
-          )}
-          <details className="panel padded">
-            <summary>Add approved BD partner</summary>
+          <nav className="tab-row" aria-label="Manager data entry">
+            <button
+              type="button"
+              className={panel === "spaces" ? "active" : ""}
+              aria-pressed={panel === "spaces"}
+              aria-controls="manager-space-data"
+              onClick={() => setPanel("spaces")}
+            >
+              Space data
+            </button>
+            <button
+              type="button"
+              className={panel === "bd" ? "active" : ""}
+              aria-pressed={panel === "bd"}
+              aria-controls="manager-bd-data"
+              onClick={() => setPanel("bd")}
+            >
+              BD data
+            </button>
+          </nav>
+          <section
+            className="panel padded"
+            id="manager-bd-data"
+            hidden={panel !== "bd"}
+          >
+            <h2>Add approved BD partner</h2>
             <form
               className="stack-form"
               onSubmit={(event) => {
@@ -235,23 +255,31 @@ export default function ManagerSpaces() {
                 Save BD partner
               </button>
             </form>
-          </details>
-          {spaces.map((space) => (
-            <SpaceEditor
-              key={`${space.id}:${space.spaceData?.durationMinutes}:${space.recordingUrl}:${space.postUrl}`}
-              space={space}
-              busy={busy}
-              save={(payload) =>
-                run(async () => {
-                  await post("save", payload);
-                  await load();
-                  setMessage(
-                    "Space data saved. Shared founder and company profiles are updated.",
-                  );
-                })
-              }
-            />
-          ))}
+          </section>
+          <div id="manager-space-data" hidden={panel !== "spaces"}>
+            {!spaces.length && (
+              <section className="panel padded">
+                No Spaces assigned yet. Ask the administrator to assign your
+                weekly sessions.
+              </section>
+            )}
+            {spaces.map((space) => (
+              <SpaceEditor
+                key={`${space.id}:${space.spaceData?.durationMinutes}:${space.recordingUrl}:${space.postUrl}`}
+                space={space}
+                busy={busy}
+                save={(payload) =>
+                  run(async () => {
+                    await post("save", payload);
+                    await load();
+                    setMessage(
+                      "Space data saved. Shared founder and company profiles are updated.",
+                    );
+                  })
+                }
+              />
+            ))}
+          </div>
         </>
       )}
     </main>

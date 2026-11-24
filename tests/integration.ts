@@ -1319,6 +1319,23 @@ try {
     await page
       .getByRole("button", { name: "Continue securely", exact: true })
       .click();
+    await page.getByRole("button", { name: "BD data", exact: true }).click();
+    await page
+      .getByRole("heading", { name: "Add approved BD partner" })
+      .waitFor();
+    assert.equal(
+      await page
+        .getByRole("button", { name: "Save Space data", exact: true })
+        .isVisible(),
+      false,
+    );
+    await page.getByRole("button", { name: "Space data", exact: true }).click();
+    assert.equal(
+      await page
+        .getByRole("heading", { name: "Add approved BD partner" })
+        .isVisible(),
+      false,
+    );
     await page
       .getByRole("button", { name: "Save Space data", exact: true })
       .waitFor();
