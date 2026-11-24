@@ -10,14 +10,20 @@ import { formatSessionTime } from "@/components/shared/SessionTime";
 
 export default function BookingEditor({
   sessionId,
+  preferredApplicationId,
   close,
 }: {
   sessionId?: string;
+  preferredApplicationId?: string;
   close: () => void;
 }) {
   const { state: s, commit, busy } = useWorkspace();
+  const initialApplication =
+    s.applications.find(
+      (a) => a.id === preferredApplicationId && a.status === "Approved",
+    ) || s.applications.find((a) => a.status === "Approved");
   const [applicationId, setApplication] = useState(
-      s.applications.find((a) => a.status === "Approved")?.id || "",
+      initialApplication?.id || "",
     ),
     [selectedSession, setSession] = useState(
       sessionId ||
@@ -27,9 +33,9 @@ export default function BookingEditor({
         )?.id ||
         "",
     ),
-    [speakers, setSpeakers] = useState(1);
+    [speakers, setSpeakers] = useState(initialApplication?.speakers || 1);
   return (
-    <Modal title="Create booking request" close={close}>
+    <Modal title="Create booking request" close={close} guardUnsaved>
       <form
         className="stack-form"
         onSubmit={async (e) => {

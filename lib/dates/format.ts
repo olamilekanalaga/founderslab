@@ -11,4 +11,5 @@ export const niceDate = (date: string) =>
     day: "numeric",
     month: "short",
     year: "numeric",
+    timeZone: "UTC",
   }).format(new Date(date));

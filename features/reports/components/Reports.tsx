@@ -1,5 +1,7 @@
 "use client";
 import { useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import ProgrammeAnalytics from "./ProgrammeAnalytics";
 import { Download, FileText, BarChart3 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useWorkspace } from "@/components/layout/WorkspaceContext";
@@ -17,6 +19,9 @@ import {
 import { SectionHeading } from "@/components/ui";
 const Chart = dynamic(() => import("@/components/ui/Charts"), { ssr: false });
 export default function Reports() {
+  const params = useSearchParams(),
+    router = useRouter();
+  const programme = params.get("view") === "programme";
   const { state: s, setMessage } = useWorkspace(),
     [filters, setFilters] = useState<Filters>(blankFilters),
     [exporting, setExporting] = useState(false);
@@ -24,11 +29,50 @@ export default function Reports() {
     change = (key: keyof Filters, value: string) =>
       setFilters((v) => ({ ...v, [key]: value }));
   const unique = (a: string[]) => Array.from(new Set(a)).sort();
+  const views = (
+    <div className="studio-view-switch" aria-label="Report view">
+      <button
+        type="button"
+        aria-pressed={!programme}
+        onClick={() => router.replace("/reports", { scroll: false })}
+      >
+        Founder records
+      </button>
+      <button
+        type="button"
+        aria-pressed={programme}
+        onClick={() =>
+          router.replace("/reports?view=programme", { scroll: false })
+        }
+      >
+        Programme analytics
+      </button>
+    </div>
+  );
+  if (programme)
+    return (
+      <>
+        <div className="page-heading">
+          <div>
+            <span className="page-eyebrow">Programme insights</span>
+            <h1>Reports</h1>
+            <p>Understand your recorded activity and project participation.</p>
+          </div>
+        </div>
+        {views}
+        <ProgrammeAnalytics />
+      </>
+    );
   return (
     <>
       <div className="page-heading">
         <div>
+          <span className="page-eyebrow">Programme insights</span>
           <h1>Reports</h1>
+          <p>
+            Explore your founder records and export a report with the filters
+            you choose.
+          </p>
         </div>
         <div className="heading-actions">
           <button
@@ -56,6 +100,7 @@ export default function Reports() {
           </button>
         </div>
       </div>
+      {views}
       <div className="panel report-filters">
         <label>
           Country

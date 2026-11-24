@@ -15,6 +15,7 @@ import {
   Label,
 } from "recharts";
 import { chartPalette } from "@/lib/design";
+import { Empty } from "@/components/ui";
 const palette = chartPalette;
 export default function Chart({
   data,
@@ -29,6 +30,13 @@ export default function Chart({
   label: string;
   fractional?: boolean;
 }) {
+  if (!data.length)
+    return (
+      <Empty title="No data to chart yet">
+        Recorded programme activity will appear here. Adjust your filters or add
+        records to get started.
+      </Empty>
+    );
   return (
     <div
       className="chart"

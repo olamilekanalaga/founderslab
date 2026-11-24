@@ -1,5 +1,6 @@
 "use client";
 import BookingEditor from "@/features/bookings/components/BookingEditor";
+import ApplicationReview from "./ApplicationReview";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -15,10 +16,9 @@ import {
 } from "@/components/ui";
 import { spaceTotals } from "@/features/spaces/lib/space-data";
 import { approvedSeats } from "@/lib/domain";
-import { dateTime, niceDate } from "@/lib/dates/format";
+import { dateTime } from "@/lib/dates/format";
 import { BOOKING_STATUSES } from "@/lib/catalog";
 
-import DeleteRecordButton from "@/features/founders/components/DeleteRecordButton";
 import WeeklySpaceEditor from "@/features/spaces/components/WeeklySpaceEditor";
 import SessionList from "@/features/spaces/components/SessionList";
 import type { Resource } from "@/components/shared/RecordEditor";
@@ -37,19 +37,53 @@ export default function Spaces({
     router = useRouter(),
     params = useSearchParams();
   const tab = embedded?.tab ?? (params.get("tab") || "sessions");
-  const [selected, setSelected] = useState<string | null>(null),
-    [booking, setBooking] = useState(false),
-    [filter, setFilter] = useState("All");
-  const a = s.applications.find((v) => v.id === selected),
+  const requestedReview = params.get("review");
+  const [reviewState, setReviewState] = useState({
+    url: requestedReview,
+    id: requestedReview || "",
+  });
+  if (reviewState.url !== requestedReview)
+    setReviewState({ url: requestedReview, id: requestedReview || "" });
+  const setSelected = (id: string | null) =>
+    setReviewState({ url: requestedReview, id: id || "" });
+  const [bookingApplication, setBookingApplication] = useState("");
+  const [booking, setBooking] = useState(false),
+    [filterState, setFilterState] = useState({
+      tab,
+      value: params.get("status") || "All",
+    });
+  const statuses =
+    tab === "sessions"
+      ? ["Scheduled", "Completed", "Cancelled"]
+      : tab === "applications"
+        ? ["Pending", "Approved", "Waitlisted", "Declined"]
+        : BOOKING_STATUSES;
+  const filter =
+    filterState.tab === tab && ["All", ...statuses].includes(filterState.value)
+      ? filterState.value
+      : "All";
+  const setFilter = (value: string) => setFilterState({ tab, value });
+  const a = s.applications.find((v) => v.id === reviewState.id),
     can = viewer.permissions.includes("booking.write");
   const session = s.sessions.find((v) => v.id === id);
-  const bookingSessionId = embedded ? null : params.get("session");
+  const bookingSessionId = params.get("session");
   const visibleBookings = s.bookings.filter(
     (b) =>
       (!bookingSessionId || b.sessionId === bookingSessionId) &&
       (filter === "All" || b.status === filter),
   );
   const actual = spaceTotals(s, id);
+  const closeReview = () => {
+    setSelected(null);
+    if (params.has("review")) {
+      const next = new URLSearchParams(params.toString());
+      next.delete("review");
+      router.replace(
+        `${path(embedded ? "operations" : "spaces")}?${next.toString()}`,
+        { scroll: false },
+      );
+    }
+  };
   return (
     <>
       {id && session ? (
@@ -192,7 +226,11 @@ export default function Spaces({
         <>
           <div className="page-heading">
             <div>
-              <h1>Founder Spaces</h1>
+              {embedded ? <h2>Founder Spaces</h2> : <h1>Founder Spaces</h1>}
+              <p>
+                Prepare your sessions, review applications and manage project
+                seats.
+              </p>
             </div>
             <div className="heading-actions">
               {can && (
@@ -219,6 +257,7 @@ export default function Spaces({
               <button
                 key={value}
                 className={tab === value ? "active" : ""}
+                aria-pressed={tab === value}
                 onClick={() => {
                   if (embedded) embedded.onChange(value as SpaceTab);
                   else router.replace(`${path("spaces")}?tab=${value}`);
@@ -275,8 +314,13 @@ export default function Spaces({
           {tab === "sessions" ? (
             <SessionList sessions={s.sessions} filter={filter} />
           ) : tab === "applications" ? (
-            <section className="panel">
-              <div className="table-wrap">
+            <section className="panel workflow-desktop">
+              <div
+                className="table-wrap"
+                tabIndex={0}
+                role="region"
+                aria-label="Founder applications"
+              >
                 <table>
                   <thead>
                     <tr>
@@ -326,10 +370,29 @@ export default function Spaces({
                   </tbody>
                 </table>
               </div>
+              {!s.applications.some(
+                (a) => filter === "All" || a.status === filter,
+              ) && (
+                <Empty
+                  title={
+                    filter === "All"
+                      ? "No applications to review"
+                      : "No matching applications"
+                  }
+                >
+                  New submissions will appear here. Try another status if you
+                  have filters selected.
+                </Empty>
+              )}
             </section>
           ) : (
-            <section className="panel">
-              <div className="table-wrap">
+            <section className="panel workflow-desktop">
+              <div
+                className="table-wrap"
+                tabIndex={0}
+                role="region"
+                aria-label="Founder booking requests"
+              >
                 <table>
                   <thead>
                     <tr>
@@ -399,143 +462,140 @@ export default function Spaces({
                   </tbody>
                 </table>
                 {!visibleBookings.length && (
-                  <Empty>No matching bookings.</Empty>
+                  <Empty title="No matching bookings">
+                    Pending requests appear here. Approve a request to reserve a
+                    project seat.
+                  </Empty>
                 )}
               </div>
             </section>
+          )}
+          {tab === "applications" && (
+            <div className="workflow-mobile">
+              {s.applications
+                .filter((a) => filter === "All" || a.status === filter)
+                .map((item, i) => (
+                  <article className="workflow-card" key={item.id}>
+                    <div className="workflow-card-heading">
+                      <Avatar name={item.founderName} index={i} />
+                      <div>
+                        <b>{item.founderName}</b>
+                        <small>{item.companyName}</small>
+                      </div>
+                    </div>
+                    <p>
+                      {item.country} · {item.speakers} speakers ·{" "}
+                      {item.reference}
+                    </p>
+                    <div className="workflow-card-footer">
+                      <Status value={item.status} />
+                      <button
+                        className="button primary"
+                        onClick={() => setSelected(item.id)}
+                      >
+                        Review application
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              {!s.applications.some(
+                (a) => filter === "All" || a.status === filter,
+              ) && (
+                <section className="panel">
+                  <Empty title="No applications to review">
+                    New founder submissions will appear here.
+                  </Empty>
+                </section>
+              )}
+            </div>
+          )}
+          {tab === "bookings" && (
+            <div className="workflow-mobile">
+              {s.bookings
+                .filter((b) => filter === "All" || b.status === filter)
+                .map((b) => {
+                  const application = s.applications.find(
+                    (a) => a.id === b.applicationId,
+                  );
+                  return (
+                    <article className="workflow-card" key={b.id}>
+                      <b>{application?.companyName || "Founder project"}</b>
+                      <small>{application?.founderName}</small>
+                      <p>
+                        {s.sessions.find((v) => v.id === b.sessionId)?.title}
+                      </p>
+                      <Link
+                        className="text-link"
+                        href={path("spaces", b.sessionId)}
+                      >
+                        Open Space
+                        <ArrowLeft size={15} />
+                      </Link>
+                      {can ? (
+                        <label>
+                          Booking status
+                          <select
+                            aria-label={`Booking status ${b.id}`}
+                            disabled={busy}
+                            value={b.status}
+                            onChange={(e) =>
+                              void commit({
+                                type: "booking.review",
+                                payload: { id: b.id, status: e.target.value },
+                              })
+                            }
+                          >
+                            {BOOKING_STATUSES.map((v) => (
+                              <option key={v}>{v}</option>
+                            ))}
+                          </select>
+                        </label>
+                      ) : (
+                        <Status value={b.status} />
+                      )}
+                    </article>
+                  );
+                })}
+              {!s.bookings.some(
+                (b) => filter === "All" || b.status === filter,
+              ) && (
+                <section className="panel">
+                  <Empty title="No matching bookings">
+                    Requests appear here before project seats are approved.
+                  </Empty>
+                </section>
+              )}
+            </div>
           )}
         </>
       )}
       {a && (
         <Modal
           title={`Application · ${a.reference}`}
-          close={() => setSelected(null)}
+          close={closeReview}
           wide
+          className="application-dialog"
         >
-          <DeleteRecordButton
-            kind="application"
-            id={a.id}
-            name={a.founderName}
+          <ApplicationReview
+            application={a}
+            onSelect={setSelected}
+            onAssign={() => {
+              setBookingApplication(a.id);
+              closeReview();
+              setBooking(true);
+            }}
           />
-          <div className="application-review">
-            <div className="row-between">
-              <div>
-                <h3>{a.companyName}</h3>
-                <p>
-                  {a.founderName} · @{a.xHandle}
-                </p>
-              </div>
-              <Status value={a.status} />
-            </div>
-            <p>{a.description}</p>
-            <dl className="facts">
-              <div>
-                <dt>Founder X</dt>
-                <dd>@{a.xHandle}</dd>
-              </div>
-              <div>
-                <dt>Project X</dt>
-                <dd>
-                  {a.projectXHandle ? `@${a.projectXHandle}` : "Not provided"}
-                </dd>
-              </div>
-              <div>
-                <dt>Country</dt>
-                <dd>{a.country}</dd>
-              </div>
-              <div>
-                <dt>Stage / sector</dt>
-                <dd>
-                  {a.stage} / {a.sector}
-                </dd>
-              </div>
-              <div>
-                <dt>Team / speakers</dt>
-                <dd>
-                  {a.teamSize} people / {a.speakers} speakers
-                </dd>
-              </div>
-              <div>
-                <dt>Main business focus</dt>
-                <dd>{a.focus}</dd>
-              </div>
-              <div>
-                <dt>Contact</dt>
-                <dd>{a.contact || "Not provided"}</dd>
-              </div>
-              <div>
-                <dt>Seeking</dt>
-                <dd>{a.seeking || "Not provided"}</dd>
-              </div>
-              <div>
-                <dt>Promotion consent</dt>
-                <dd>
-                  {a.promotionalConsent ? "Granted separately" : "Not granted"}
-                </dd>
-              </div>
-              <div>
-                <dt>Submitted</dt>
-                <dd>{niceDate(a.createdAt)}</dd>
-              </div>
-            </dl>
-            <ExternalLink href={a.website}>Public project link</ExternalLink>
-            {can && (
-              <div className="form-actions">
-                {["Declined", "Waitlisted", "Approved"].map((status) => (
-                  <button
-                    disabled={busy}
-                    className={`button ${status === "Approved" ? "primary" : ""}`}
-                    key={status}
-                    onClick={() =>
-                      void commit({
-                        type: "application.review",
-                        payload: { id: a.id, status },
-                      })
-                    }
-                  >
-                    {status === "Approved"
-                      ? "Approve application"
-                      : status === "Waitlisted"
-                        ? "Waitlist"
-                        : "Decline"}
-                  </button>
-                ))}
-              </div>
-            )}
-            {a.status === "Approved" && (
-              <div className="success-note">
-                <p>
-                  Founder and company records are linked. You can now assign a
-                  session.
-                </p>
-                <button
-                  className="button"
-                  onClick={() => {
-                    setSelected(null);
-                    setBooking(true);
-                  }}
-                >
-                  Assign session
-                </button>
-                <Link
-                  className="text-link"
-                  href={path("founders", a.founderId || "")}
-                >
-                  Open founder profile
-                </Link>
-                <Link
-                  className="text-link"
-                  href={path("companies", a.companyId || "")}
-                >
-                  Open company profile
-                </Link>
-              </div>
-            )}
-          </div>
         </Modal>
       )}
       {booking && (
-        <BookingEditor sessionId={id} close={() => setBooking(false)} />
+        <BookingEditor
+          sessionId={id}
+          preferredApplicationId={bookingApplication}
+          close={() => {
+            setBooking(false);
+            setBookingApplication("");
+          }}
+        />
       )}
     </>
   );
