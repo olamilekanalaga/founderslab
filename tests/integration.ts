@@ -320,7 +320,6 @@ try {
     "/companies",
     "/spaces",
     "/reports",
-    "/campaigns",
     "/settings",
     "/owner-invitations",
   ]) {
@@ -988,7 +987,6 @@ try {
   for (const path of [
     "/dashboard",
     "/reports",
-    "/campaigns",
     "/settings",
     "/owner-invitations",
     "/companies",
@@ -2179,35 +2177,7 @@ try {
     await page.getByLabel("Password", { exact: true }).fill(password);
     await page.getByRole("button", { name: "Sign in", exact: true }).click();
     await page.waitForURL("**/dashboard");
-    await page.goto(origin + "/campaigns");
-    await page
-      .getByRole("heading", { name: "Founder award archive", exact: true })
-      .waitFor();
-    assert.equal(
-      await page
-        .getByRole("button", { name: "Save winner", exact: true })
-        .count(),
-      0,
-    );
-    assert.equal(
-      await page
-        .getByRole("navigation")
-        .getByRole("link", { name: /Monthly winner/ })
-        .count(),
-      0,
-    );
-    await page
-      .getByRole("cell", { name: "1 SOL", exact: true })
-      .first()
-      .waitFor();
-    await page
-      .getByRole("cell", { name: "historical-payment-reference", exact: true })
-      .waitFor();
-    await page.mouse.move(0, 0);
-    await page.screenshot({
-      path: artifactPath("v4-award-archive-mobile.png"),
-      fullPage: true,
-    });
+    assert.equal((await page.goto(origin + "/campaigns"))?.status(), 404);
     await page.goto(origin + "/founders/" + uiFounder.id);
     await page
       .getByRole("button", { name: "Delete permanently", exact: true })

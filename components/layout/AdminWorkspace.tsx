@@ -20,7 +20,6 @@ import {
   RefreshCw,
   CheckCircle2,
   CircleAlert,
-  Archive,
   Settings as SettingsIcon,
 } from "lucide-react";
 import type { Section, DataState, Viewer } from "@/lib/types";
@@ -37,7 +36,6 @@ import Overview from "@/features/programme/components/Overview";
 import Directory from "@/features/directory/components/Directory";
 import Spaces from "@/features/spaces/components/Spaces";
 import Reports from "@/features/reports/components/Reports";
-import Campaigns from "@/features/campaigns/components/MonthlyWinner";
 import SpaceManagersSettings from "@/features/space-managers/components/SpaceManagersSettings";
 import TeamSettings from "@/features/settings/components/Settings";
 const navigation = [
@@ -47,7 +45,6 @@ const navigation = [
   { id: "operations", label: "Admin operations", icon: Mic2 },
   { id: "owner-invitations", label: "Owner invitations", icon: ShieldCheck },
   { id: "reports", label: "Reports", icon: ChartNoAxesCombined },
-  { id: "campaigns", label: "Award archive", icon: Archive },
   { id: "settings", label: "Settings", icon: SettingsIcon },
 ] as const;
 export default function Workspace(props: {
@@ -166,13 +163,11 @@ function Shell({ section, id }: { section: Section; id?: string }) {
     </nav>
   );
   const title =
-    section === "campaigns"
-      ? "Founder award archive"
-      : section === "settings"
-        ? "Settings"
-        : section === "spaces"
-          ? "Founder Spaces"
-          : navigation.find((n) => n.id === section)?.label;
+    section === "settings"
+      ? "Settings"
+      : section === "spaces"
+        ? "Founder Spaces"
+        : navigation.find((n) => n.id === section)?.label;
   const can = viewer.permissions.includes(SECTION_PERMISSIONS[section]);
   const role = ROLES[viewer.roleId]?.name || viewer.roleId;
   const logout = (
@@ -329,8 +324,6 @@ function Shell({ section, id }: { section: Section; id?: string }) {
             <Spaces id={id} edit={edit} />
           ) : section === "reports" ? (
             <Reports />
-          ) : section === "campaigns" ? (
-            <Campaigns />
           ) : (
             <TeamSettings edit={edit} />
           )}
