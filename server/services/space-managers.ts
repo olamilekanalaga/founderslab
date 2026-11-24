@@ -131,7 +131,7 @@ export async function issueManagerLink(managerId: string, actor: string) {
   const link = await db().$transaction(async (tx) => {
     await lockManager(tx, managerId);
     await tx.spaceManagerLink.updateMany({
-      where: { managerId, usedAt: null },
+      where: { managerId, usedAt: null, manual: false },
       data: { usedAt: new Date() },
     });
     return tx.spaceManagerLink.create({
@@ -178,6 +178,47 @@ export async function issueManagerLink(managerId: string, actor: string) {
     });
   });
 }
+export async function issueManualManagerLink(email: string, actor: string) {
+  const raw = token();
+  await db().$transaction(async (tx) => {
+    const { id } = await tx.spaceManager.upsert({
+      where: { email },
+      create: { email, allSpaces: true },
+      update: {},
+      select: { id: true },
+    });
+    await lockManager(tx, id);
+    const now = new Date();
+    await tx.spaceManager.update({
+      where: { id },
+      data: { allSpaces: true },
+    });
+    await tx.spaceManagerAssignment.deleteMany({ where: { managerId: id } });
+    await tx.spaceManagerLink.updateMany({
+      where: { managerId: id, manual: true, usedAt: null },
+      data: { usedAt: now },
+    });
+    await tx.spaceManagerLink.create({
+      data: {
+        managerId: id,
+        manual: true,
+        tokenHash: hash(raw),
+        expiresAt: new Date(now.getTime() + 15 * 60000),
+      },
+    });
+    await tx.auditLog.create({
+      data: {
+        actor,
+        action: "manager.manual.created",
+        entityId: id,
+        detail:
+          "Single-use manual invitation created for all current and future Spaces.",
+      },
+    });
+  });
+  return raw;
+}
+
 export async function assignedSpaces(managerId: string) {
   const manager = await db().spaceManager.findFirst({
     where: { id: managerId, revokedAt: null },

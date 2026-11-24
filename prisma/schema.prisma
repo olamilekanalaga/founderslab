@@ -471,6 +471,7 @@ model SpaceManagerAssignment {
 }
 
 model SpaceManagerLink {
+  manual      Boolean     @default(false)
   id          String       @id @default(cuid())
   managerId   String
   manager     SpaceManager @relation(fields: [managerId], references: [id], onDelete: Cascade)
