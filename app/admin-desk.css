@@ -1207,3 +1207,18 @@ html:has(.admin-desk)::-webkit-scrollbar-thumb:hover {
   max-width: 360px;
   margin: 20px auto 0;
 }
+
+.admin-desk .saturday-lineup {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.saturday-lineup ol {
+  display: grid;
+  gap: 12px;
+  padding-inline-start: 1.5rem;
+}
+
+.saturday-lineup li p {
+  margin: 4px 0 0;
+}

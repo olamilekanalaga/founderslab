@@ -1,7 +1,7 @@
 import type { Section } from "@/lib/types";
 export const SECTION_PERMISSIONS: Record<Section, string> = {
   "owner-invitations": "team.manage",
-  operations: "team.manage",
+  operations: "booking.write",
   dashboard: "directory.read",
   founders: "directory.read",
   companies: "directory.read",
@@ -12,5 +12,5 @@ export const SECTION_PERMISSIONS: Record<Section, string> = {
   "market-map": "research.read",
   opportunities: "commercial.read",
   reports: "reports.read",
-  settings: "team.manage",
+  settings: "directory.read",
 };

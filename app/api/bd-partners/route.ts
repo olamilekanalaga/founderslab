@@ -3,7 +3,8 @@ import { createDecipheriv, randomUUID } from "node:crypto";
 import { z } from "zod";
 import { bdRegistration } from "@/lib/validation/bd-partner";
 import { registerBdPartner } from "@/server/services/bd-registration";
-import { requireViewer, requireCsrf } from "@/server/auth";
+import { requireCsrf } from "@/server/auth";
+import { requireBdOperator } from "@/server/auth/workspace";
 import { db } from "@/server/db";
 import { body, failure, json } from "@/server/http";
 import { DomainError } from "@/lib/domain";
@@ -60,7 +61,7 @@ function readBankDetails(value: string) {
 
 export async function GET() {
   try {
-    await requireViewer("team.manage");
+    await requireBdOperator();
     return json(
       await db().bdPartner.findMany({
         orderBy: { name: "asc" },
@@ -96,7 +97,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const viewer = await requireViewer("team.manage");
+    const viewer = await requireBdOperator();
     requireCsrf(request, viewer);
     const payload = command.parse(await body(request));
     const result = await db().$transaction(async (tx) => {
@@ -109,10 +110,10 @@ export async function POST(request: Request) {
         const details = readBankDetails(partner.bankDetails);
         await tx.auditLog.create({
           data: {
-            actor: viewer.id,
+            actor: viewer.name,
             action: "bd.bank.view",
             entityId: payload.partnerId,
-            detail: "Admin viewed transfer details",
+            detail: "Viewed transfer details",
           },
         });
         return { details };
@@ -173,10 +174,10 @@ export async function POST(request: Request) {
         });
         await tx.auditLog.create({
           data: {
-            actor: viewer.id,
+            actor: viewer.name,
             action: "bd.verify",
             entityId: appearance.id,
-            detail: "Admin verified founder appearance",
+            detail: "Verified founder appearance",
           },
         });
         return;
@@ -197,10 +198,10 @@ export async function POST(request: Request) {
       });
       await tx.auditLog.create({
         data: {
-          actor: viewer.id,
+          actor: viewer.name,
           action: "bd.pay",
           entityId: payment.id,
-          detail: "Admin recorded a manual transfer",
+          detail: "Recorded a manual transfer",
         },
       });
     });

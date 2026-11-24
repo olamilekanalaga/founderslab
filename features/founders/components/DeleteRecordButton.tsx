@@ -19,7 +19,11 @@ export default function DeleteRecordButton({
   const router = useRouter();
   const [open, setOpen] = useState(false),
     [confirmation, setConfirmation] = useState("");
-  if (!viewer.permissions.includes("directory.write")) return null;
+  if (
+    !viewer.permissions.includes("directory.write") ||
+    viewer.roleId === "space-manager"
+  )
+    return null;
   return (
     <>
       <button

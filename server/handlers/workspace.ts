@@ -6,14 +6,15 @@ import {
 import { z } from "zod";
 import { body, json, failure } from "@/server/http";
 import { db, loadState, executeCommand } from "@/server/db";
-import { requireViewer, requireCsrf } from "@/server/auth";
+import { requireCsrf } from "@/server/auth";
+import { requireWorkspaceViewer } from "@/server/auth/workspace";
 import { actionPermission } from "@/lib/catalog";
 import { DomainError, scopeState } from "@/lib/domain";
 import { schemas } from "@/lib/validation";
 
 export async function GET() {
   try {
-    const viewer = await requireViewer();
+    const viewer = await requireWorkspaceViewer();
     return json({
       state: scopeState(await loadState(), viewer.permissions),
       viewer,
@@ -24,7 +25,7 @@ export async function GET() {
 }
 export async function POST(request: Request) {
   try {
-    const viewer = await requireViewer();
+    const viewer = await requireWorkspaceViewer();
     requireCsrf(request, viewer);
     const command = z
       .object({ type: z.string(), payload: z.record(z.string(), z.unknown()) })

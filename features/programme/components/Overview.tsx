@@ -19,6 +19,7 @@ import { approvedSeats } from "@/lib/domain/queries";
 import { spaceTotals, durationLabel } from "@/features/spaces/lib/space-data";
 import { Avatar, Empty } from "@/components/ui";
 import CurrentSaturdayCard from "./CurrentSaturdayCard";
+import SaturdayLineup from "./SaturdayLineup";
 import OverviewActivity from "./OverviewActivity";
 
 const londonDate = (value: string, options: Intl.DateTimeFormatOptions) =>
@@ -118,6 +119,7 @@ export default function Overview({ addFounder }: { addFounder: () => void }) {
           )}
         </div>
       </div>
+      {viewer.roleId === "space-manager" && <SaturdayLineup now={now} />}
       <div className="desk-grid">
         {metrics.map(({ label, value, detail, icon: Icon, href }) => (
           <Link className="metric-card desk-metric" href={href} key={label}>
@@ -293,18 +295,16 @@ export default function Overview({ addFounder }: { addFounder: () => void }) {
             {pending.length} applications · {bookings.length} bookings
           </span>
         </section>
-        <section className="panel desk-access">
-          <ShieldCheck size={28} />
-          <h2>Owner access</h2>
-          <p>Manage reporting access to assigned Spaces.</p>
-          {can("team.manage") ? (
+        {can("team.manage") && (
+          <section className="panel desk-access">
+            <ShieldCheck size={28} />
+            <h2>Owner access</h2>
+            <p>Manage Space Manager access.</p>
             <Link className="button" href={path("owner-invitations")}>
               Manage invitations
             </Link>
-          ) : (
-            <p>Ask an administrator to manage access.</p>
-          )}
-        </section>
+          </section>
+        )}
       </div>
       <details className="panel desk-details">
         <summary>

@@ -1,5 +1,5 @@
 import { redirect, notFound } from "next/navigation";
-import { getViewer } from "@/server/auth";
+import { getWorkspaceViewer } from "@/server/auth/workspace";
 import { loadState } from "@/server/db";
 import { scopeState } from "@/lib/domain";
 import { SECTIONS, type Section } from "@/lib/types";
@@ -24,7 +24,7 @@ export default async function PrivateWorkspace({
   )
     redirect("/founders");
   if (!SECTIONS.includes(section as Section)) notFound();
-  const viewer = await getViewer();
+  const viewer = await getWorkspaceViewer();
   if (!viewer) redirect("/signin");
   if (!viewer.permissions.includes(SECTION_PERMISSIONS[section as Section]))
     return (

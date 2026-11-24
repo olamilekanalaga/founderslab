@@ -74,7 +74,9 @@ export default function SpaceManagersSettings() {
     <section className="panel padded space-managers-settings">
       <h2>Space Managers</h2>
       <p className="muted">
-        Passwordless access to assigned weekly Spaces only.
+        All Spaces access lets a manager run the operational workspace,
+        including BD payments. Selected Spaces access is limited to those
+        sessions and BD registration.
       </p>
       <>
         {loading && (

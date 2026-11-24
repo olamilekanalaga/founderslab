@@ -122,12 +122,15 @@ function Shell({ section, id }: { section: Section; id?: string }) {
   async function signOut() {
     setSigningOut(true);
     try {
-      const response = await fetch("/api/auth/logout", {
-        method: "POST",
-        headers: { "X-CSRF-Token": viewer.csrf || "" },
-      });
+      const response = await fetch(
+        manager ? "/api/manager/logout" : "/api/auth/logout",
+        {
+          method: "POST",
+          headers: { "X-CSRF-Token": viewer.csrf || "" },
+        },
+      );
       if (!response.ok) throw new Error("Sign-out failed. Please try again.");
-      router.push("/signin");
+      router.push(manager ? "/manager/spaces" : "/signin");
       router.refresh();
     } catch (error) {
       setMessage(
@@ -138,6 +141,10 @@ function Shell({ section, id }: { section: Section; id?: string }) {
       setSigningOut(false);
     }
   }
+  const manager = viewer.roleId === "space-manager";
+  const accountName = manager ? viewer.name : OWNER_NAME;
+  const profile = (size = 38) =>
+    manager ? <Avatar name={accountName} /> : <OwnerPortrait size={size} />;
   const visible = navigation.filter((n) =>
     viewer.permissions.includes(SECTION_PERMISSIONS[n.id]),
   );
@@ -182,7 +189,9 @@ function Shell({ section, id }: { section: Section; id?: string }) {
             : navigation.find((n) => n.id === section)?.label;
   const can = viewer.permissions.includes(SECTION_PERMISSIONS[section]);
   const canManageTeam = viewer.permissions.includes("team.manage");
-  const role = ROLES[viewer.roleId]?.name || viewer.roleId;
+  const role = manager
+    ? "Space Manager"
+    : ROLES[viewer.roleId]?.name || viewer.roleId;
   const logout = (
     <button
       aria-label="Sign out"
@@ -247,10 +256,10 @@ function Shell({ section, id }: { section: Section; id?: string }) {
             )}
             <button
               className="account-trigger"
-              aria-label={`Open account menu for ${OWNER_NAME}`}
+              aria-label={`Open account menu for ${accountName}`}
               onClick={() => setAccountOpen(true)}
             >
-              <OwnerPortrait />
+              {profile()}
             </button>
           </div>
         </header>
@@ -282,12 +291,13 @@ function Shell({ section, id }: { section: Section; id?: string }) {
           ) : (
             <TeamSettings
               edit={edit}
+              canManageTeam={canManageTeam}
               account={
                 <>
                   <div className="account-detail">
-                    <OwnerPortrait size={72} />
-                    <h3>{OWNER_NAME}</h3>
-                    <p>{viewer.email}</p>
+                    {profile(72)}
+                    <h3>{accountName}</h3>
+                    {!manager && <p>{viewer.email}</p>}
                     <span className="small-tag">{role}</span>
                   </div>
                   <div className="settings-account-actions">
@@ -318,9 +328,9 @@ function Shell({ section, id }: { section: Section; id?: string }) {
           className="account-dialog"
         >
           <div className="account-detail">
-            <OwnerPortrait size={72} />
-            <h3>{OWNER_NAME}</h3>
-            <p>{viewer.email}</p>
+            {profile(72)}
+            <h3>{accountName}</h3>
+            {!manager && <p>{viewer.email}</p>}
             <span className="small-tag">{role}</span>
           </div>
           <fieldset className="studio-appearance">
@@ -349,14 +359,14 @@ function Shell({ section, id }: { section: Section; id?: string }) {
                   : "Solid panels with blur and animations turned off."}
             </p>
           </fieldset>
-          {canManageTeam ? (
+          {canManageTeam || manager ? (
             <Link
               className="button"
               href={path("settings")}
               onClick={() => setAccountOpen(false)}
             >
               <SettingsIcon size={17} />
-              Team and settings
+              {manager ? "Settings" : "Team and settings"}
             </Link>
           ) : (
             logout

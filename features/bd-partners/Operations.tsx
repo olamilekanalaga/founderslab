@@ -225,8 +225,16 @@ export default function Operations({
               className="record-form"
             >
               <label>
-                Partner name
-                <input name="name" required maxLength={200} />
+                BD X handle
+                <input
+                  name="name"
+                  required
+                  maxLength={16}
+                  pattern="@?[A-Za-z0-9_]{1,15}"
+                  placeholder="@ola__crrypt"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                />
               </label>
               <label>
                 Email
