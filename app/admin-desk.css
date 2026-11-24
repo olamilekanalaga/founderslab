@@ -150,10 +150,13 @@ html:has(.admin-desk)::-webkit-scrollbar-thumb:hover {
   min-height: 44px;
   padding: 0;
   margin-bottom: 18px;
-  background: transparent;
   border: 0;
   box-shadow: none;
   backdrop-filter: none;
+}
+/* The desk header uses the workspace backdrop in every visual-effects mode. */
+.admin-desk > .main-column > .topbar {
+  background: transparent;
 }
 .admin-desk .topbar-left {
   gap: 7px;
