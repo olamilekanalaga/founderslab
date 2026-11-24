@@ -18,6 +18,11 @@ const command = z.discriminatedUnion("action", [
   bdRegistration.extend({ action: z.literal("register") }),
   z.object({ action: z.literal("bank"), partnerId: z.uuid() }),
   z.object({
+    action: z.literal("attribute"),
+    partnerId: z.uuid(),
+    applicationId: text,
+  }),
+  z.object({
     action: z.literal("verify"),
     partnerId: z.uuid(),
     bookingId: text,
@@ -132,6 +137,30 @@ export async function POST(request: Request) {
         { id: string }[]
       >`SELECT id FROM "BdPartner" WHERE id = ${payload.partnerId} FOR UPDATE`;
       if (!locked.length) throw new DomainError("BD partner not found.", 404);
+      if (payload.action === "attribute") {
+        const assigned = await tx.application.updateMany({
+          where: {
+            id: payload.applicationId,
+            bdReferrerXHandle: { not: null },
+            bdPartnerId: null,
+          },
+          data: { bdPartnerId: payload.partnerId },
+        });
+        if (!assigned.count)
+          throw new DomainError(
+            "This referral is already assigned or unavailable.",
+            409,
+          );
+        await tx.auditLog.create({
+          data: {
+            actor: viewer.name,
+            action: "bd.attribute",
+            entityId: payload.applicationId,
+            detail: `Linked referred application to BD partner ${payload.partnerId}`,
+          },
+        });
+        return;
+      }
       const verified = await tx.bdAppearance.count({
         where: { partnerId: payload.partnerId },
       });
@@ -144,6 +173,11 @@ export async function POST(request: Request) {
             session: { include: { spaceData: { include: { teams: true } } } },
           },
         });
+        if (booking && booking.application.bdPartnerId !== payload.partnerId)
+          throw new DomainError(
+            "This booking is not attributed to this BD partner.",
+            409,
+          );
         const companyId = booking?.application.companyId;
         const founderId = booking?.application.founderId;
         if (

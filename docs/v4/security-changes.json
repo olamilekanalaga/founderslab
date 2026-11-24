@@ -61,5 +61,12 @@
     "originalSha256": "0584578bf8df0c0bcafacf6b0914d2a8e07fd3115a748f74d4f1b887a108634c",
     "sha256": "ddbf655e67e9d3fbd4267f1f84a115420e4d7478a9a078d22ac730c80b1bfbc5",
     "reason": "Allow scope-filtered workspace reads for active All Spaces managers with server-enforced operational permissions."
+  },
+  {
+    "file": "server/handlers/public.ts",
+    "name": "POST",
+    "originalSha256": "714e50f62f02baf27528bb45a11ec3087afcb19fe73227cbaf4b15b891e0f38b",
+    "sha256": "e7b7b715b569d9a89c6716237348a6ca9dbba31394dc8f441477d5cb70c5be09",
+    "reason": "Normalize and match an optional founder-submitted BD handle within the existing private application transaction, with no public lookup response."
   }
 ]

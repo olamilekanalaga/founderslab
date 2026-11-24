@@ -16,6 +16,7 @@ import {
 } from "@/lib/validation";
 import { approvedSeats, DomainError } from "@/lib/domain";
 import { defaultSettings } from "@/lib/catalog";
+import { findBdPartnersByHandle } from "@/server/services/bd-registration";
 
 export async function GET(
   _request: Request,
@@ -210,9 +211,14 @@ export async function POST(
               409,
             );
         }
+        const matchingPartners = data.bdReferrerXHandle
+          ? await findBdPartnersByHandle(tx, `@${data.bdReferrerXHandle}`)
+          : [];
         return tx.application.create({
           data: {
             ...data,
+            bdPartnerId:
+              matchingPartners.length === 1 ? matchingPartners[0].id : null,
             id,
             reference: `FL-${id.slice(0, 8).toUpperCase()}`,
             dedupeKey: normaliseKey(p.xHandle, p.companyName),
