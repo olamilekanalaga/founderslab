@@ -1,0 +1,271 @@
+/* Palettes from SuperteamUK-Startups-Analytics, scoped to the private workspace. */
+.admin-desk[data-workspace-theme="superteam"] {
+  color-scheme: dark;
+  --bg: #111726;
+  --surface: #172033;
+  --desk-soft: #222c41;
+  --ink: #f4f6fb;
+  --muted: #aeb8ca;
+  --border: #2c3850;
+  --palette-accent: #8ca6ff;
+  --primary-text: #111726;
+}
+
+.admin-desk[data-workspace-theme="classic"] {
+  --bg: #fff;
+  --surface: #fcfcfc;
+  --desk-soft: #f7f7f7;
+  --ink: #1a1c1f;
+  --muted: #767676;
+  --border: #ededed;
+  --palette-accent: #339cff;
+}
+
+.admin-desk[data-workspace-theme="neutral"] {
+  --bg: #f7f7f4;
+  --surface: #fff;
+  --desk-soft: #f5f5f5;
+  --ink: #1c1c1c;
+  --muted: #787878;
+  --border: #e8e8e8;
+  --palette-accent: #0285ff;
+}
+
+.admin-desk[data-workspace-theme="scientific"] {
+  --bg: #f7faff;
+  --surface: #fff;
+  --desk-soft: #edf4ff;
+  --ink: #10233f;
+  --muted: #60738d;
+  --border: #cedcf0;
+  --palette-accent: #1769e0;
+}
+
+.admin-desk[data-workspace-theme="sticker"] {
+  --bg: #fff8fc;
+  --surface: #fff;
+  --desk-soft: #fff0f8;
+  --ink: #261526;
+  --muted: #856f80;
+  --border: #f2b9da;
+  --palette-accent: #7450ff;
+}
+
+.admin-desk[data-workspace-theme="pixel"] {
+  color-scheme: dark;
+  --bg: #121315;
+  --surface: #181c18;
+  --desk-soft: #26321d;
+  --ink: #e8f0da;
+  --muted: #9aa58f;
+  --border: #3f5138;
+  --palette-accent: #b6ff3b;
+  --primary-text: #121315;
+}
+
+.workspace-theme-picker {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 18px;
+  color: var(--muted);
+}
+
+.workspace-theme-picker select {
+  width: 100%;
+  min-height: 44px;
+  font-size: 16px;
+}
+
+.admin-desk.app-shell[data-workspace-theme]:not(
+    [data-workspace-theme="founders"]
+  ) {
+  --accent: color-mix(in srgb, var(--palette-accent) 74%, var(--ink));
+  --forest: var(--accent);
+  --light: var(--desk-soft);
+  --glass: var(--surface);
+  --account-surface: color-mix(in srgb, var(--surface) 90%, transparent);
+  --account-divider: var(--border);
+  background: var(--bg);
+}
+
+.admin-desk[data-workspace-theme]:not(
+    [data-workspace-theme="founders"]
+  )[data-visual-effects="reduced"] {
+  --account-surface: var(--surface);
+}
+
+@media (prefers-reduced-transparency: reduce),
+  (prefers-reduced-motion: reduce) {
+  .admin-desk[data-workspace-theme]:not(
+      [data-workspace-theme="founders"]
+    )[data-visual-effects="system"] {
+    --account-surface: var(--surface);
+  }
+}
+
+.admin-desk[data-workspace-theme]:not([data-workspace-theme="founders"]) {
+  :is(
+    .panel,
+    .metric-card,
+    .founder-tile,
+    .profile-banner,
+    .filter-bar,
+    .session-month,
+    .workspace-bottom-nav
+  ) {
+    background: var(--surface);
+    border-color: var(--border);
+    box-shadow: none;
+  }
+
+  :is(
+    .modal:not(.account-dialog),
+    .studio-panel,
+    .toast,
+    .button:not(.primary),
+    .global-search,
+    .account-trigger,
+    .studio-appearance button,
+    input,
+    select:not(.booking-status-control),
+    textarea
+  ) {
+    background: var(--surface);
+    border-color: var(--border);
+    color: var(--ink);
+  }
+
+  :is(
+    .modal-heading,
+    thead th,
+    .small-tag,
+    .person-avatar,
+    .studio-space-date,
+    .desk-ticket
+  ) {
+    background: var(--desk-soft);
+    border-color: var(--border);
+    color: var(--ink);
+  }
+
+  :is(
+    .modal-heading h2,
+    td,
+    th,
+    label,
+    .topbar-left,
+    .desk-queue-row b,
+    .desk-ticket strong,
+    .desk-metric
+  ) {
+    color: var(--ink);
+  }
+
+  :is(
+    .workspace-footer,
+    .studio-appearance legend,
+    .studio-appearance-note,
+    td small,
+    .desk-metric small
+  ) {
+    color: var(--muted);
+  }
+
+  :is(
+    .text-link,
+    .tabs button.active,
+    .tab-row button.active,
+    .workspace-bottom-nav a.active
+  ) {
+    color: var(--accent);
+  }
+
+  :is(.tabs button.active, .tab-row button.active, .studio-appearance) {
+    border-color: var(--border);
+  }
+
+  :is(
+    .workspace-bottom-nav a.active,
+    .studio-appearance button[aria-pressed="true"],
+    .button:not(.primary):hover
+  ) {
+    background: var(--desk-soft);
+  }
+
+  .button.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--primary-text, #fff);
+    box-shadow: none;
+  }
+
+  .button.primary:hover {
+    background: color-mix(in srgb, var(--accent) 88%, var(--ink));
+  }
+
+  :is(button, a, input, select, textarea):focus-visible {
+    outline-color: var(--accent);
+  }
+}
+
+.admin-desk[data-workspace-theme]:not([data-workspace-theme="founders"]) {
+  :is(.table-wrap, tbody tr) {
+    background: var(--surface);
+    border-color: var(--border);
+  }
+
+  :is(thead, tbody tr:hover) {
+    background: var(--desk-soft);
+  }
+
+  :is(td, th, .tabs, .tab-row, .workspace-footer) {
+    border-color: var(--border);
+  }
+
+  :is(.tabs button:not(.active), .tab-row button:not(.active), .muted) {
+    color: var(--muted);
+  }
+
+  :is(.desk-chart-link, .account-detail .small-tag, .desk-ticket svg) {
+    color: var(--accent);
+  }
+
+  .current-saturday-slots > span:not(.filled) {
+    background: var(--desk-soft);
+    border-color: var(--border);
+    color: var(--muted);
+  }
+}
+
+.admin-desk[data-workspace-theme]:not([data-workspace-theme="founders"]) {
+  --chart-grid: var(--border);
+  --chart-label: var(--muted);
+  --chart-surface: var(--surface);
+  --chart-ink: var(--ink);
+  --chart-accent: var(--palette-accent);
+
+  :is(.main-column h2, .main-column h3, .desk-metric strong, .topbar-left > b) {
+    color: var(--ink);
+  }
+
+  :is(.desk-metric > div svg, .desk-access > svg, .desk-queue .icon-button) {
+    color: var(--accent);
+  }
+
+  :is(
+    .desk-ticket small,
+    .desk-details > summary,
+    .desk-chart-loading,
+    .workspace-footer > span
+  ) {
+    color: var(--muted);
+  }
+
+  .desk-next {
+    background: var(--desk-soft);
+  }
+
+  .desk-next :is(div, small, svg, strong) {
+    color: var(--ink);
+  }
+}

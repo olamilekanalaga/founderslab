@@ -47,6 +47,17 @@ function OwnerPortrait({ size = 38 }: { size?: number }) {
     />
   );
 }
+const workspaceThemes = {
+  founders: "Founders Lab",
+  superteam: "Superteam UK · Original",
+  classic: "Classic",
+  neutral: "Neutral",
+  scientific: "Scientific blue",
+  sticker: "Sticker pop",
+  pixel: "Dark pixel",
+} as const;
+type WorkspaceTheme = keyof typeof workspaceThemes;
+
 const navigation = [
   { id: "dashboard", label: "Overview", icon: LayoutDashboard },
   { id: "founders", label: "Directory", icon: Users },
@@ -91,6 +102,7 @@ function Shell({ section, id }: { section: Section; id?: string }) {
   const [effects, setEffects] = useState<"glass" | "system" | "reduced">(
     "glass",
   );
+  const [theme, setTheme] = useState<WorkspaceTheme>("founders");
   useEffect(() => {
     try {
       const saved = localStorage.getItem("founderslab-appearance");
@@ -98,6 +110,10 @@ function Shell({ section, id }: { section: Section; id?: string }) {
         // Restore the browser preference after the initial server render.
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setEffects(saved);
+      }
+      const savedTheme = localStorage.getItem("founderslab-theme");
+      if (savedTheme && Object.hasOwn(workspaceThemes, savedTheme)) {
+        setTheme(savedTheme as WorkspaceTheme);
       }
     } catch {}
   }, []);
@@ -222,6 +238,7 @@ function Shell({ section, id }: { section: Section; id?: string }) {
     <div
       className="app-shell admin-experience admin-studio admin-desk"
       data-visual-effects={effects}
+      data-workspace-theme={theme}
     >
       <div className="main-column">
         <header className="topbar">
@@ -359,6 +376,25 @@ function Shell({ section, id }: { section: Section; id?: string }) {
                   : "Solid panels with blur and animations turned off."}
             </p>
           </fieldset>
+          <label className="workspace-theme-picker">
+            Workspace theme
+            <select
+              value={theme}
+              onChange={(event) => {
+                const selected = event.target.value as WorkspaceTheme;
+                setTheme(selected);
+                try {
+                  localStorage.setItem("founderslab-theme", selected);
+                } catch {}
+              }}
+            >
+              {Object.entries(workspaceThemes).map(([id, label]) => (
+                <option key={id} value={id}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
           {canManageTeam || manager ? (
             <Link
               className="button"

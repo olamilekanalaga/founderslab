@@ -38,12 +38,16 @@ export default function AnalyticsChart({
   };
   const axes = (
     <>
-      <CartesianGrid vertical={false} stroke="#e6def0" strokeDasharray="3 5" />
+      <CartesianGrid
+        vertical={false}
+        stroke="var(--chart-grid, #e6def0)"
+        strokeDasharray="3 5"
+      />
       <XAxis
         dataKey="name"
         axisLine={false}
         tickLine={false}
-        tick={{ fontSize: 10, fill: "#71647f" }}
+        tick={{ fontSize: 10, fill: "var(--chart-label, #71647f)" }}
         tickFormatter={tick}
         minTickGap={25}
       />
@@ -51,14 +55,15 @@ export default function AnalyticsChart({
         axisLine={false}
         tickLine={false}
         allowDecimals={unit !== ""}
-        tick={{ fontSize: 10, fill: "#71647f" }}
+        tick={{ fontSize: 10, fill: "var(--chart-label, #71647f)" }}
       />
       <Tooltip
         labelFormatter={(value) => String(value)}
         formatter={(value) => [valueLabel(Number(value)), label]}
         contentStyle={{
-          background: "#fff",
-          border: "1px solid #d6c6e9",
+          background: "var(--chart-surface, #fff)",
+          color: "var(--chart-ink, inherit)",
+          border: "1px solid var(--chart-grid, #d6c6e9)",
           borderRadius: 10,
           fontSize: 12,
           boxShadow: "0 7px 25px rgba(55,34,83,.1)",
@@ -80,7 +85,7 @@ export default function AnalyticsChart({
             <Bar
               isAnimationActive={false}
               dataKey="value"
-              fill="#9669cf"
+              fill="var(--chart-accent, #9669cf)"
               radius={[5, 5, 0, 0]}
               maxBarSize={32}
             />
@@ -89,8 +94,16 @@ export default function AnalyticsChart({
           <AreaChart {...common}>
             <defs>
               <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#b899df" stopOpacity={0.45} />
-                <stop offset="100%" stopColor="#b899df" stopOpacity={0.025} />
+                <stop
+                  offset="0%"
+                  stopColor="var(--chart-accent, #b899df)"
+                  stopOpacity={0.45}
+                />
+                <stop
+                  offset="100%"
+                  stopColor="var(--chart-accent, #b899df)"
+                  stopOpacity={0.025}
+                />
               </linearGradient>
             </defs>
             {axes}
@@ -99,7 +112,7 @@ export default function AnalyticsChart({
               type="monotone"
               dataKey="value"
               name={label}
-              stroke="#8652c5"
+              stroke="var(--chart-accent, #8652c5)"
               fill={`url(#${gradientId})`}
               strokeWidth={2.5}
               dot={data.length === 1 ? { r: 4 } : false}
