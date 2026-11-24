@@ -1259,9 +1259,3 @@ html:has(.admin-desk)::-webkit-scrollbar-thumb:hover {
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
-
-@media (max-width: 420px) {
-  .workspace-bottom-nav a[href="/bd-performance"] {
-    flex-grow: 1.3;
-  }
-}

@@ -10,8 +10,12 @@ import { useWorkspace } from "@/components/layout/WorkspaceContext";
 import { rewardSummary, REFERRALS_PER_CYCLE, REWARD_NAIRA } from "./rewards";
 
 import { naira, type Partner } from "./intelligence";
+import BdIntelligence from "./BdIntelligence";
+import CommissionExample from "./CommissionExample";
 import ReferralLink from "./ReferralLink";
 import { referralStatus } from "./referral-status";
+
+type OperationsTab = "bd" | "performance" | SpaceTab;
 
 export default function Operations({
   edit,
@@ -22,13 +26,14 @@ export default function Operations({
   const router = useRouter();
   const requestedPanel = params.get("tab");
   const selectedPartner = params.get("partner");
-  const panel: "bd" | SpaceTab =
+  const panel: OperationsTab =
+    requestedPanel === "performance" ||
     requestedPanel === "applications" ||
     requestedPanel === "bookings" ||
     requestedPanel === "sessions"
       ? requestedPanel
       : "bd";
-  function setPanel(value: "bd" | SpaceTab) {
+  function setPanel(value: OperationsTab) {
     const next = new URLSearchParams(params.toString());
     next.set("tab", value);
     next.delete("review");
@@ -38,14 +43,15 @@ export default function Operations({
     router.replace(`/operations?${next.toString()}`, { scroll: false });
   }
   const { viewer, state, lastUpdated } = useWorkspace();
-  const [partners, setPartners] = useState<Partner[]>([]);
+  const [partnerRecords, setPartners] = useState<Partner[]>();
+  const partners = partnerRecords ?? [];
+  const [loadError, setLoadError] = useState(false);
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [accessLink, setAccessLink] = useState("");
   const [accessMessage, setAccessMessage] = useState("");
   const [paymentRequest, setPaymentRequest] = useState<string>();
-  const isOwner = viewer.permissions.includes("team.manage");
   const [bankDetails, setBankDetails] = useState<{
     partnerId: string;
     bank: string;
@@ -88,11 +94,13 @@ export default function Operations({
       .then(async (response) => {
         if (!response.ok) throw new Error("Could not load BD partners.");
         const result = await response.json();
-        if (!controller.signal.aborted) setPartners(result);
+        if (!controller.signal.aborted) {
+          setPartners(result);
+          setLoadError(false);
+        }
       })
       .catch(() => {
-        if (!controller.signal.aborted)
-          setNotice("Could not load BD partners.");
+        if (!controller.signal.aborted) setLoadError(true);
       });
     return () => controller.abort();
   }, [attempt, lastUpdated]);
@@ -173,6 +181,7 @@ export default function Operations({
           {(
             [
               ["bd", "BD details"],
+              ["performance", "BD Performance"],
               ["applications", "Review founder applications"],
               ["bookings", "Manage bookings"],
               ["sessions", "Enter Space data"],
@@ -198,7 +207,24 @@ export default function Operations({
         </div>
       </section>
       <div id="operations-panel">
-        {panel !== "bd" && (
+        {panel === "performance" && (
+          <>
+            <div className="page-heading">
+              <h2>BD Performance</h2>
+            </div>
+            {partnerRecords && !loadError ? (
+              <BdIntelligence partners={partnerRecords} />
+            ) : (
+              <p role="status">
+                {loadError
+                  ? "Could not load BD performance."
+                  : "Loading BD performance…"}
+              </p>
+            )}
+            <CommissionExample />
+          </>
+        )}
+        {panel !== "bd" && panel !== "performance" && (
           <Spaces
             key={panel}
             edit={edit}
@@ -292,8 +318,10 @@ export default function Operations({
               </button>
             </form>
           </section>
-          {notice && <p role="status">{notice}</p>}
-          {isOwner && !!unmatched.length && (
+          {(notice || loadError) && (
+            <p role="status">{notice || "Could not load BD partners."}</p>
+          )}
+          {!!unmatched.length && (
             <section className="panel padded">
               <h2>Historical referrals to review</h2>
               {unmatched.map((application) => (
@@ -405,58 +433,56 @@ export default function Operations({
                   {partner.active && (
                     <ReferralLink code={partner.referralCode} />
                   )}
-                  {isOwner && (
-                    <details>
-                      <summary>Edit partner and private access</summary>
+                  <details>
+                    <summary>Edit partner and private access</summary>
+                    <form
+                      className="record-form"
+                      onSubmit={(event) =>
+                        void submit(event, "profile", partner.id)
+                      }
+                    >
+                      <label>
+                        Full name
+                        <input
+                          name="fullName"
+                          defaultValue={partner.fullName || ""}
+                          maxLength={200}
+                        />
+                      </label>
+                      <label>
+                        BD X username
+                        <input
+                          name="xHandle"
+                          defaultValue={
+                            partner.name.startsWith("@") ? partner.name : ""
+                          }
+                          maxLength={16}
+                        />
+                      </label>
+                      <label className="check-label">
+                        <input
+                          type="checkbox"
+                          name="active"
+                          defaultChecked={partner.active}
+                        />{" "}
+                        Active and approved
+                      </label>
+                      <button className="button" disabled={busy}>
+                        Save partner
+                      </button>
+                    </form>
+                    {partner.active && (
                       <form
-                        className="record-form"
                         onSubmit={(event) =>
-                          void submit(event, "profile", partner.id)
+                          void submit(event, "access", partner.id)
                         }
                       >
-                        <label>
-                          Full name
-                          <input
-                            name="fullName"
-                            defaultValue={partner.fullName || ""}
-                            maxLength={200}
-                          />
-                        </label>
-                        <label>
-                          BD X username
-                          <input
-                            name="xHandle"
-                            defaultValue={
-                              partner.name.startsWith("@") ? partner.name : ""
-                            }
-                            maxLength={16}
-                          />
-                        </label>
-                        <label className="check-label">
-                          <input
-                            type="checkbox"
-                            name="active"
-                            defaultChecked={partner.active}
-                          />{" "}
-                          Active and approved
-                        </label>
                         <button className="button" disabled={busy}>
-                          Save partner
+                          Generate private dashboard invitation
                         </button>
                       </form>
-                      {partner.active && (
-                        <form
-                          onSubmit={(event) =>
-                            void submit(event, "access", partner.id)
-                          }
-                        >
-                          <button className="button" disabled={busy}>
-                            Generate private dashboard invitation
-                          </button>
-                        </form>
-                      )}
-                    </details>
-                  )}
+                    )}
+                  </details>
                   <dl className="facts">
                     {[
                       ["Total referred", referrals.length],
@@ -541,65 +567,62 @@ export default function Operations({
                                 <td>{application.companyName}</td>
                                 <td>
                                   <Status value={status} />
-                                  {isOwner &&
-                                    application.bdReviewStatus === "review" && (
-                                      <p>Flagged for owner review</p>
-                                    )}
-                                  {isOwner &&
-                                    application.bdReviewStatus === "self" && (
-                                      <p>Self-referral blocked</p>
-                                    )}
-                                  {isOwner &&
-                                    application.bdReviewStatus !==
-                                      "disqualified" && (
-                                      <details>
-                                        <summary>Review referral</summary>
-                                        <form
-                                          className="record-form"
-                                          onSubmit={(event) =>
-                                            void submit(
-                                              event,
-                                              "review-referral",
-                                              partner.id,
-                                            )
-                                          }
-                                        >
-                                          <input
-                                            type="hidden"
-                                            name="applicationId"
-                                            value={application.id}
-                                          />
-                                          <label>
-                                            Decision
-                                            <select name="decision">
-                                              <option value="disqualify">
-                                                Disqualify referral
+                                  {application.bdReviewStatus === "review" && (
+                                    <p>Flagged for review</p>
+                                  )}
+                                  {application.bdReviewStatus === "self" && (
+                                    <p>Self-referral blocked</p>
+                                  )}
+                                  {application.bdReviewStatus !==
+                                    "disqualified" && (
+                                    <details>
+                                      <summary>Review referral</summary>
+                                      <form
+                                        className="record-form"
+                                        onSubmit={(event) =>
+                                          void submit(
+                                            event,
+                                            "review-referral",
+                                            partner.id,
+                                          )
+                                        }
+                                      >
+                                        <input
+                                          type="hidden"
+                                          name="applicationId"
+                                          value={application.id}
+                                        />
+                                        <label>
+                                          Decision
+                                          <select name="decision">
+                                            <option value="disqualify">
+                                              Disqualify referral
+                                            </option>
+                                            {application.bdReviewStatus ===
+                                              "review" && (
+                                              <option value="clear">
+                                                Clear review flag
                                               </option>
-                                              {application.bdReviewStatus ===
-                                                "review" && (
-                                                <option value="clear">
-                                                  Clear review flag
-                                                </option>
-                                              )}
-                                            </select>
-                                          </label>
-                                          <label>
-                                            Audit reason
-                                            <input
-                                              name="reason"
-                                              required
-                                              maxLength={200}
-                                            />
-                                          </label>
-                                          <button
-                                            className="button"
-                                            disabled={busy}
-                                          >
-                                            Record decision
-                                          </button>
-                                        </form>
-                                      </details>
-                                    )}
+                                            )}
+                                          </select>
+                                        </label>
+                                        <label>
+                                          Audit reason
+                                          <input
+                                            name="reason"
+                                            required
+                                            maxLength={200}
+                                          />
+                                        </label>
+                                        <button
+                                          className="button"
+                                          disabled={busy}
+                                        >
+                                          Record decision
+                                        </button>
+                                      </form>
+                                    </details>
+                                  )}
                                 </td>
                               </tr>
                             );
