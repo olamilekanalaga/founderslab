@@ -49,6 +49,11 @@ const password = randomBytes(24).toString("base64url");
 const mail: { to: string[]; text: string }[] = [];
 let rejectEmail = false;
 const mailServer = createServer(async (req, res) => {
+  assert.match(
+    String(req.headers["idempotency-key"]),
+    /^space-manager\/[a-f0-9]{64}$/,
+  );
+  assert.equal(req.method, "POST");
   let raw = "";
   for await (const chunk of req) raw += chunk.toString();
   mail.push(JSON.parse(raw));

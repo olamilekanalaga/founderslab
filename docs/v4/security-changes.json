@@ -26,5 +26,12 @@
     "reason": "Remove founder and company roster data from the assigned Space Manager response. Assignment and session checks are preserved.",
     "originalSha256": "cd4ac99b1f447b9c258a836505f499cd5633014786eb1bb214c48e0692981899",
     "sha256": "85558602c97cc5bdacccd08d305ca8510fcd8f06edc8cdb5f346b0c234f17faf"
+  },
+  {
+    "file": "server/services/space-managers.ts",
+    "name": "sendManagerEmail",
+    "reason": "Validate invitation origin, refuse credential redirects, use per-link Resend idempotency and report safe provider error guidance.",
+    "originalSha256": "5aabbf6cbba4a4ba7a4a1f94676af6c0177c5aff80e36497b4f5cdc16402b80a",
+    "sha256": "0e206170fca42cbb184244e08d635041b9801699bac5e72ad64330b7a5d9e8f9"
   }
 ]
