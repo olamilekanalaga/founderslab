@@ -104,23 +104,26 @@ test.describe("Admin experience", () => {
     await page.getByRole("button", { name: "Sign in", exact: true }).click();
     await page.waitForURL("**/dashboard");
     await page.setViewportSize({ width: 393, height: 852 });
-    await page
-      .getByRole("button", { name: "Open navigation", exact: true })
-      .click();
+    const navigation = page.getByRole("navigation", {
+      name: "Workspace navigation",
+    });
     await expect(
-      page
-        .getByRole("dialog")
-        .getByRole("button", { name: "Sign out", exact: true }),
+      navigation.getByRole("link", { name: "Overview" }),
+    ).toHaveAttribute("aria-current", "page");
+    expect(
+      await navigation.evaluate((bar) => bar.getBoundingClientRect().bottom),
+    ).toBe(852);
+    await navigation.getByRole("link", { name: "Settings" }).click();
+    await expect(
+      navigation.getByRole("link", { name: "Settings" }),
+    ).toHaveAttribute("aria-current", "page");
+    await expect(
+      page.getByRole("heading", { name: "⭕️La_Crrypt💰₿" }),
     ).toBeVisible();
-    await page.keyboard.press("Escape");
     await expect(
-      page.getByRole("button", { name: "Open navigation", exact: true }),
-    ).toBeFocused();
-    await page.getByRole("button", { name: /Open account menu for/ }).click();
-    await page
-      .getByRole("dialog")
-      .getByRole("button", { name: "Sign out", exact: true })
-      .click();
+      page.getByRole("link", { name: "Programme website" }),
+    ).toHaveAttribute("href", "/");
+    await page.getByRole("button", { name: "Sign out", exact: true }).click();
     await expect(page).toHaveURL(/\/signin$/);
     expect((await page.request.get("/api/auth/me")).status()).toBe(401);
     await context.close();

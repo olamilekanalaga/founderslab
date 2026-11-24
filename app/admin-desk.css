@@ -703,7 +703,7 @@ html:has(.admin-desk)::-webkit-scrollbar-thumb:hover {
     font-size: 26px;
   }
   .admin-desk .desk-grid {
-    grid-template-rows: 100px 214px 154px;
+    grid-template-rows: 100px 214px 164px;
     gap: 12px;
   }
   .admin-desk .desk-grid > :is(.panel, .metric-card) {
@@ -1129,4 +1129,81 @@ html:has(.admin-desk)::-webkit-scrollbar-thumb:hover {
     padding: 10px 8px;
     font-size: 12px;
   }
+}
+
+.admin-desk.app-shell {
+  --workspace-nav-height: 74px;
+  grid-template-columns: minmax(0, 1fr);
+  padding-bottom: calc(
+    var(--workspace-nav-height) + 24px + env(safe-area-inset-bottom)
+  );
+}
+
+.admin-desk.app-shell .toast {
+  bottom: calc(
+    var(--workspace-nav-height) + 16px + env(safe-area-inset-bottom)
+  );
+}
+
+.admin-desk .workspace-bottom-nav {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: var(--workspace-nav-height);
+  padding: 6px max(4px, env(safe-area-inset-right))
+    calc(6px + env(safe-area-inset-bottom)) max(4px, env(safe-area-inset-left));
+  background: #fff;
+  border-top: 1px solid var(--border);
+}
+
+.workspace-bottom-nav a {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 125px;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 10px;
+  color: var(--muted);
+  font-size: clamp(10px, 2.8vw, 13px);
+  line-height: 1.15;
+  text-align: center;
+  text-decoration: none;
+}
+
+.workspace-bottom-nav a:hover,
+.workspace-bottom-nav a.active {
+  background: var(--desk-soft);
+  color: var(--accent);
+}
+
+.workspace-bottom-nav small {
+  position: absolute;
+  top: 3px;
+  left: calc(50% + 10px);
+  max-width: calc(50% - 10px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 1px 3px;
+  border-radius: 9px;
+  background: var(--desk-soft);
+  color: var(--accent);
+  font-size: 9px;
+}
+
+.admin-desk .settings-account {
+  padding: 24px;
+}
+
+.settings-account-actions {
+  display: grid;
+  gap: 8px;
+  max-width: 360px;
+  margin: 20px auto 0;
 }
