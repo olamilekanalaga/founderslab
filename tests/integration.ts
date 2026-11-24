@@ -2038,6 +2038,20 @@ try {
       ]) {
         assert.ok((await textContrast(selector)) >= 4.5, name + " " + selector);
       }
+      await page.goto(origin + "/reports");
+      await expect(workspace).toHaveAttribute("data-workspace-theme", name);
+      const reportCards = ".metric-grid > .metric-card";
+      await expect(page.locator(reportCards)).toHaveCount(3);
+      for (let index = 1; index <= 3; index++) {
+        for (const part of ["div", "strong"]) {
+          assert.ok(
+            (await textContrast(
+              `${reportCards}:nth-child(${index}) > ${part}`,
+            )) >= 4.5,
+            `${name} report card ${index} ${part}`,
+          );
+        }
+      }
       await page.goto(origin + "/settings");
       await page.getByRole("button", { name: /Open account menu/ }).click();
     }

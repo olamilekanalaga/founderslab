@@ -339,15 +339,22 @@
   --chart-ink: var(--ink);
   --chart-accent: var(--palette-accent);
 
-  :is(.main-column h2, .main-column h3, .desk-metric strong, .topbar-left > b) {
+  :is(
+    .main-column h2,
+    .main-column h3,
+    .metric-card > strong,
+    .topbar-left > b
+  ) {
     color: var(--ink);
   }
 
-  :is(.desk-metric > div svg, .desk-access > svg, .desk-queue .icon-button) {
+  :is(.metric-card > div svg, .desk-access > svg, .desk-queue .icon-button) {
     color: var(--accent);
   }
 
   :is(
+    .metric-card > div,
+    .metric-card > small,
     .desk-ticket small,
     .desk-details > summary,
     .desk-chart-loading,
