@@ -10,9 +10,7 @@ import { useWorkspace } from "@/components/layout/WorkspaceContext";
 import { rewardSummary, REFERRALS_PER_CYCLE, REWARD_NAIRA } from "./rewards";
 
 import { naira, type Partner } from "./intelligence";
-import BdIntelligence from "./BdIntelligence";
 import ReferralLink from "./ReferralLink";
-import CommissionExample from "./CommissionExample";
 import { referralStatus } from "./referral-status";
 
 export default function Operations({
@@ -208,12 +206,6 @@ export default function Operations({
           />
         )}
         <div hidden={panel !== "bd"}>
-          <BdIntelligence partners={partners} />
-          <CommissionExample />
-          <p>
-            Applications and attendance alone do not earn commission. Only
-            verified appearances after a completed Space’s final approval count.
-          </p>
           {accessLink && (
             <Modal
               title="Partner dashboard invitation"

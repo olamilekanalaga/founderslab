@@ -1225,3 +1225,43 @@ html:has(.admin-desk)::-webkit-scrollbar-thumb:hover {
 .saturday-lineup li p {
   margin: 4px 0 0;
 }
+
+.admin-desk .bd-performance {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  min-width: 0;
+}
+
+.admin-desk .bd-performance-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 175px), 1fr));
+  gap: 12px;
+}
+
+.admin-desk .bd-performance-filters label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.admin-desk .bd-performance-filters :is(input, select) {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+}
+
+.admin-desk .bd-performance-metrics {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 132px), 1fr));
+}
+
+.admin-desk .bd-performance-metrics strong {
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 420px) {
+  .workspace-bottom-nav a[href="/bd-performance"] {
+    flex-grow: 1.3;
+  }
+}

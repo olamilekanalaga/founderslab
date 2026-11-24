@@ -8,6 +8,7 @@ import {
   Users,
   Mic2,
   ChartNoAxesCombined,
+  TrendingUp,
   Search,
   ChevronRight,
   ArrowUpRight,
@@ -27,6 +28,7 @@ import {
 } from "@/components/layout/WorkspaceContext";
 import { Modal, Empty, Avatar } from "@/components/ui";
 import RecordEditor, { type Resource } from "@/components/shared/RecordEditor";
+import BdPerformance from "@/features/bd-partners/BdIntelligence";
 import Operations from "@/features/bd-partners/Operations";
 import Overview from "@/features/programme/components/Overview";
 import Directory from "@/features/directory/components/Directory";
@@ -62,6 +64,7 @@ const navigation = [
   { id: "dashboard", label: "Overview", icon: LayoutDashboard },
   { id: "founders", label: "Directory", icon: Users },
   { id: "operations", label: "Admin operations", icon: Mic2 },
+  { id: "bd-performance", label: "BD Performance", icon: TrendingUp },
   { id: "reports", label: "Reports", icon: ChartNoAxesCombined },
   { id: "settings", label: "Settings", icon: SettingsIcon },
 ] as const;
@@ -301,6 +304,8 @@ function Shell({ section, id }: { section: Section; id?: string }) {
             </>
           ) : section === "operations" ? (
             <Operations edit={edit} />
+          ) : section === "bd-performance" ? (
+            <BdPerformance />
           ) : section === "spaces" ? (
             <Spaces id={id} edit={edit} />
           ) : section === "reports" ? (
