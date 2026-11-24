@@ -30,6 +30,7 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
     companyName: "",
     xHandle: "",
     projectXHandle: "",
+    bdReferrerXHandle: "",
     website: "",
     country: "",
     description: "",
@@ -182,6 +183,23 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
                 autoCorrect="off"
                 maxLength={50}
               />
+            </label>
+            <label>
+              BD referrer’s X username
+              <input
+                name="bdReferrerXHandle"
+                value={fields.bdReferrerXHandle}
+                onChange={(e) => change("bdReferrerXHandle", e.target.value)}
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                maxLength={16}
+                aria-describedby="bd-referrer-hint"
+              />
+              <small id="bd-referrer-hint">
+                Enter the X username of the BD partner who referred you, e.g.
+                @ola__crrypt. Leave blank if nobody referred you.
+              </small>
             </label>
             <label>
               Contact email (private)

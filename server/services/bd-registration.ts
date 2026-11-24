@@ -3,7 +3,19 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import type { Prisma } from "@prisma/client";
 import type { z } from "zod";
+import { DomainError } from "@/lib/domain";
 import type { bdRegistration } from "@/lib/validation/bd-partner";
+
+export function findBdPartnersByHandle(
+  tx: Prisma.TransactionClient,
+  username: string,
+) {
+  return tx.$queryRaw<{ id: string }[]>`
+    SELECT id FROM "BdPartner"
+    WHERE lower(name) = lower(${username})
+    LIMIT 2
+  `;
+}
 
 export async function registerBdPartner(
   tx: Prisma.TransactionClient,
@@ -17,6 +29,13 @@ export async function registerBdPartner(
   actor: string,
   detail: string,
 ) {
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${"bd-handle:" + name}))`;
+  if ((await findBdPartnersByHandle(tx, name)).length)
+    throw new DomainError(
+      "This X username is already registered to a BD partner.",
+      409,
+    );
+
   const partner = await tx.bdPartner.create({
     data: {
       id: randomUUID(),

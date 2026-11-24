@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { TEAM_SIZES } from "@/lib/catalog";
 import { chainNames } from "@/lib/chains";
+import { optionalBdXHandle } from "./bd-partner";
 import {
   text,
   short,
@@ -68,6 +69,7 @@ export const normaliseKey = (handle: string, company: string) =>
 
 /** Removed intake questions default without changing historical snapshots. */
 export const publicApplicationSchema = applicationSchema.extend({
+  bdReferrerXHandle: optionalBdXHandle,
   stage: required.optional().default("Live"),
   projectXHandle: xHandle,
   founderRole: required,

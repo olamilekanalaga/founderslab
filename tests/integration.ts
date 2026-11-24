@@ -178,8 +178,14 @@ try {
       delete row.xHandle;
     }
     if (table === "Application") {
-      assert.equal(row.projectXHandle, null);
-      delete row.projectXHandle;
+      for (const field of [
+        "projectXHandle",
+        "bdReferrerXHandle",
+        "bdPartnerId",
+      ]) {
+        assert.equal(row[field], null);
+        delete row[field];
+      }
     }
     assert.deepEqual(row, originals[table]);
   }
@@ -2653,12 +2659,88 @@ try {
       JSON.parse(storedBankDetails).accountNumber,
       registerPartner.accountNumber,
     );
-    const {
-      rows: [candidate],
-    } = await bdDb.query(
-      `SELECT id, "companyId" FROM "Application" WHERE status='Approved' AND "founderId" IS NOT NULL AND "companyId" IS NOT NULL LIMIT 1`,
+    const otherPartner = (await request(bdRoute, undefined, admin)).data.find(
+      (row: { id: string }) => row.id !== partner.id,
     );
-    assert.ok(candidate);
+    assert.ok(otherPartner);
+    const duplicateHandle = await request(
+      bdRoute,
+      {
+        ...registerPartner,
+        name: "BD_INTEGRATION",
+        email: "another-bd@example.invalid",
+      },
+      admin,
+    );
+    assert.equal(duplicateHandle.status, 409);
+    assert.equal(
+      (
+        await request(
+          bdRoute,
+          {
+            ...registerPartner,
+            name: "bdxintegration",
+            email: "lookalike-bd@example.invalid",
+          },
+          admin,
+        )
+      ).status,
+      200,
+    );
+
+    const referred = await request("/api/public/apply", {
+      ...application,
+      founderName: "Referred founder",
+      companyName: "Referred project",
+      xHandle: "referred_founder",
+      projectXHandle: "referred_proj",
+      bdReferrerXHandle: "@BD_INTEGRATION",
+    });
+    assert.equal(referred.status, 201, JSON.stringify(referred.data));
+    assert.equal(referred.data.bdPartnerId, undefined);
+    const unmatched = await request("/api/public/apply", {
+      ...application,
+      founderName: "Unmatched founder",
+      companyName: "Unmatched project",
+      xHandle: "unmatched_user",
+      projectXHandle: "unmatched_proj",
+      bdReferrerXHandle: "unknown_partner",
+    });
+    assert.equal(unmatched.status, 201, JSON.stringify(unmatched.data));
+    const intake = (await request("/api/workspace", undefined, admin)).data
+      .state as DataState;
+    const linkedReferral = intake.applications.find(
+      (row) => row.reference === referred.data.reference,
+    )!;
+    const unresolved = intake.applications.find(
+      (row) => row.reference === unmatched.data.reference,
+    )!;
+    assert.equal(linkedReferral.bdPartnerId, partner.id);
+    assert.equal(linkedReferral.bdReferrerXHandle, "bd_integration");
+    assert.equal(unresolved.bdPartnerId, null);
+    assert.equal(unresolved.bdReferrerXHandle, "unknown_partner");
+    const attribute = {
+      action: "attribute",
+      applicationId: unresolved.id,
+      partnerId: otherPartner.id,
+    };
+    assert.equal((await request(bdRoute, attribute, admin, false)).status, 403);
+    assert.equal((await request(bdRoute, attribute, admin)).status, 200);
+    assert.equal(
+      (await request(bdRoute, { ...attribute, partnerId: partner.id }, admin))
+        .status,
+      409,
+    );
+
+    const approvedState = await command("application.review", {
+      id: linkedReferral.id,
+      status: "Approved",
+    });
+    const candidate = approvedState.applications.find(
+      (row) => row.id === linkedReferral.id,
+    )!;
+    assert.equal(candidate.bdPartnerId, partner.id);
+    assert.ok(candidate.companyId);
     for (let i = 1; i <= 8; i++) {
       const sessionId = `bd-test-space-${i}`;
       const bookingId = `bd-test-booking-${i}`;
@@ -2676,6 +2758,16 @@ try {
       );
       const payload = { action: "verify", partnerId: partner.id, bookingId };
       assert.equal((await request(bdRoute, payload, admin)).status, 400);
+      assert.equal(
+        (
+          await request(
+            bdRoute,
+            { ...payload, partnerId: otherPartner.id },
+            admin,
+          )
+        ).status,
+        409,
+      );
       await bdDb.query(
         `INSERT INTO "SpaceData"(id,"sessionId","recordedBy","submittedAt","updatedAt")
          VALUES($1,$2,'test',now(),now())`,
@@ -2696,10 +2788,10 @@ try {
       );
       const recorded = (await request(bdRoute, undefined, admin)).data[0];
       assert.equal(recorded.appearances.length, i);
-      assert.equal(
-        rewardSummary(i, recorded.payments).earned,
-        Math.floor(i / 4) * 20_000,
-      );
+      const reward = rewardSummary(i, recorded.payments);
+      assert.equal(reward.earned, Math.floor(i / 4) * 20_000);
+      assert.equal(reward.unpaidCycles, Math.floor(i / 4));
+      assert.equal(reward.cycleProgress, i % 4 || 4);
     }
     const pay = {
       action: "pay",
@@ -2792,6 +2884,13 @@ try {
       .getByRole("link", { name: /Admin operations/ })
       .click();
     await page.getByRole("heading", { name: "@bd_integration" }).waitFor();
+    const referralTable = page
+      .getByRole("region", { name: "Founder referrals for @bd_integration" })
+      .getByRole("table", { name: "Referred founders" });
+    await referralTable
+      .getByRole("rowheader", { name: "Referred founder" })
+      .waitFor();
+    await referralTable.getByText("Verified", { exact: true }).waitFor();
     const review = page.getByRole("button", {
       name: "Review founder applications",
     });

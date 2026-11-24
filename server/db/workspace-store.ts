@@ -159,12 +159,16 @@ export async function persistDiff(
       const where =
         keys.length === 1 ? keyValues : { [keys.join("_")]: keyValues };
       if (key === "applications") {
-        if (old)
+        if (old) {
+          // Attribution changes are owned by the BD workflow.
+          const { bdPartnerId, bdReferrerXHandle, ...data } = row;
+          void bdPartnerId;
+          void bdReferrerXHandle;
           await client.application.update({
             where: { id: String(row.id) },
-            data: row,
+            data,
           });
-        else if (seed)
+        } else if (seed)
           await delegate(client, model).upsert({
             where,
             update: row,

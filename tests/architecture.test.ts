@@ -176,6 +176,11 @@ test("historical Prisma migrations remain byte-identical and BD tables are addit
         ? readFileSync(entry.file, "utf8")
             .replace(/^  xHandle +String\?\n/m, "")
             .replace(/^  projectXHandle +String\?\n/m, "")
+            .replace(
+              /^  (?:bdReferrerXHandle|bdPartnerId|bdPartner) +.*\n/gm,
+              "",
+            )
+            .replace(/\n  @@index\(\[bdPartnerId\]\)\n/, "")
             .replace(/^  allSpaces +Boolean +@default\(false\)\n/m, "")
             .replace(/\nmodel BdPartner \{[\s\S]*$/, "")
         : readFileSync(entry.file);
@@ -217,6 +222,7 @@ test("historical Prisma migrations remain byte-identical and BD tables are addit
         "prisma/migrations/202611220004_project_x_identity/migration.sql",
         bdMigration,
         "prisma/migrations/202611240001_manager_all_spaces/migration.sql",
+        "prisma/migrations/202611240002_bd_application_attribution/migration.sql",
       )
       .sort(),
   );
