@@ -66,19 +66,12 @@ export async function ensureProgrammeWindow(
       include: {
         session: {
           select: {
-            status: true,
             spaceData: { select: { submittedAt: true } },
           },
         },
       },
     });
-    if (
-      !current ||
-      (current.session.status !== "Completed" &&
-        current.session.status !== "Cancelled" &&
-        !current.session.spaceData?.submittedAt)
-    )
-      return schedule;
+    if (!current?.session.spaceData?.submittedAt) return schedule;
     const previous = schedule.activeStart;
     schedule = await tx.programmeSchedule.update({
       where: { id: "main" },
@@ -115,7 +108,7 @@ export async function requireProgrammeBooking(
     );
   if (nextOnly && week.position !== schedule.activeStart)
     throw new DomainError(
-      "Booking opens after the previous Space is completed.",
+      "Booking opens after the previous Space data is submitted.",
       409,
     );
 }

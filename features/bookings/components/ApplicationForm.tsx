@@ -120,7 +120,7 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
               {chosenSession && !selectionValid && (
                 <span role="alert">
                   {chosenSession?.bookingLocked
-                    ? "Booking opens after the previous Space is completed."
+                    ? "Booking opens after the previous Space data is submitted."
                     : "This slot is no longer available. Return to the calendar."}
                 </span>
               )}

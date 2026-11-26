@@ -94,8 +94,8 @@
     "file": "server/services/programme-window.ts",
     "name": "ensureProgrammeWindow",
     "originalSha256": "f0fe85fdc198aadf8f02a79af9ee16c5c22725155b7257369ded79af3a934a33",
-    "sha256": "6d6e8ddfcfd373f68f7f86f868dc94b7fe762947e63e162b97c291985e41f965",
-    "reason": "Publish three Sundays and restrict both public booking endpoints to the head of the completion-gated schedule."
+    "sha256": "9bc40a324afdfa3c27f2bd0b700b07d0ec4b5e73b1930ddaf6013012153eaf79",
+    "reason": "Keep the public window limited to its first Sunday until its Space data is submitted."
   },
   {
     "file": "server/auth/session.ts",
@@ -129,8 +129,8 @@
     "file": "server/services/programme-window.ts",
     "name": "requireProgrammeBooking",
     "originalSha256": "e0dfedd9f325ce13ecaab18d16992417ec109a16c0e81f4ff54f066dd984d03a",
-    "sha256": "84e2910267372dc500533ebe97c6a895c4a718e62fc79b287d527a517f21959a",
-    "reason": "Publish three Sundays and restrict both public booking endpoints to the head of the completion-gated schedule."
+    "sha256": "c7c67fb006a4dea8098b876e7a6816aa6283d068e4c6d4a64d363c6e445434f1",
+    "reason": "Keep the public window limited to its first Sunday until its Space data is submitted."
   },
   {
     "file": "server/auth/session.ts",

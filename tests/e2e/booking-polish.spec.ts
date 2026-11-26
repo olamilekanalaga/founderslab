@@ -67,7 +67,7 @@ test("hero date choice is carried directly into the application and mobile Escap
   await expect(menu).toBeFocused();
 });
 
-test("the next Sunday opens only when the previous Space completes", async ({
+test("the next Sunday opens only after Space data is submitted", async ({
   page,
 }) => {
   const now = new Date("2026-11-29T18:59:50Z");
@@ -92,7 +92,7 @@ test("the next Sunday opens only when the previous Space completes", async ({
   await expect(dates.first()).toContainText("November 2026");
   await page.clock.fastForward(31_000);
   await expect(dates).toHaveCount(3);
-  await expect(dates.first()).toContainText("Awaiting completion");
+  await expect(dates.first()).toContainText("Awaiting Space data");
   await expect(page.locator(".fl-preview-dates > button:disabled")).toHaveCount(
     3,
   );
