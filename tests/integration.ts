@@ -3291,11 +3291,18 @@ try {
       viewport: { width: 393, height: 852 },
     });
     await page.goto(origin + "/apply");
-    await expect(page.getByLabel("BD referrer")).toHaveCount(0);
+    await expect(page.getByLabel("BD referrer’s X username")).toHaveCount(0);
     await page.goto(origin + "/book?ref=BD_Integration");
     assert.match(page.url(), /#choose-a-sunday$/);
     await page.goto(origin + "/apply");
-    const lockedHandle = page.getByLabel("BD referrer");
+    const referredHtml = await (
+      await page.request.get(origin + "/apply")
+    ).text();
+    assert.match(
+      referredHtml,
+      /readonly=""[^>]*value="@bd_integration"|value="@bd_integration"[^>]*readonly=""/i,
+    );
+    const lockedHandle = page.getByLabel("BD referrer’s X username");
     await expect(lockedHandle).toHaveValue("@bd_integration");
     await expect(lockedHandle).toHaveAttribute("readonly", "");
   } finally {

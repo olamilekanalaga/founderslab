@@ -14,7 +14,13 @@ import { publicApplicationSchema as applicationSchema } from "@/lib/validation/a
 import PublicFooter from "@/components/layout/PublicFooter";
 import { api } from "@/features/bookings/lib/public-api";
 import { FounderContact } from "@/features/bookings/components/FounderContact";
-export function ApplicationForm({ configured }: { configured: boolean }) {
+export function ApplicationForm({
+  configured,
+  referral,
+}: {
+  configured: boolean;
+  referral: { handle: string | null; locked: boolean; valid: boolean };
+}) {
   const params = useSearchParams(),
     router = useRouter();
   const selectedSessionId = params.get("session") || "";
@@ -40,16 +46,6 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
     comments: "",
     websiteTrap: "",
   });
-  const [referral, setReferral] = useState<{
-    handle: string | null;
-    locked: boolean;
-    valid: boolean;
-  }>();
-  useEffect(() => {
-    void api("referral")
-      .then(setReferral)
-      .catch(() => {});
-  }, []);
   const [privacy, setPrivacy] = useState(false),
     [promo, setPromo] = useState(false),
     [hiring, setHiring] = useState("");
@@ -201,22 +197,22 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
                 maxLength={50}
               />
             </label>
-            {referral?.valid && (
+            {referral.valid && (
               <label>
-                BD referrer
+                BD referrer’s X username
                 <input
                   value={referral.handle || "Registered BD partner"}
                   readOnly
                 />
               </label>
             )}
-            {referral?.locked && !referral.valid && (
+            {referral.locked && !referral.valid && (
               <p className="muted">
                 This referral link is unavailable. You can still apply.
               </p>
             )}
             <label>
-              Contact email (private)
+              Contact email (optional)
               <input
                 name="contact"
                 type="email"
