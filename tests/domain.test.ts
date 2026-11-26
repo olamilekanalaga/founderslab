@@ -85,6 +85,40 @@ test("applications validate consent, normalise duplicate identities and create l
   );
   assert.equal(s.founders.length, 51);
 });
+test("an already approved application without a booking can reserve exactly one seat", () => {
+  const original = createLocalApplication(makeSeed(), application);
+  const id = original.applications.at(-1)!.id;
+  const now = "2025-01-01T00:00:00.000Z";
+  const sessionId = "up1";
+  const before = approvedSeats(original, sessionId);
+  const legacy = applyCommand(
+    original,
+    {
+      type: "application.review",
+      payload: { id, status: "Approved" },
+    },
+    admin,
+    now,
+  );
+  assert.equal(approvedSeats(legacy, sessionId), before);
+  const assign = {
+    type: "application.review",
+    payload: { id, status: "Approved", sessionId },
+  };
+  const booked = applyCommand(legacy, assign, admin, now);
+  const retried = applyCommand(booked, assign, admin, now);
+  assert.equal(approvedSeats(retried, sessionId), before + 1);
+  assert.deepEqual(
+    retried.bookings
+      .filter((booking) => booking.applicationId === id)
+      .map(({ sessionId, speakers, status }) => ({
+        sessionId,
+        speakers,
+        status,
+      })),
+    [{ sessionId, speakers: application.speakers, status: "Approved" }],
+  );
+});
 test("capacity counts projects rather than speakers and cancellation releases a seat", () => {
   let s = makeSeed();
   s.bookings = s.bookings.filter((b) => b.sessionId !== "up1");

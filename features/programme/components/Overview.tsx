@@ -18,7 +18,7 @@ import {
 import { useWorkspace } from "@/components/layout/WorkspaceContext";
 import { approvedSeats } from "@/lib/domain/queries";
 import { spaceTotals, durationLabel } from "@/features/spaces/lib/space-data";
-import { Avatar, Empty } from "@/components/ui";
+import { Empty } from "@/components/ui";
 import CurrentSundayCard from "./CurrentSundayCard";
 import SundayLineup from "./SundayLineup";
 import OverviewActivity from "./OverviewActivity";
@@ -202,27 +202,6 @@ export default function Overview({ addFounder }: { addFounder: () => void }) {
             </b>
           </div>
           <small>Approved projects, separate from speakers</small>
-        </section>
-        <section className="panel desk-profile">
-          <Avatar name={viewer.name} />
-          <h2 title={viewer.name}>{viewer.name}</h2>
-          <p>Programme {viewer.roleId.toLowerCase()}</p>
-          <div className="desk-profile-stats">
-            <div>
-              <span>Spaces</span>
-              <strong>{s.sessions.length}</strong>
-            </div>
-            <div>
-              <span>Reports</span>
-              <strong>{s.spaceData.filter((r) => r.submittedAt).length}</strong>
-            </div>
-            <div>
-              <span>Countries</span>
-              <strong>
-                {new Set(s.founders.map((f) => f.country).filter(Boolean)).size}
-              </strong>
-            </div>
-          </div>
         </section>
         <section className="panel desk-schedule">
           <div>

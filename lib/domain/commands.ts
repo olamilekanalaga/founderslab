@@ -277,6 +277,47 @@ export function applyCommand(
             createdAt: now,
           });
       }
+      if (v.status === "Approved" && v.sessionId) {
+        const session = s.sessions.find((entry) => entry.id === v.sessionId);
+        check(
+          session?.status === "Scheduled" &&
+            session.startsAt > now &&
+            !s.spaceData.some(
+              (report) => report.sessionId === session.id && report.submittedAt,
+            ),
+          "Select an upcoming Space.",
+        );
+        const blockingStatuses = ["Approved", "Pending", "Waitlisted"];
+        check(
+          !upcomingBookings.some(
+            (booking) =>
+              booking.sessionId !== session.id &&
+              blockingStatuses.includes(booking.status),
+          ),
+          "This application already has a booking for an upcoming Space.",
+        );
+        let booking = upcomingBookings.find(
+          (entry) => entry.sessionId === session.id,
+        );
+        if (!booking) {
+          booking = {
+            id: crypto.randomUUID(),
+            applicationId: a.id,
+            sessionId: session.id,
+            speakers: a.speakers,
+            status: "Pending",
+            createdAt: now,
+            updatedAt: now,
+          };
+          s.bookings.push(booking);
+        }
+        if (
+          ["Pending", "Waitlisted", "Cancelled", "Declined"].includes(
+            booking.status,
+          )
+        )
+          reviewBooking(s, booking, "Approved", now);
+      }
       for (const booking of upcomingBookings) {
         if (
           v.status === "Approved" &&

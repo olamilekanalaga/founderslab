@@ -87,6 +87,7 @@ export const schemas = {
   "application.review": z.object({
     id: required,
     status: z.enum(["Approved", "Waitlisted", "Declined"]),
+    sessionId: required.optional(),
   }),
   "space-data.save": z.object({
     submit: z.boolean().optional().default(false),

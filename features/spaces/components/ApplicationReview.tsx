@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Users, Building2, CheckCircle2 } from "lucide-react";
 import { useWorkspace } from "@/components/layout/WorkspaceContext";
 import { Avatar, Status, ExternalLink } from "@/components/ui";
@@ -16,16 +16,39 @@ export default function ApplicationReview({
 }) {
   const { state, path, viewer, commit, busy } = useWorkspace();
   const can = viewer.permissions.includes("booking.write");
-  const hasUnconfirmedBooking = state.bookings.some(
+  const [now] = useState(() => Date.now());
+  const [chosenSpace, setChosenSpace] = useState({
+    applicationId: "",
+    sessionId: "",
+  });
+  const upcomingSpaces = state.sessions
+    .filter(
+      (session) =>
+        session.status === "Scheduled" &&
+        Date.parse(session.startsAt) > now &&
+        !state.spaceData.some(
+          (report) => report.sessionId === session.id && report.submittedAt,
+        ),
+    )
+    .toSorted((first, second) => first.startsAt.localeCompare(second.startsAt));
+  const upcomingBookings = state.bookings.filter(
     (booking) =>
       booking.applicationId === a.id &&
-      ["Pending", "Waitlisted"].includes(booking.status) &&
-      state.sessions.some(
-        (session) =>
-          session.id === booking.sessionId &&
-          session.status === "Scheduled" &&
-          Date.parse(session.startsAt) > Date.now(),
-      ),
+      upcomingSpaces.some((session) => session.id === booking.sessionId) &&
+      ["Pending", "Waitlisted", "Approved"].includes(booking.status),
+  );
+  const needsSpace = upcomingBookings.length === 0;
+  const bookedSpace = upcomingSpaces.find(
+    (session) => session.id === upcomingBookings[0]?.sessionId,
+  );
+  const selectedSpace =
+    upcomingSpaces.find(
+      (session) =>
+        chosenSpace.applicationId === a.id &&
+        session.id === chosenSpace.sessionId,
+    ) ?? upcomingSpaces[0];
+  const hasUnconfirmedBooking = upcomingBookings.some(
+    (booking) => booking.status !== "Approved",
   );
   const pending = state.applications
     .filter((v) => v.status === "Pending")
@@ -239,6 +262,32 @@ export default function ApplicationReview({
         {can && (
           <div className="studio-review-actions">
             <span>Review this application</span>
+            {bookedSpace ? (
+              <span>Space · {formatSpaceDate(bookedSpace.startsAt)}</span>
+            ) : (
+              <label>
+                Space
+                <select
+                  value={selectedSpace?.id ?? ""}
+                  disabled={busy || !selectedSpace}
+                  onChange={(event) =>
+                    setChosenSpace({
+                      applicationId: a.id,
+                      sessionId: event.target.value,
+                    })
+                  }
+                >
+                  {!selectedSpace && (
+                    <option value="">No upcoming Spaces</option>
+                  )}
+                  {upcomingSpaces.map((session) => (
+                    <option key={session.id} value={session.id}>
+                      {session.title} · {formatSpaceDate(session.startsAt)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
             <div>
               {["Approved", "Declined"].map((status) => (
                 <button
@@ -246,14 +295,24 @@ export default function ApplicationReview({
                   type="button"
                   disabled={
                     busy ||
-                    (status === a.status &&
-                      !(status === "Approved" && hasUnconfirmedBooking))
+                    (status === "Approved"
+                      ? (needsSpace && !selectedSpace) ||
+                        (a.status === "Approved" &&
+                          !needsSpace &&
+                          !hasUnconfirmedBooking)
+                      : status === a.status)
                   }
                   className={`button ${status === "Approved" ? "primary" : ""}`}
                   onClick={() =>
                     void commit({
                       type: "application.review",
-                      payload: { id: a.id, status },
+                      payload: {
+                        id: a.id,
+                        status,
+                        ...(status === "Approved" && needsSpace && selectedSpace
+                          ? { sessionId: selectedSpace.id }
+                          : {}),
+                      },
                     })
                   }
                 >
@@ -269,4 +328,15 @@ export default function ApplicationReview({
 }
 function InboxLabel() {
   return <b>Review queue</b>;
+}
+
+function formatSpaceDate(startsAt: string) {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/London",
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(startsAt));
 }
