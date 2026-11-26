@@ -470,9 +470,23 @@ export default function Spaces({
                                     })
                                   }
                                 >
-                                  {BOOKING_STATUSES.map((status) => (
-                                    <option key={status}>{status}</option>
-                                  ))}
+                                  {!["Approved", "Cancelled"].includes(
+                                    booking.status,
+                                  ) && (
+                                    <option value={booking.status} disabled>
+                                      {booking.status}
+                                    </option>
+                                  )}
+                                  <option value="Approved">
+                                    {booking.status === "Approved"
+                                      ? "Approved"
+                                      : "Approve"}
+                                  </option>
+                                  <option value="Cancelled">
+                                    {booking.status === "Cancelled"
+                                      ? "Cancelled"
+                                      : "Cancel"}
+                                  </option>
                                 </select>
                               ) : (
                                 <Status value={booking.status} />

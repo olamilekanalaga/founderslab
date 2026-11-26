@@ -215,7 +215,17 @@ export async function executeCommand(command: Command, viewer: Viewer) {
         await requireProgrammeBooking(tx, String(command.payload.sessionId));
       // Capacity decisions and edits to verified attendance share a session lock.
       let editedSession: string | undefined;
-      if (command.type === "booking.review") {
+      if (command.type === "application.review") {
+        await lockProgramme(tx);
+        const applicationId = String(command.payload.id);
+        const bookings = await tx.bookingRequest.findMany({
+          where: { applicationId },
+          select: { sessionId: true },
+          orderBy: { sessionId: "asc" },
+        });
+        for (const { sessionId } of bookings)
+          await tx.$queryRaw`SELECT id FROM "Session" WHERE id = ${sessionId} FOR UPDATE`;
+      } else if (command.type === "booking.review") {
         const booking = await tx.bookingRequest.findUnique({
           where: { id: String(command.payload.id) },
         });
