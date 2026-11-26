@@ -95,9 +95,13 @@ const env = {
 };
 let server: ReturnType<typeof spawn> | undefined;
 let output = "";
-function run(script: string, args: string[] = []) {
+function run(
+  script: string,
+  args: string[] = [],
+  overrides: Partial<NodeJS.ProcessEnv> = {},
+) {
   const r = spawnSync(process.execPath, ["--import", "tsx", script, ...args], {
-    env,
+    env: { ...env, ...overrides },
     encoding: "utf8",
   });
   if (r.status !== 0) throw new Error(`${script} failed: ${r.stderr}`);
@@ -287,7 +291,10 @@ try {
     "Additive identity migration preserves existing founder/application usernames, contact data, confirmations and company records; new project identities remain NULL and migration is idempotent",
   );
   run("scripts/prepare-vercel.ts");
-  run("scripts/prepare-vercel.ts");
+  run("scripts/prepare-vercel.ts", [], {
+    BOOTSTRAP_ADMIN_EMAIL: ` ${env.BOOTSTRAP_ADMIN_EMAIL.toUpperCase()} `,
+    BOOTSTRAP_ADMIN_PASSWORD: "short",
+  });
   const initialDb = new Client({ connectionString: url.toString() });
   await initialDb.connect();
   assert.equal(
