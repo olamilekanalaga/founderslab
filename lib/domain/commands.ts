@@ -5,6 +5,59 @@ import type { Command, DataState, Viewer } from "@/lib/types";
 import { actionPermission, RESEARCH_SECTIONS } from "@/lib/catalog";
 import { schemas } from "@/lib/validation";
 import { chainNames } from "@/lib/chains";
+function reviewBooking(
+  s: DataState,
+  b: DataState["bookings"][number],
+  status: DataState["bookings"][number]["status"],
+  now: string,
+) {
+  const a = s.applications.find((a) => a.id === b.applicationId),
+    session = s.sessions.find((v) => v.id === b.sessionId);
+  check(a && session, "Application or session missing");
+  if (["Approved", "Attended", "No-show"].includes(status)) {
+    check(
+      a.status === "Approved" && a.founderId && a.companyId,
+      "Approve the founder application first",
+    );
+    check(session.status !== "Cancelled", "The session is cancelled");
+    const same = s.participants.some(
+      (p) =>
+        p.sessionId === b.sessionId &&
+        p.companyId === a.companyId &&
+        p.attendance !== "Cancelled",
+    );
+    check(
+      same || approvedSeats(s, session.id) < session.capacity,
+      "Session is full. Choose another session.",
+    );
+    const existing = s.participants.find(
+      (p) =>
+        p.sessionId === b.sessionId &&
+        p.founderId === a.founderId &&
+        p.companyId === a.companyId,
+    );
+    const participant = {
+      id: existing?.id || crypto.randomUUID(),
+      sessionId: b.sessionId,
+      founderId: a.founderId,
+      companyId: a.companyId,
+      speakers: b.speakers,
+      attendance: status,
+      createdAt: existing?.createdAt || now,
+    };
+    if (existing) Object.assign(existing, participant);
+    else s.participants.push(participant);
+  } else
+    s.participants = s.participants.map((p) =>
+      p.sessionId === b.sessionId &&
+      p.founderId === a.founderId &&
+      p.companyId === a.companyId
+        ? { ...p, attendance: "Cancelled" }
+        : p,
+    );
+  b.status = status;
+  b.updatedAt = now;
+}
 export function applyCommand(
   state: DataState,
   command: Command,
@@ -128,14 +181,32 @@ export function applyCommand(
       const v = schemas["application.review"].parse(p),
         a = s.applications.find((a) => a.id === v.id);
       check(a, "Application not found");
+      const upcomingBookings = s.bookings.filter(
+        (b) =>
+          b.applicationId === a.id &&
+          s.sessions.some(
+            (session) =>
+              session.id === b.sessionId &&
+              session.status === "Scheduled" &&
+              session.startsAt > now,
+          ) &&
+          !s.spaceData.some(
+            (report) => report.sessionId === b.sessionId && report.submittedAt,
+          ),
+      );
       if (a.status === "Approved" && v.status !== "Approved")
         check(
           !s.bookings.some(
             (b) =>
               b.applicationId === a.id &&
-              ["Approved", "Attended", "No-show"].includes(b.status),
+              ["Approved", "Attended", "No-show"].includes(b.status) &&
+              !(
+                v.status === "Declined" &&
+                b.status === "Approved" &&
+                upcomingBookings.includes(b)
+              ),
           ),
-          "Cancel approved bookings before declining this application.",
+          "Resolve existing attendance or approved bookings before cancelling this application.",
         );
       a.status = v.status;
       a.updatedAt = now;
@@ -205,6 +276,18 @@ export function applyCommand(
             role: a.founderRole,
             createdAt: now,
           });
+      }
+      for (const booking of upcomingBookings) {
+        if (
+          v.status === "Approved" &&
+          ["Pending", "Waitlisted"].includes(booking.status)
+        )
+          reviewBooking(s, booking, "Approved", now);
+        if (
+          v.status === "Declined" &&
+          ["Pending", "Waitlisted", "Approved"].includes(booking.status)
+        )
+          reviewBooking(s, booking, "Cancelled", now);
       }
       break;
     }
@@ -365,50 +448,7 @@ export function applyCommand(
       const v = schemas["booking.review"].parse(p),
         b = s.bookings.find((b) => b.id === v.id);
       check(b, "Booking not found");
-      const a = s.applications.find((a) => a.id === b.applicationId),
-        session = s.sessions.find((v) => v.id === b.sessionId);
-      check(a && session, "Application or session missing");
-      if (["Approved", "Attended", "No-show"].includes(v.status)) {
-        check(
-          a.status === "Approved" && a.founderId && a.companyId,
-          "Approve the founder application first",
-        );
-        check(session.status !== "Cancelled", "The session is cancelled");
-        const same = s.participants.some(
-          (p) =>
-            p.sessionId === b.sessionId &&
-            p.companyId === a.companyId &&
-            p.attendance !== "Cancelled",
-        );
-        check(
-          same || approvedSeats(s, session.id) < session.capacity,
-          "Session is full. Waitlist this project or choose another session.",
-        );
-        const existing = s.participants.find(
-          (p) =>
-            p.sessionId === b.sessionId &&
-            p.founderId === a.founderId &&
-            p.companyId === a.companyId,
-        );
-        put(s.participants, {
-          id: existing?.id || crypto.randomUUID(),
-          sessionId: b.sessionId,
-          founderId: a.founderId,
-          companyId: a.companyId,
-          speakers: b.speakers,
-          attendance: v.status,
-          createdAt: existing?.createdAt || now,
-        });
-      } else
-        s.participants = s.participants.map((p) =>
-          p.sessionId === b.sessionId &&
-          p.founderId === a.founderId &&
-          p.companyId === a.companyId
-            ? { ...p, attendance: "Cancelled" }
-            : p,
-        );
-      b.status = v.status;
-      b.updatedAt = now;
+      reviewBooking(s, b, v.status, now);
       entityId = b.id;
       break;
     }

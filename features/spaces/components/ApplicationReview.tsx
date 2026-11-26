@@ -16,6 +16,17 @@ export default function ApplicationReview({
 }) {
   const { state, path, viewer, commit, busy } = useWorkspace();
   const can = viewer.permissions.includes("booking.write");
+  const hasUnconfirmedBooking = state.bookings.some(
+    (booking) =>
+      booking.applicationId === a.id &&
+      ["Pending", "Waitlisted"].includes(booking.status) &&
+      state.sessions.some(
+        (session) =>
+          session.id === booking.sessionId &&
+          session.status === "Scheduled" &&
+          Date.parse(session.startsAt) > Date.now(),
+      ),
+  );
   const pending = state.applications
     .filter((v) => v.status === "Pending")
     .toSorted((a, b) => a.createdAt.localeCompare(b.createdAt));
@@ -229,11 +240,15 @@ export default function ApplicationReview({
           <div className="studio-review-actions">
             <span>Review this application</span>
             <div>
-              {["Declined", "Waitlisted", "Approved"].map((status) => (
+              {["Approved", "Declined"].map((status) => (
                 <button
                   key={status}
                   type="button"
-                  disabled={busy || status === a.status}
+                  disabled={
+                    busy ||
+                    (status === a.status &&
+                      !(status === "Approved" && hasUnconfirmedBooking))
+                  }
                   className={`button ${status === "Approved" ? "primary" : ""}`}
                   onClick={() =>
                     void commit({
@@ -242,11 +257,7 @@ export default function ApplicationReview({
                     })
                   }
                 >
-                  {status === "Approved"
-                    ? "Approve application"
-                    : status === "Waitlisted"
-                      ? "Waitlist"
-                      : "Decline"}
+                  {status === "Approved" ? "Approve" : "Cancel"}
                 </button>
               ))}
             </div>

@@ -794,6 +794,33 @@ try {
   });
   assert.equal(calendarConfirmation.data.bookings.length, 1);
   assert.equal(calendarConfirmation.data.bookings[0].status, "Pending");
+  const calendarState = (await request("/api/workspace", undefined, admin)).data
+    .state as DataState;
+  const calendarRecord = calendarState.applications.find(
+    (entry) => entry.reference === calendarResult.data.reference,
+  )!;
+  const availableSeats = async () =>
+    (await request("/api/public/sessions")).data.sessions.find(
+      (entry: { id: string }) => entry.id === lockedBooking.id,
+    ).availableSeats as number;
+  const seatsBeforeApproval = await availableSeats();
+  for (let attempt = 0; attempt < 2; attempt++)
+    await command("application.review", {
+      id: calendarRecord.id,
+      status: "Approved",
+    });
+  assert.equal(await availableSeats(), seatsBeforeApproval - 1);
+  const cancelled = await command("application.review", {
+    id: calendarRecord.id,
+    status: "Declined",
+  });
+  assert.equal(
+    cancelled.bookings.find(
+      (entry) => entry.applicationId === calendarRecord.id,
+    )?.status,
+    "Cancelled",
+  );
+  assert.equal(await availableSeats(), seatsBeforeApproval);
   const beforeFailed = (await request("/api/workspace", undefined, admin)).data
     .state.applications.length;
   assert.equal(
@@ -3169,11 +3196,13 @@ try {
         response.url().endsWith("/api/workspace") &&
         response.request().method() === "POST",
     );
-    await pendingStatus.selectOption("Declined");
+    await pendingStatus.selectOption("Cancelled");
     assert.equal((await updateBooking).status(), 200);
-    const declinedStatus = bookingTable.locator("tbody select").nth(changedRow);
-    await expect(declinedStatus).toHaveValue("Declined");
-    await expect(declinedStatus).toHaveCSS(
+    const cancelledStatus = bookingTable
+      .locator("tbody select")
+      .nth(changedRow);
+    await expect(cancelledStatus).toHaveValue("Cancelled");
+    await expect(cancelledStatus).toHaveCSS(
       "background-color",
       "rgb(252, 236, 236)",
     );
