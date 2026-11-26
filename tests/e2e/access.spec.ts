@@ -46,7 +46,7 @@ test("browser storage cannot grant Admin access or enable a demo", async ({
         },
       })
     ).status(),
-  ).toBe(404);
+  ).toBe(400);
 });
 test("application and manager sign-in contain no demo or public account signup", async ({
   page,

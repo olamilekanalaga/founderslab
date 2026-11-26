@@ -1,5 +1,4 @@
 import "server-only";
-import { createHash, timingSafeEqual } from "node:crypto";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { db } from "@/server/db";
@@ -15,7 +14,6 @@ const signupAccounts = {
 };
 const input = z
   .object({
-    key: z.string().trim().min(32).max(200),
     email: z.string().trim().toLowerCase().pipe(z.email()),
     firstName: z.string().trim().min(1).max(80),
     lastName: z.string().trim().min(1).max(80),
@@ -36,7 +34,6 @@ const input = z
   .strict();
 
 export async function workspaceSignupEnabled() {
-  if ((process.env.WORKSPACE_SIGNUP_KEY?.length ?? 0) < 32) return false;
   const [status, registered] = await Promise.all([
     db().setting.findUnique({ where: { key: setting } }),
     db().user.count({ where: signupAccounts }),
@@ -45,22 +42,13 @@ export async function workspaceSignupEnabled() {
 }
 
 export async function registerWorkspaceAdmin(request: Request) {
-  const secret = process.env.WORKSPACE_SIGNUP_KEY;
-  if (!secret || secret.length < 32)
-    throw new DomainError("Registration is closed.", 404);
   await rateLimit(
     `workspace-signup:${request.headers.get("x-forwarded-for") || "local"}`,
     15,
     900000,
   );
-  const { key, email, firstName, lastName, x, telegram, password, photo } =
+  const { email, firstName, lastName, x, telegram, password, photo } =
     input.parse(await body(request));
-  const digest = (value: string) => createHash("sha256").update(value).digest();
-  if (!timingSafeEqual(digest(key), digest(secret)))
-    throw new DomainError(
-      "This signup link is invalid or registration is closed.",
-      403,
-    );
   const bytes = Buffer.from(
     photo.slice("data:image/jpeg;base64,".length),
     "base64",
@@ -107,7 +95,7 @@ export async function registerWorkspaceAdmin(request: Request) {
         action: "workspace.signup",
         entityId: account.id,
         detail: closed
-          ? "Second workspace account registered. Shared signup closed automatically."
+          ? "Second workspace account registered. Public signup closed automatically."
           : "Full workspace account registered.",
       },
     });
@@ -134,7 +122,7 @@ export async function closeWorkspaceSignup(accountId: string, actor: string) {
         actor,
         action: "workspace.signup.close",
         entityId: accountId,
-        detail: "Shared signup link disabled.",
+        detail: "Public signup disabled.",
       },
     });
   });

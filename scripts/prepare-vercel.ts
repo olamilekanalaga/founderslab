@@ -43,17 +43,10 @@ console.log(
 run("scripts/migrate.ts", direct);
 run("scripts/seed.ts", application);
 run("scripts/publish-sundays.ts", application);
-if ((process.env.WORKSPACE_SIGNUP_KEY?.length ?? 0) >= 32) {
-  console.log(
-    "Workspace signup is configured. Legacy admin provisioning skipped.",
-  );
-} else if (
-  process.env.BOOTSTRAP_ADMIN_EMAIL &&
-  process.env.BOOTSTRAP_ADMIN_PASSWORD
-) {
+if (process.env.BOOTSTRAP_ADMIN_EMAIL && process.env.BOOTSTRAP_ADMIN_PASSWORD) {
   run("scripts/admin.ts", application);
 } else {
   console.log(
-    "Tables and programme defaults are ready. Set BOOTSTRAP_ADMIN_EMAIL and BOOTSTRAP_ADMIN_PASSWORD in Production, then redeploy to provision your administrator.",
+    "Tables and programme defaults are ready. Legacy owner provisioning skipped.",
   );
 }

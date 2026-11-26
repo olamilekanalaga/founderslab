@@ -86,7 +86,6 @@ const env = {
   MANAGER_EMAIL_FROM: "Founders Lab <test@example.invalid>",
   TEST_EMAIL_ENDPOINT: `http://127.0.0.1:${mailAddress.port}`,
 
-  WORKSPACE_SIGNUP_KEY: randomBytes(32).toString("base64url"),
   BOOTSTRAP_ADMIN_EMAIL: "admin@integration.example.invalid",
   BOOTSTRAP_ADMIN_NAME: "Integration Admin",
   BOOTSTRAP_ADMIN_PASSWORD: password,
@@ -290,14 +289,9 @@ try {
   pass(
     "Additive identity migration preserves existing founder/application usernames, contact data, confirmations and company records; new project identities remain NULL and migration is idempotent",
   );
-  run("scripts/prepare-vercel.ts", [], { WORKSPACE_SIGNUP_KEY: "" });
+  run("scripts/prepare-vercel.ts");
   run("scripts/prepare-vercel.ts", [], {
-    WORKSPACE_SIGNUP_KEY: "",
     BOOTSTRAP_ADMIN_EMAIL: ` ${env.BOOTSTRAP_ADMIN_EMAIL.toUpperCase()} `,
-    BOOTSTRAP_ADMIN_PASSWORD: "short",
-  });
-  run("scripts/prepare-vercel.ts", [], {
-    BOOTSTRAP_ADMIN_EMAIL: "new-owner@integration.example.invalid",
     BOOTSTRAP_ADMIN_PASSWORD: "short",
   });
   const initialDb = new Client({ connectionString: url.toString() });
@@ -1022,7 +1016,7 @@ try {
   );
   await policyDb.end();
   pass(
-    "Only the provisioned administrator can sign in; invitations/signup are disabled and inactive sessions lose access",
+    "Legacy owner authentication remains scoped and inactive sessions lose access",
   );
   // Separate passwordless access: the Admin allowlist and credentials remain unchanged.
   const managerEmail = "manager@integration.example.invalid";
@@ -4104,7 +4098,6 @@ try {
   );
   const workspacePassword = randomBytes(24).toString("base64url");
   const sharedSignup = {
-    key: env.WORKSPACE_SIGNUP_KEY,
     email: "shared-owner@integration.example.invalid",
     firstName: "Programme",
     lastName: "Owner",
@@ -4123,11 +4116,6 @@ try {
     firstName: "Space",
     lastName: "Manager",
   };
-  assert.equal(
-    (await request(signupPath, { ...sharedSignup, key: "x".repeat(40) }))
-      .status,
-    403,
-  );
   assert.equal(
     (
       await request(signupPath, {

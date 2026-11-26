@@ -82,14 +82,9 @@ export default function WorkspaceSignup({ enabled }: { enabled: boolean }) {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const fields = new FormData(event.currentTarget);
-    const key = new URLSearchParams(window.location.hash.slice(1))
-      .get("key")
-      ?.trim();
     const file = fields.get("photo");
-    if (!key || !(file instanceof File)) {
-      setMessage(
-        "Open the full private signup link and choose a profile photo.",
-      );
+    if (!(file instanceof File) || !file.size) {
+      setMessage("Choose a profile photo.");
       return;
     }
     if (fields.get("password") !== fields.get("confirmation")) {
@@ -105,12 +100,10 @@ export default function WorkspaceSignup({ enabled }: { enabled: boolean }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...Object.fromEntries(fields),
-          key,
           photo: await profilePhoto(file),
         }),
       });
       if (!response.ok) throw new Error((await response.json()).error);
-      window.history.replaceState(null, "", "/signup");
       setComplete(true);
     } catch (error) {
       setMessage(

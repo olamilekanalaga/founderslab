@@ -30,8 +30,8 @@ The manager chooses a password and can sign in again at `/manager/spaces` using 
 
 The release adds two columns through the existing Neon migration pipeline. No email provider or new Vercel settings are required.
 
-## Shared workspace signup
+## Workspace signup
 
-Set a random, unique `WORKSPACE_SIGNUP_KEY` of at least 32 characters as a Sensitive Production variable and redeploy. The signup flow does not use the legacy bootstrap email or password variables. The two members use `/signup#key=YOUR_KEY` privately and register with their own distinct email addresses, in either order. They have the same workspace permissions. An email already attached to an account cannot be reassigned through signup.
+The public signup page is available at `/signup`. It has no key or email allowlist. Anyone who reaches the page while it is open can claim one of the two full-access accounts, so only release it when both intended users are ready. Each member uses their own email and password. The two accounts have the same workspace permissions.
 
-After the second workspace account is registered, signup closes automatically and stays closed across deployments. Both members can continue to sign in at `/signin` and save their own login in their password manager. Removing the legacy bootstrap email and password variables retires access for the legacy owner login while preserving its database record.
+Registration closes automatically after the second account. To close it earlier, a registered account can use **Overview → Manage signup → Close signup**. Existing members can continue signing in at `/signin` and save their own login in their password manager. The legacy `WORKSPACE_SIGNUP_KEY` variable is no longer used. Removing `BOOTSTRAP_ADMIN_EMAIL` and `BOOTSTRAP_ADMIN_PASSWORD` retires the legacy owner login while preserving its database record.
