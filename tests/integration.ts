@@ -290,9 +290,14 @@ try {
   pass(
     "Additive identity migration preserves existing founder/application usernames, contact data, confirmations and company records; new project identities remain NULL and migration is idempotent",
   );
-  run("scripts/prepare-vercel.ts");
+  run("scripts/prepare-vercel.ts", [], { WORKSPACE_SIGNUP_KEY: "" });
   run("scripts/prepare-vercel.ts", [], {
+    WORKSPACE_SIGNUP_KEY: "",
     BOOTSTRAP_ADMIN_EMAIL: ` ${env.BOOTSTRAP_ADMIN_EMAIL.toUpperCase()} `,
+    BOOTSTRAP_ADMIN_PASSWORD: "short",
+  });
+  run("scripts/prepare-vercel.ts", [], {
+    BOOTSTRAP_ADMIN_EMAIL: "new-owner@integration.example.invalid",
     BOOTSTRAP_ADMIN_PASSWORD: "short",
   });
   const initialDb = new Client({ connectionString: url.toString() });
