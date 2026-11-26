@@ -43,10 +43,4 @@ console.log(
 run("scripts/migrate.ts", direct);
 run("scripts/seed.ts", application);
 run("scripts/publish-sundays.ts", application);
-if (process.env.BOOTSTRAP_ADMIN_EMAIL && process.env.BOOTSTRAP_ADMIN_PASSWORD) {
-  run("scripts/admin.ts", application);
-} else {
-  console.log(
-    "Tables and programme defaults are ready. Legacy owner provisioning skipped.",
-  );
-}
+console.log("Production database ready for workspace signup.");

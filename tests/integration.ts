@@ -291,7 +291,7 @@ try {
   );
   run("scripts/prepare-vercel.ts");
   run("scripts/prepare-vercel.ts", [], {
-    BOOTSTRAP_ADMIN_EMAIL: ` ${env.BOOTSTRAP_ADMIN_EMAIL.toUpperCase()} `,
+    BOOTSTRAP_ADMIN_EMAIL: "invalid legacy email",
     BOOTSTRAP_ADMIN_PASSWORD: "short",
   });
   const initialDb = new Client({ connectionString: url.toString() });
@@ -303,8 +303,9 @@ try {
   );
   assert.equal(
     (await initialDb.query('SELECT count(*)::int AS n FROM "User"')).rows[0].n,
-    1,
+    0,
   );
+  run("scripts/admin.ts");
   const slots = await initialDb.query(
     'SELECT id,"startsAt",capacity FROM "Session" ORDER BY "startsAt"',
   );
@@ -339,7 +340,7 @@ try {
   await initialDb.query('DELETE FROM "ProgrammeSchedule"');
   await initialDb.end();
   pass(
-    "Production release initializes tables/defaults and one admin idempotently without fictional founders",
+    "Production release initializes defaults without requiring legacy credentials or creating accounts",
   );
   run("scripts/seed.ts", ["--demo"]);
   const scheduleDb = new Client({ connectionString: url.toString() });
