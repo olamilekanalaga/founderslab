@@ -5,19 +5,21 @@ import { useWorkspace } from "@/components/layout/WorkspaceContext";
 
 export default function WorkspaceSignupControls() {
   const { viewer } = useWorkspace();
-  const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [closed, setClosed] = useState(false);
+  const [message, setMessage] = useState("");
+
   async function closeSignup() {
     setBusy(true);
+    setMessage("");
     try {
       const response = await fetch("/api/auth/close-signup", {
         method: "POST",
         headers: { "X-CSRF-Token": viewer.csrf || "" },
       });
       if (!response.ok) throw new Error((await response.json()).error);
-      setMessage(
-        "Signup is closed. Existing workspace accounts can still sign in.",
-      );
+      setClosed(true);
+      setMessage("Signup is closed. Existing accounts can still sign in.");
     } catch (error) {
       setMessage(
         error instanceof Error ? error.message : "Could not close signup.",
@@ -26,12 +28,11 @@ export default function WorkspaceSignupControls() {
       setBusy(false);
     }
   }
+
   return (
     <section className="panel padded">
       <h1>Workspace access</h1>
-      <p>
-        After both accounts are ready, close signup to disable the shared link.
-      </p>
+      <p>Signup closes automatically after two accounts are created.</p>
       <form
         onSubmit={(event) => {
           event.preventDefault();
@@ -39,9 +40,10 @@ export default function WorkspaceSignupControls() {
         }}
       >
         <label className="check-label">
-          <input type="checkbox" required /> Both accounts can sign in.
+          <input type="checkbox" required disabled={closed} /> Close signup for
+          everyone.
         </label>
-        <button className="button primary" disabled={busy}>
+        <button className="button primary" disabled={busy || closed}>
           Close signup
         </button>
       </form>

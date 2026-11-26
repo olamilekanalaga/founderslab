@@ -30,8 +30,8 @@ The manager chooses a password and can sign in again at `/manager/spaces` using 
 
 The release adds two columns through the existing Neon migration pipeline. No email provider or new Vercel settings are required.
 
-## Shared workspace signup
+## Workspace signup
 
-Set a random, unique `WORKSPACE_SIGNUP_KEY` of at least 32 characters as a Sensitive Production variable and redeploy. Set `BOOTSTRAP_ADMIN_EMAIL` to the email you want to use for the first registration. The deployment administrator should privately open `/signup#key=YOUR_KEY` and register with that email. A new email creates a new administrator. If the configured email already belongs to the active owner, signup replaces that account’s password and invalidates its old sessions. The legacy bootstrap password is optional and is ignored during production preparation while the signup key is configured.
+The public signup page is available at `/signup`. It has no key or email allowlist. Anyone who reaches the page while it is open can claim one of the two full-access accounts, so only release it when both intended users are ready. Each member uses their own email and password. The two accounts have the same workspace permissions.
 
-Sign in at `/signin` with the new password. Share the full signup URL privately with the Space Manager after the owner setup is complete. Anyone holding the URL can register as a full administrator while registration is open. Once both accounts can sign in, use **Overview → Manage signup → Close signup**. This disables the URL immediately, including after redeployment. You can then remove `WORKSPACE_SIGNUP_KEY` and the old bootstrap password variable. The two registered users keep their own logins and can save them in their own password managers.
+Registration closes automatically after the second account. To close it earlier, a registered account can use **Overview → Manage signup → Close signup**. Existing members can continue signing in at `/signin` and save their own login in their password manager. The legacy `WORKSPACE_SIGNUP_KEY` variable is no longer used. Removing `BOOTSTRAP_ADMIN_EMAIL` and `BOOTSTRAP_ADMIN_PASSWORD` retires the legacy owner login while preserving its database record.

@@ -86,7 +86,6 @@ const env = {
   MANAGER_EMAIL_FROM: "Founders Lab <test@example.invalid>",
   TEST_EMAIL_ENDPOINT: `http://127.0.0.1:${mailAddress.port}`,
 
-  WORKSPACE_SIGNUP_KEY: randomBytes(32).toString("base64url"),
   BOOTSTRAP_ADMIN_EMAIL: "admin@integration.example.invalid",
   BOOTSTRAP_ADMIN_NAME: "Integration Admin",
   BOOTSTRAP_ADMIN_PASSWORD: password,
@@ -290,14 +289,9 @@ try {
   pass(
     "Additive identity migration preserves existing founder/application usernames, contact data, confirmations and company records; new project identities remain NULL and migration is idempotent",
   );
-  run("scripts/prepare-vercel.ts", [], { WORKSPACE_SIGNUP_KEY: "" });
+  run("scripts/prepare-vercel.ts");
   run("scripts/prepare-vercel.ts", [], {
-    WORKSPACE_SIGNUP_KEY: "",
     BOOTSTRAP_ADMIN_EMAIL: ` ${env.BOOTSTRAP_ADMIN_EMAIL.toUpperCase()} `,
-    BOOTSTRAP_ADMIN_PASSWORD: "short",
-  });
-  run("scripts/prepare-vercel.ts", [], {
-    BOOTSTRAP_ADMIN_EMAIL: "new-owner@integration.example.invalid",
     BOOTSTRAP_ADMIN_PASSWORD: "short",
   });
   const initialDb = new Client({ connectionString: url.toString() });
@@ -1022,7 +1016,7 @@ try {
   );
   await policyDb.end();
   pass(
-    "Only the provisioned administrator can sign in; invitations/signup are disabled and inactive sessions lose access",
+    "Legacy owner authentication remains scoped and inactive sessions lose access",
   );
   // Separate passwordless access: the Admin allowlist and credentials remain unchanged.
   const managerEmail = "manager@integration.example.invalid";
@@ -4104,8 +4098,7 @@ try {
   );
   const workspacePassword = randomBytes(24).toString("base64url");
   const sharedSignup = {
-    key: env.WORKSPACE_SIGNUP_KEY,
-    email: env.BOOTSTRAP_ADMIN_EMAIL,
+    email: "shared-owner@integration.example.invalid",
     firstName: "Programme",
     lastName: "Owner",
     x: "@owner",
@@ -4117,14 +4110,6 @@ try {
   };
   const signupPath = "/api/auth/signup";
   const loginPath = "/api/auth/login";
-  const formerOwner: Jar = { cookie: "", csrf: "" };
-  const formerLogin = { email: sharedSignup.email, password };
-  assert.equal(
-    (await request(loginPath, formerLogin, formerOwner)).status,
-    200,
-  );
-  const originalOwner = (await request("/api/auth/me", undefined, formerOwner))
-    .data.viewer;
   const managerSignup = {
     ...sharedSignup,
     email: "shared-manager@integration.example.invalid",
@@ -4132,19 +4117,25 @@ try {
     lastName: "Manager",
   };
   assert.equal(
-    (await request(signupPath, { ...sharedSignup, key: "x".repeat(40) }))
-      .status,
-    403,
+    (
+      await request(signupPath, {
+        ...sharedSignup,
+        email: env.BOOTSTRAP_ADMIN_EMAIL,
+      })
+    ).status,
+    409,
   );
-  assert.equal((await request(signupPath, managerSignup)).status, 403);
-  assert.equal((await request(signupPath, sharedSignup)).status, 201);
-  assert.equal(
-    (await request("/api/auth/me", undefined, formerOwner)).status,
-    401,
-  );
-  assert.equal((await request(loginPath, formerLogin)).status, 401);
-  assert.equal((await request(signupPath, sharedSignup)).status, 409);
   assert.equal((await request(signupPath, managerSignup)).status, 201);
+  assert.equal((await request(signupPath, managerSignup)).status, 409);
+  const attempts = await Promise.all([
+    request(signupPath, sharedSignup),
+    request(signupPath, sharedSignup),
+  ]);
+  assert.deepEqual(attempts.map(({ status }) => status).sort(), [201, 403]);
+  assert.match(
+    await (await fetch(origin + "/signup")).text(),
+    /Workspace registration is closed/,
+  );
   const newOwner: Jar = { cookie: "", csrf: "" };
   const newManager: Jar = { cookie: "", csrf: "" };
   for (const [account, signup] of [
@@ -4172,10 +4163,6 @@ try {
     assert.equal(workspace.data.viewer.profilePhoto, signup.photo);
   }
   assert.equal(
-    (await request("/api/auth/me", undefined, newOwner)).data.viewer.id,
-    originalOwner.id,
-  );
-  assert.equal(
     (
       await request(
         "/api/space-managers",
@@ -4184,14 +4171,6 @@ try {
       )
     ).status,
     410,
-  );
-  assert.equal(
-    (await request("/api/auth/close-signup", {}, newOwner, false)).status,
-    403,
-  );
-  assert.equal(
-    (await request("/api/auth/close-signup", {}, newOwner)).status,
-    200,
   );
   assert.equal(
     (
@@ -4212,7 +4191,7 @@ try {
     200,
   );
   pass(
-    "Shared signup replaces the owner password in place, grants the same permissions, and closes without blocking login",
+    "Two peers can sign up in either order and registration closes automatically without blocking login",
   );
   console.log(
     `${passed} PostgreSQL/production HTTP integration groups passed.`,
