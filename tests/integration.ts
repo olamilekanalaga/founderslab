@@ -1827,14 +1827,14 @@ try {
   const { reportData, blankFilters } =
     await import("@/features/reports/lib/selectors");
   const report = reportData(state, blankFilters);
-  assert.equal(report.founders.length, 51);
+  assert.equal(report.founders.length, 52);
   assert.equal(
     report.countries.reduce((sum, c) => sum + c.value, 0),
-    51,
+    52,
   );
   assert.equal(
     reportData(state, { ...blankFilters, country: "Nigeria" }).founders.length,
-    21,
+    22,
   );
   pass(
     "Database-derived reporting totals and consent-gated public research publication",
