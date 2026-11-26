@@ -2386,6 +2386,18 @@ try {
     ).status,
     201,
   );
+  await cycleDb.query('UPDATE "Session" SET status=$1 WHERE id=$2', [
+    "Completed",
+    cycleIds[0],
+  ]);
+  const beforeSubmission = await request("/api/public/sessions");
+  assert.equal(beforeSubmission.data.sessions[0].id, cycleIds[0]);
+  assert.deepEqual(
+    beforeSubmission.data.sessions.map(
+      ({ bookingLocked }: { bookingLocked: boolean }) => bookingLocked,
+    ),
+    [false, true, true],
+  );
   const cycleManager: Jar = { cookie: "", csrf: "" };
   assert.equal(
     (
@@ -2490,7 +2502,7 @@ try {
   );
   await cycleDb.end();
   pass(
-    "Public Sundays roll forward one at a time after completion, while drafts, repeated saves and historical bookings remain intact",
+    "Public Sundays advance after submitted Space data, while a Completed status alone, drafts and repeated submissions do not unlock dates",
   );
   const deletionDb = new Client({ connectionString: url.toString() });
   deletionDb.on("error", () => {});

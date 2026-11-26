@@ -89,13 +89,13 @@ export default function HeroBookingPreview() {
                     </strong>
                     <small>
                       {locked
-                        ? "Opens after the previous Space"
+                        ? "Opens after Space data is submitted"
                         : open
                           ? `${session.availableSeats} ${session.availableSeats === 1 ? "slot" : "slots"} left`
                           : session.availableSeats <= 0
                             ? "Full"
                             : Date.parse(session.startsAt) <= availability.asOf
-                              ? "Awaiting completion"
+                              ? "Awaiting Space data"
                               : "Closed"}
                     </small>
                   </span>
