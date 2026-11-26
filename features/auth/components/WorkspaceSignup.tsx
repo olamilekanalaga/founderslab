@@ -1,7 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { Eye, EyeOff, UserRound } from "lucide-react";
+import { useEffect, useState, type FormEvent } from "react";
+import styles from "./workspace-signup.module.css";
 
 async function profilePhoto(file: File) {
   if (
@@ -33,10 +36,50 @@ async function profilePhoto(file: File) {
   }
 }
 
+function SignupPassword({ confirm = false }: { confirm?: boolean }) {
+  const [visible, setVisible] = useState(false);
+  const label = confirm ? "Confirm password" : "Password";
+  const name = confirm ? "confirmation" : "password";
+  const id = `workspace-signup-${name}`;
+  const Icon = visible ? EyeOff : Eye;
+  return (
+    <div className="signin-password">
+      <label htmlFor={id}>{label}</label>
+      <div className="signin-password-input">
+        <input
+          id={id}
+          name={name}
+          type={visible ? "text" : "password"}
+          placeholder={confirm ? "Confirm password" : "Create password"}
+          autoComplete="new-password"
+          autoCapitalize="none"
+          spellCheck={false}
+          minLength={15}
+          maxLength={128}
+          required
+        />
+        <button
+          type="button"
+          className="icon-button"
+          aria-label={`${visible ? "Hide" : "Show"} ${label.toLowerCase()}`}
+          aria-controls={id}
+          onClick={() => setVisible((value) => !value)}
+        >
+          <Icon size={19} aria-hidden="true" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function WorkspaceSignup({ enabled }: { enabled: boolean }) {
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [complete, setComplete] = useState(false);
+  const [preview, setPreview] = useState("");
+  useEffect(() => {
+    if (preview) return () => URL.revokeObjectURL(preview);
+  }, [preview]);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const fields = new FormData(event.currentTarget);
@@ -48,6 +91,11 @@ export default function WorkspaceSignup({ enabled }: { enabled: boolean }) {
       );
       return;
     }
+    if (fields.get("password") !== fields.get("confirmation")) {
+      setMessage("The passwords do not match.");
+      return;
+    }
+    fields.delete("confirmation");
     setBusy(true);
     setMessage("");
     try {
@@ -74,82 +122,102 @@ export default function WorkspaceSignup({ enabled }: { enabled: boolean }) {
     }
   }
   return (
-    <main className="auth-page" id="main-content">
-      <section className="auth-card">
-        <Link className="brand" href="/">
-          FoundersLab
-        </Link>
-        <h1>
-          {complete ? "Your account is ready" : "Create your workspace account"}
-        </h1>
+    <main className={`auth-page ${styles.page}`} id="main-content">
+      <section className={`auth-card ${styles.card}`}>
+        <header className={styles.heading}>
+          <h1>{complete ? "Your account is ready" : "Create your account"}</h1>
+          <Link href="/">FoundersLab</Link>
+        </header>
         {complete || !enabled ? (
-          <p>
+          <p className={styles.intro}>
             {complete
               ? "Sign in with your new email and password."
               : "Workspace registration is closed."}
           </p>
         ) : (
           <form className="stack-form" onSubmit={submit}>
-            <label>
-              Profile photo
+            <label className={styles.photoPicker}>
+              <span className={styles.photo}>
+                {preview ? (
+                  <Image
+                    src={preview}
+                    unoptimized
+                    width={80}
+                    height={80}
+                    alt=""
+                  />
+                ) : (
+                  <UserRound size={34} strokeWidth={1.6} aria-hidden="true" />
+                )}
+              </span>
+              <span>
+                {preview ? "Change profile picture" : "Upload profile picture"}
+              </span>
               <input
                 name="photo"
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
                 required
+                onChange={(event) => {
+                  const file = event.currentTarget.files?.[0];
+                  setPreview(file ? URL.createObjectURL(file) : "");
+                }}
               />
             </label>
+            <div className={styles.names}>
+              <label>
+                First name
+                <input
+                  name="firstName"
+                  placeholder="First name"
+                  autoComplete="given-name"
+                  maxLength={80}
+                  required
+                />
+              </label>
+              <label>
+                Last name
+                <input
+                  name="lastName"
+                  placeholder="Last name"
+                  autoComplete="family-name"
+                  maxLength={80}
+                  required
+                />
+              </label>
+            </div>
             <label>
-              First name
-              <input
-                name="firstName"
-                autoComplete="given-name"
-                maxLength={80}
-                required
-              />
-            </label>
-            <label>
-              Last name
-              <input
-                name="lastName"
-                autoComplete="family-name"
-                maxLength={80}
-                required
-              />
-            </label>
-            <label>
-              Email
+              Email address
               <input
                 name="email"
                 type="email"
+                placeholder="Enter email address"
                 autoComplete="username"
                 required
               />
             </label>
             <label>
               X username
-              <input name="x" autoCapitalize="none" maxLength={16} required />
+              <input
+                name="x"
+                placeholder="@username"
+                autoCapitalize="none"
+                maxLength={16}
+                required
+              />
             </label>
             <label>
               Telegram username
               <input
                 name="telegram"
+                placeholder="@username"
                 autoCapitalize="none"
                 maxLength={33}
                 required
               />
             </label>
-            <label>
-              Password
-              <input
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                minLength={15}
-                maxLength={128}
-                required
-              />
-            </label>
+            <SignupPassword />
+            <SignupPassword confirm />
             {message && (
               <p className="error" role="alert">
                 {message}
@@ -160,9 +228,10 @@ export default function WorkspaceSignup({ enabled }: { enabled: boolean }) {
             </button>
           </form>
         )}
-        <Link className="text-link" href="/signin">
-          Sign in
-        </Link>
+        <div className={styles.signin}>
+          {enabled && !complete && "Already have an account? "}
+          <Link href="/signin">Sign in</Link>
+        </div>
       </section>
     </main>
   );
