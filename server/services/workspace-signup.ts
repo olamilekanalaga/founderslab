@@ -73,17 +73,18 @@ export async function registerWorkspaceAdmin(request: Request) {
       throw new DomainError("Registration is closed.", 403);
     const existing = await tx.user.findUnique({ where: { email } });
     const ownerEmail = process.env.BOOTSTRAP_ADMIN_EMAIL?.trim().toLowerCase();
-    // The person controlling deployment settings claims the existing owner before sharing the link.
+    // Require the deployment-configured email for the first signup.
     if (
       !status &&
       (!ownerEmail ||
         email !== ownerEmail ||
-        !existing?.active ||
-        existing.roleId !== "admin" ||
-        existing.signupProfile)
+        (existing &&
+          (!existing.active ||
+            existing.roleId !== "admin" ||
+            existing.signupProfile)))
     )
       throw new DomainError(
-        "The existing owner must set up their account first.",
+        "The configured owner email must sign up first.",
         403,
       );
     if (status && existing)
