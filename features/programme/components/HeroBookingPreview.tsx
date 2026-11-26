@@ -89,7 +89,7 @@ export default function HeroBookingPreview() {
                     </strong>
                     <small>
                       {locked
-                        ? "Opens after Space data is submitted"
+                        ? "Locked"
                         : open
                           ? `${session.availableSeats} ${session.availableSeats === 1 ? "slot" : "slots"} left`
                           : session.availableSeats <= 0
