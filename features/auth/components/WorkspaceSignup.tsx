@@ -54,7 +54,6 @@ function SignupPassword({ confirm = false }: { confirm?: boolean }) {
           autoComplete="new-password"
           autoCapitalize="none"
           spellCheck={false}
-          minLength={15}
           maxLength={128}
           required
         />
@@ -83,7 +82,9 @@ export default function WorkspaceSignup({ enabled }: { enabled: boolean }) {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const fields = new FormData(event.currentTarget);
-    const key = new URLSearchParams(window.location.hash.slice(1)).get("key");
+    const key = new URLSearchParams(window.location.hash.slice(1))
+      .get("key")
+      ?.trim();
     const file = fields.get("photo");
     if (!key || !(file instanceof File)) {
       setMessage(

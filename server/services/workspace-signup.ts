@@ -9,7 +9,7 @@ import { DomainError } from "@/lib/domain";
 const setting = "workspace.signup";
 const input = z
   .object({
-    key: z.string().min(32).max(200),
+    key: z.string().trim().min(32).max(200),
     email: z.string().trim().toLowerCase().pipe(z.email()),
     firstName: z.string().trim().min(1).max(80),
     lastName: z.string().trim().min(1).max(80),
@@ -21,7 +21,7 @@ const input = z
       .string()
       .trim()
       .regex(/^@?[A-Za-z0-9_]{1,32}$/),
-    password: z.string().min(15).max(128),
+    password: z.string().min(1).max(128),
     photo: z
       .string()
       .max(200000)
