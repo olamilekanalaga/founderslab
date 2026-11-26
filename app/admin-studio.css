@@ -1228,6 +1228,17 @@
   font-size: 10px;
   margin-bottom: 8px;
 }
+.admin-studio .studio-review-actions > label {
+  display: grid;
+  gap: 4px;
+  width: fit-content;
+  max-width: 100%;
+  margin-bottom: 10px;
+}
+.admin-studio .studio-review-actions select {
+  width: 100%;
+  min-width: 0;
+}
 .admin-studio .studio-review-actions > div {
   display: flex;
   flex-wrap: wrap;

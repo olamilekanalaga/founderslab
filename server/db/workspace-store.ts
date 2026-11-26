@@ -221,9 +221,13 @@ export async function executeCommand(command: Command, viewer: Viewer) {
         const bookings = await tx.bookingRequest.findMany({
           where: { applicationId },
           select: { sessionId: true },
-          orderBy: { sessionId: "asc" },
         });
-        for (const { sessionId } of bookings)
+        const sessionIds = new Set(
+          bookings.map((booking) => booking.sessionId),
+        );
+        if (typeof command.payload.sessionId === "string")
+          sessionIds.add(command.payload.sessionId);
+        for (const sessionId of [...sessionIds].sort())
           await tx.$queryRaw`SELECT id FROM "Session" WHERE id = ${sessionId} FOR UPDATE`;
       } else if (command.type === "booking.review") {
         const booking = await tx.bookingRequest.findUnique({
