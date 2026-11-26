@@ -15,7 +15,9 @@ for (const [label, width, height] of [
     const first = page
       .locator(".fl-preview-dates > button:not([disabled])")
       .first();
-    await first.click();
+    await expect(
+      page.locator(".fl-preview-dates > button:disabled"),
+    ).toHaveCount(2);
     await expect(first).toHaveAttribute("aria-pressed", "true");
     const next = page.getByRole("link", { name: "Choose this Sunday" });
     const target = await next.getAttribute("href");
@@ -65,7 +67,7 @@ test("hero date choice is carried directly into the application and mobile Escap
   await expect(menu).toBeFocused();
 });
 
-test("the fourth published date appears when the first starts", async ({
+test("the next Sunday opens only when the previous Space completes", async ({
   page,
 }) => {
   const now = new Date("2026-11-29T18:59:50Z");
@@ -74,8 +76,15 @@ test("the fourth published date appears when the first starts", async ({
     ...session,
     availableSeats: 4,
   }));
+  let completed = false;
   await page.route("**/api/public/sessions", (route) =>
-    route.fulfill({ json: { sessions } }),
+    route.fulfill({
+      json: {
+        sessions: sessions
+          .slice(completed ? 1 : 0)
+          .map((session, index) => ({ ...session, bookingLocked: index > 0 })),
+      },
+    }),
   );
   await page.goto("/");
   const dates = page.locator(".fl-preview-dates > button");
@@ -83,6 +92,15 @@ test("the fourth published date appears when the first starts", async ({
   await expect(dates.first()).toContainText("November 2026");
   await page.clock.fastForward(31_000);
   await expect(dates).toHaveCount(3);
+  await expect(dates.first()).toContainText("Awaiting completion");
+  await expect(page.locator(".fl-preview-dates > button:disabled")).toHaveCount(
+    3,
+  );
+  completed = true;
+  await page.clock.fastForward(31_000);
   await expect(dates.first()).toContainText("December 2026");
-  await expect(dates.last()).toContainText("19");
+  await expect(dates.last()).toContainText("20");
+  await expect(page.locator(".fl-preview-dates > button:disabled")).toHaveCount(
+    2,
+  );
 });

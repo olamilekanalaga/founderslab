@@ -1,4 +1,4 @@
-/** Attendance-gated eight-week window. Never deletes historical sessions or bookings. */
+/** Rolling three-week booking window. Never deletes historical sessions or bookings. */
 export {};
 try {
   process.loadEnvFile(".env");
@@ -10,6 +10,6 @@ const schedule = await db().$transaction((tx) => ensureProgrammeWindow(tx), {
   timeout: 30000,
 });
 console.log(
-  `Programme window ready: weeks ${schedule.activeStart + 1}–${schedule.activeStart + 8}, Sundays at 7 PM Europe/London. Advancement requires four distinct attendance submissions.`,
+  `Programme window ready: public weeks ${schedule.activeStart + 1}–${schedule.activeStart + 3}, Sundays at 7 PM Europe/London. Only the first week accepts bookings until its Space is complete.`,
 );
 await db().$disconnect();

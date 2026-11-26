@@ -13,6 +13,7 @@ export interface PublicSession {
   availableSeats: number;
   position?: number;
   submitted?: boolean;
+  bookingLocked?: boolean;
 }
 type SessionDate = Pick<PublicSession, "startsAt" | "timezone">;
 export function sessionDay(session: SessionDate) {
@@ -32,11 +33,15 @@ export function isSunday(session: SessionDate) {
   );
 }
 export function publicSlotOpen(
-  session: Pick<PublicSession, "startsAt" | "timezone" | "status" | "deadline">,
+  session: Pick<
+    PublicSession,
+    "startsAt" | "timezone" | "status" | "deadline" | "bookingLocked"
+  >,
   seats: number,
   now = Date.now(),
 ) {
   return (
+    !session.bookingLocked &&
     session.status === "Scheduled" &&
     isSunday(session) &&
     seats > 0 &&
