@@ -234,7 +234,7 @@ export default function Overview({ addFounder }: { addFounder: () => void }) {
               className="button primary"
               href={`${path("operations")}?tab=sessions`}
             >
-              View programme <ArrowUpRight size={15} />
+              View programme
             </Link>
           </div>
           <div className="desk-tickets">
