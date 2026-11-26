@@ -142,12 +142,12 @@ export default function WorkspaceSignup({ enabled }: { enabled: boolean }) {
                   <Image
                     src={preview}
                     unoptimized
-                    width={80}
-                    height={80}
+                    width={84}
+                    height={84}
                     alt=""
                   />
                 ) : (
-                  <UserRound size={34} strokeWidth={1.6} aria-hidden="true" />
+                  <UserRound size={36} aria-hidden="true" />
                 )}
               </span>
               <span>
@@ -164,7 +164,7 @@ export default function WorkspaceSignup({ enabled }: { enabled: boolean }) {
                 }}
               />
             </label>
-            <div className={styles.names}>
+            <div className={styles.fieldPair}>
               <label>
                 First name
                 <input
@@ -196,26 +196,28 @@ export default function WorkspaceSignup({ enabled }: { enabled: boolean }) {
                 required
               />
             </label>
-            <label>
-              X username
-              <input
-                name="x"
-                placeholder="@username"
-                autoCapitalize="none"
-                maxLength={16}
-                required
-              />
-            </label>
-            <label>
-              Telegram username
-              <input
-                name="telegram"
-                placeholder="@username"
-                autoCapitalize="none"
-                maxLength={33}
-                required
-              />
-            </label>
+            <div className={styles.fieldPair}>
+              <label>
+                X username
+                <input
+                  name="x"
+                  placeholder="@username"
+                  autoCapitalize="none"
+                  maxLength={16}
+                  required
+                />
+              </label>
+              <label>
+                Telegram username
+                <input
+                  name="telegram"
+                  placeholder="@username"
+                  autoCapitalize="none"
+                  maxLength={33}
+                  required
+                />
+              </label>
+            </div>
             <SignupPassword />
             <SignupPassword confirm />
             {message && (
@@ -223,7 +225,7 @@ export default function WorkspaceSignup({ enabled }: { enabled: boolean }) {
                 {message}
               </p>
             )}
-            <button className="button primary" disabled={busy}>
+            <button type="submit" className={styles.submit} disabled={busy}>
               {busy ? "Creating account…" : "Create account"}
             </button>
           </form>
