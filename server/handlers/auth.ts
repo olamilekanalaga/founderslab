@@ -13,6 +13,10 @@ import {
   isProvisionedAdmin,
   verifyPassword,
 } from "@/server/auth";
+import {
+  registerWorkspaceAdmin,
+  closeWorkspaceSignup,
+} from "@/server/services/workspace-signup";
 import { DomainError } from "@/lib/domain";
 
 export async function GET(
@@ -35,6 +39,13 @@ export async function POST(
   try {
     const { action } = await params;
     requireOrigin(request);
+    if (action === "signup") return await registerWorkspaceAdmin(request);
+    if (action === "close-signup") {
+      const viewer = await requireViewer("team.manage");
+      requireCsrf(request, viewer);
+      await closeWorkspaceSignup(viewer.id, viewer.name);
+      return json({ ok: true });
+    }
     if (action === "login") {
       const p = z
         .object({
@@ -55,7 +66,7 @@ export async function POST(
       const valid = verifyPassword(p.password, encoded);
       if (!user || !isProvisionedAdmin(user) || !valid)
         throw new DomainError("Email or password is incorrect.", 401);
-      await startSession(user.id);
+      await startSession(user.id, user.passwordHash);
       return json({ ok: true });
     }
     if (action === "logout") {

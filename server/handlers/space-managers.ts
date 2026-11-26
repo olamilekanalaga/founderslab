@@ -100,6 +100,11 @@ export async function POST(request: Request) {
           .strict(),
       ])
       .parse(await body(request));
+    if (
+      viewer.profilePhoto &&
+      ["manual", "password-link", "invite", "resend"].includes(p.action)
+    )
+      throw new DomainError("Legacy manager invitations are retired.", 410);
     if (p.action === "manual" || p.action === "password-link") {
       const passwordSetup = p.action === "password-link";
       // requireCsrf already validated the request Origin against this deployment.

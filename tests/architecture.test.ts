@@ -174,6 +174,7 @@ test("historical Prisma migrations remain byte-identical and BD tables are addit
     const contents =
       entry.file === "prisma/schema.prisma"
         ? readFileSync(entry.file, "utf8")
+            .replace(/^  signupProfile +Json\?\n/m, "")
             .replace(/^  xHandle +String\?\n/m, "")
             .replace(/^  projectXHandle +String\?\n/m, "")
             .replace(
@@ -235,6 +236,7 @@ test("historical Prisma migrations remain byte-identical and BD tables are addit
         "prisma/migrations/202611240005_bd_verification_gate/migration.sql",
         "prisma/migrations/202611240006_manager_password/migration.sql",
         "prisma/migrations/202611240007_sunday_programme/migration.sql",
+        "prisma/migrations/202611260001_shared_admin_signup/migration.sql",
       )
       .sort(),
   );
