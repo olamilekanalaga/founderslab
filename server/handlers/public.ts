@@ -3,7 +3,7 @@ import { PARTICIPATION_TERMS } from "@/lib/programme-policy";
 import {
   ensureProgrammeWindow,
   requireProgrammeBooking,
-  WINDOW_WEEKS,
+  PUBLIC_WINDOW_WEEKS,
 } from "@/server/services/programme-window";
 import { z } from "zod";
 import { publicSlotOpen } from "@/lib/dates/booking";
@@ -114,7 +114,7 @@ export async function GET(
         programmeWeek: {
           position: {
             gte: window.activeStart,
-            lt: window.activeStart + WINDOW_WEEKS,
+            lt: window.activeStart + PUBLIC_WINDOW_WEEKS,
           },
         },
       },
@@ -126,12 +126,13 @@ export async function GET(
           select: { companyId: true },
         },
       },
-      orderBy: { startsAt: "asc" },
+      orderBy: { programmeWeek: { position: "asc" } },
     });
     return json({
       sessions: sessions.map(({ participants, ...s }) => ({
         id: s.id,
         position: s.programmeWeek!.position,
+        bookingLocked: s.programmeWeek!.position !== window.activeStart,
         submitted: Boolean(s.spaceData?.submittedAt),
         title: s.title,
         startsAt: s.startsAt,
@@ -197,7 +198,7 @@ export async function POST(
       void ignored;
       const application = await db().$transaction(async (tx) => {
         if (sessionId) {
-          await requireProgrammeBooking(tx, sessionId);
+          await requireProgrammeBooking(tx, sessionId, true);
           await tx.$queryRaw`SELECT id FROM "Session" WHERE id = ${sessionId} FOR UPDATE`;
           const session = await tx.session.findUnique({
             where: { id: sessionId },
@@ -322,7 +323,7 @@ export async function POST(
     if (action === "book" && p.sessionId) {
       const result = await db().$transaction(
         async (tx) => {
-          await requireProgrammeBooking(tx, p.sessionId!);
+          await requireProgrammeBooking(tx, p.sessionId!, true);
           await tx.$queryRaw`SELECT id FROM "Session" WHERE id = ${p.sessionId!} FOR UPDATE`;
           const session = await tx.session.findUnique({
             where: { id: p.sessionId },

@@ -1,5 +1,4 @@
 "use client";
-import { useState } from "react";
 import Link from "next/link";
 import { ArrowRight, CalendarDays, Check, Mic2, RefreshCw } from "lucide-react";
 import { isSunday, publicSlotOpen } from "@/lib/dates/booking";
@@ -7,16 +6,12 @@ import SessionTime from "@/components/shared/SessionTime";
 import { useProgrammeAvailability } from "./ProgrammeAvailability";
 export default function HeroBookingPreview() {
   const { availability, retry } = useProgrammeAvailability();
-  const [selected, setSelected] = useState("");
-  const upcoming = availability.sessions
-    .filter(
-      (session) =>
-        isSunday(session) && Date.parse(session.startsAt) > availability.asOf,
-    )
-    .slice(0, 3);
+  const upcoming = availability.sessions.filter(isSunday).slice(0, 3);
+  const current = upcoming[0];
   const chosen =
-    upcoming.find((session) => session.id === selected) ||
-    upcoming.find((session) => publicSlotOpen(session, session.availableSeats));
+    current && publicSlotOpen(current, current.availableSeats)
+      ? current
+      : undefined;
   return (
     <aside
       id="choose-a-sunday"
@@ -58,8 +53,9 @@ export default function HeroBookingPreview() {
               <p>No upcoming Sundays are currently published.</p>
             </div>
           ) : (
-            upcoming.map((session) => {
-              const open = publicSlotOpen(session, session.availableSeats);
+            upcoming.map((session, index) => {
+              const locked = index > 0 || session.bookingLocked;
+              const open = !locked && Boolean(chosen);
               const date = new Date(session.startsAt);
               return (
                 <button
@@ -68,7 +64,6 @@ export default function HeroBookingPreview() {
                   disabled={!open}
                   aria-pressed={chosen?.id === session.id}
                   className={chosen?.id === session.id ? "is-selected" : ""}
-                  onClick={() => setSelected(session.id)}
                 >
                   <span className="fl-preview-day">
                     <small>
@@ -93,11 +88,15 @@ export default function HeroBookingPreview() {
                       }).format(date)}
                     </strong>
                     <small>
-                      {open
-                        ? `${session.availableSeats} ${session.availableSeats === 1 ? "slot" : "slots"} left`
-                        : session.availableSeats <= 0
-                          ? "Full"
-                          : "Closed"}
+                      {locked
+                        ? "Opens after the previous Space"
+                        : open
+                          ? `${session.availableSeats} ${session.availableSeats === 1 ? "slot" : "slots"} left`
+                          : session.availableSeats <= 0
+                            ? "Full"
+                            : Date.parse(session.startsAt) <= availability.asOf
+                              ? "Awaiting completion"
+                              : "Closed"}
                     </small>
                   </span>
                   <span className="fl-preview-radio">

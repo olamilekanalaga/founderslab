@@ -312,13 +312,13 @@ try {
   );
   await initialDb.query('UPDATE "Session" SET status=$1 WHERE id=$2', [
     "Cancelled",
-    slots.rows[0].id,
+    slots.rows.at(-1)!.id,
   ]);
   run("scripts/prepare-vercel.ts");
   assert.equal(
     (
       await initialDb.query('SELECT status FROM "Session" WHERE id=$1', [
-        slots.rows[0].id,
+        slots.rows.at(-1)!.id,
       ])
     ).rows[0].status,
     "Cancelled",
@@ -623,6 +623,12 @@ try {
   };
   state = await command("session.save", sessionPayload);
   const session = state.sessions.find((s) => s.title === sessionPayload.title)!;
+  const bookingWindowDb = new Client({ connectionString: url.toString() });
+  await bookingWindowDb.connect();
+  await bookingWindowDb.query(
+    'UPDATE "ProgrammeSchedule" SET "activeStart"=(SELECT position FROM "ProgrammeWeek" WHERE "sessionId"=$1) WHERE id=$2',
+    [session.id, "main"],
+  );
   assert.equal(
     (
       await request("/api/public/book", {
@@ -729,12 +735,46 @@ try {
   pass(
     "Six concurrent approvals produce five project seats, fifteen speakers, and one capacity rejection",
   );
+  const lockedBooking = publicSessions.data.sessions[1];
+  assert.equal(publicSessions.data.sessions.length, 3);
+  assert.equal(publicSession.bookingLocked, false);
+  assert.ok(
+    publicSessions.data.sessions
+      .slice(1)
+      .every((row: { bookingLocked: boolean }) => row.bookingLocked),
+  );
+  assert.equal(
+    (
+      await request("/api/public/book", {
+        token: capability,
+        sessionId: lockedBooking.id,
+      })
+    ).status,
+    409,
+  );
+  assert.equal(
+    (
+      await request("/api/public/apply", {
+        ...application,
+        founderName: "Locked Founder",
+        companyName: "Locked Product",
+        xHandle: "locked_product",
+        sessionId: lockedBooking.id,
+      })
+    ).status,
+    409,
+  );
+  await bookingWindowDb.query(
+    'UPDATE "ProgrammeSchedule" SET "activeStart"=$1 WHERE id=$2',
+    [lockedBooking.position, "main"],
+  );
+  await bookingWindowDb.end();
   const calendarApplication = {
     ...application,
     founderName: "Calendar Founder",
     companyName: "Calendar Product",
     xHandle: "calendar_product",
-    sessionId: "up3",
+    sessionId: lockedBooking.id,
   };
   const calendarResult = await request(
     "/api/public/apply",
@@ -2372,7 +2412,7 @@ try {
         ["main"],
       )
     ).rows[0].activeStart,
-    0,
+    1,
   );
   await command("space-data.save", attendance(cycleIds[1], true));
   await command("space-data.save", attendance(cycleIds[2], true));
@@ -2383,7 +2423,7 @@ try {
         ["main"],
       )
     ).rows[0].activeStart,
-    0,
+    3,
   );
   const retainedBookingIds = (
     await cycleDb.query('SELECT id FROM "BookingRequest" ORDER BY id')
@@ -2400,10 +2440,10 @@ try {
     4,
   );
   const publicWindow = await request("/api/public/sessions");
-  assert.equal(publicWindow.data.sessions.length, 8);
+  assert.equal(publicWindow.data.sessions.length, 3);
   assert.ok(
     publicWindow.data.sessions.every(
-      (s: { position: number }) => s.position >= 4 && s.position < 12,
+      (s: { position: number }) => s.position >= 4 && s.position < 7,
     ),
   );
   assert.ok(
@@ -2442,7 +2482,7 @@ try {
   );
   await cycleDb.end();
   pass(
-    "Eight-week season advances once after four distinct submitted Spaces; drafts/repeated saves do not count, archived history and booking IDs remain intact, and out-of-season bookings are rejected",
+    "Public Sundays roll forward one at a time after completion, while drafts, repeated saves and historical bookings remain intact",
   );
   const deletionDb = new Client({ connectionString: url.toString() });
   deletionDb.on("error", () => {});

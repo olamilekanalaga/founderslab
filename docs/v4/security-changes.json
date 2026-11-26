@@ -2,9 +2,9 @@
   {
     "file": "server/handlers/public.ts",
     "name": "GET",
-    "reason": "Resolve only the active referral display handle from the booking cookie without exposing partner records.",
     "originalSha256": "e6253cafa565f0951ca5c6d46d03dc423698dae63c42d0fa0bc1c168f020bd74",
-    "sha256": "c6ccf9dbb86e6c2fc14a9200321e0ad3e216c6639fffa35490a1d4f859916c6c"
+    "sha256": "10b49b050eca2b14d99fc1632051b624bb9cf97fe1d73d86fb60f117b1f41d67",
+    "reason": "Publish three Sundays and restrict both public booking endpoints to the head of the completion-gated schedule."
   },
   {
     "file": "server/handlers/workspace.ts",
@@ -65,9 +65,9 @@
   {
     "file": "server/handlers/public.ts",
     "name": "POST",
-    "reason": "Founder referral attribution comes from the server-issued grant, with private self-referral review flags. Booking errors refer to the Sunday schedule.",
     "originalSha256": "714e50f62f02baf27528bb45a11ec3087afcb19fe73227cbaf4b15b891e0f38b",
-    "sha256": "4abb28ae757ef9708443419d84bf11951df107db6a1ee972ea2d097b32a65a98"
+    "sha256": "a71d31d52df9a825bdf82664dc5ab0fc80e5beacec5f7e043910ae23e6e8201d",
+    "reason": "Publish three Sundays and restrict both public booking endpoints to the head of the completion-gated schedule."
   },
   {
     "file": "server/services/space-managers.ts",
@@ -93,8 +93,15 @@
   {
     "file": "server/services/programme-window.ts",
     "name": "ensureProgrammeWindow",
-    "reason": "Use Sunday recurrence for the existing attendance-gated booking window.",
     "originalSha256": "f0fe85fdc198aadf8f02a79af9ee16c5c22725155b7257369ded79af3a934a33",
-    "sha256": "415ab048723d3d1e927c702ccb68e14746b0f2643d5cd679ed796fc19a7b0330"
+    "sha256": "6d6e8ddfcfd373f68f7f86f868dc94b7fe762947e63e162b97c291985e41f965",
+    "reason": "Publish three Sundays and restrict both public booking endpoints to the head of the completion-gated schedule."
+  },
+  {
+    "file": "server/services/programme-window.ts",
+    "name": "requireProgrammeBooking",
+    "originalSha256": "e0dfedd9f325ce13ecaab18d16992417ec109a16c0e81f4ff54f066dd984d03a",
+    "sha256": "84e2910267372dc500533ebe97c6a895c4a718e62fc79b287d527a517f21959a",
+    "reason": "Publish three Sundays and restrict both public booking endpoints to the head of the completion-gated schedule."
   }
 ]

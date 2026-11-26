@@ -18,9 +18,7 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
   const params = useSearchParams(),
     router = useRouter();
   const selectedSessionId = params.get("session") || "";
-  const [availableSessions, setAvailableSessions] = useState<PublicSession[]>(
-    [],
-  );
+  const [availableSessions, setAvailableSessions] = useState<PublicSession[]>();
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [speakers, setSpeakers] = useState(""),
@@ -82,7 +80,7 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
           ),
         );
   }, [selectedSessionId]);
-  const chosenSession = availableSessions.find(
+  const chosenSession = availableSessions?.find(
     (s) => s.id === selectedSessionId,
   );
   const selectionValid =
@@ -112,6 +110,8 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
               <strong>
                 {chosenSession ? (
                   <SessionTime startsAt={chosenSession.startsAt} />
+                ) : availableSessions ? (
+                  "This Space is no longer available."
                 ) : (
                   "Loading selected Space…"
                 )}
@@ -119,7 +119,9 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
               <span>{chosenSession?.title}</span>
               {chosenSession && !selectionValid && (
                 <span role="alert">
-                  This slot is no longer available. Choose another Sunday.
+                  {chosenSession?.bookingLocked
+                    ? "Booking opens after the previous Space is completed."
+                    : "This slot is no longer available. Return to the calendar."}
                 </span>
               )}
             </div>
@@ -128,7 +130,13 @@ export function ApplicationForm({ configured }: { configured: boolean }) {
             </Link>
           </div>
         )}
+        {!selectionValid && error && (
+          <p className="error" role="alert">
+            {error}
+          </p>
+        )}
         <form
+          hidden={!selectionValid}
           className="panel public-form"
           onSubmit={async (e) => {
             e.preventDefault();
