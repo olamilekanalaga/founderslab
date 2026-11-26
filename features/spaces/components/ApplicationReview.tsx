@@ -268,6 +268,7 @@ export default function ApplicationReview({
               <label>
                 Space
                 <select
+                  aria-label="Space"
                   value={selectedSpace?.id ?? ""}
                   disabled={busy || !selectedSpace}
                   onChange={(event) =>
