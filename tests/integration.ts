@@ -98,7 +98,7 @@ let output = "";
 function run(
   script: string,
   args: string[] = [],
-  overrides: NodeJS.ProcessEnv = {},
+  overrides: Partial<NodeJS.ProcessEnv> = {},
 ) {
   const r = spawnSync(process.execPath, ["--import", "tsx", script, ...args], {
     env: { ...env, ...overrides },
