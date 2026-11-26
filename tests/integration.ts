@@ -86,6 +86,7 @@ const env = {
   MANAGER_EMAIL_FROM: "Founders Lab <test@example.invalid>",
   TEST_EMAIL_ENDPOINT: `http://127.0.0.1:${mailAddress.port}`,
 
+  WORKSPACE_SIGNUP_KEY: randomBytes(32).toString("base64url"),
   BOOTSTRAP_ADMIN_EMAIL: "admin@integration.example.invalid",
   BOOTSTRAP_ADMIN_NAME: "Integration Admin",
   BOOTSTRAP_ADMIN_PASSWORD: password,
@@ -425,7 +426,7 @@ try {
       "/signin",
     );
   }
-  for (const route of ["/signup", "/register", "/invite"]) {
+  for (const route of ["/register", "/invite"]) {
     assert.equal((await fetch(origin + route)).status, 404, route);
   }
   assert.equal(
@@ -890,7 +891,7 @@ try {
       403,
     );
   }
-  for (const action of ["accept-invite", "signup", "register", "bootstrap"]) {
+  for (const action of ["accept-invite", "register", "bootstrap"]) {
     assert.equal(
       (
         await request("/api/auth/" + action, {
@@ -4048,6 +4049,118 @@ try {
   assert.equal((await request("/api/auth/me", undefined, admin)).status, 401);
   pass(
     "Logout requires CSRF and revokes the database session, including replay of its old cookie",
+  );
+  const workspacePassword = randomBytes(24).toString("base64url");
+  const sharedSignup = {
+    key: env.WORKSPACE_SIGNUP_KEY,
+    email: env.BOOTSTRAP_ADMIN_EMAIL,
+    firstName: "Programme",
+    lastName: "Owner",
+    x: "@owner",
+    telegram: "@owner_workspace",
+    password: workspacePassword,
+    photo:
+      "data:image/jpeg;base64," +
+      readFileSync("public/owner-portrait.jpg").toString("base64"),
+  };
+  const signupPath = "/api/auth/signup";
+  const loginPath = "/api/auth/login";
+  const formerOwner: Jar = { cookie: "", csrf: "" };
+  const formerLogin = { email: sharedSignup.email, password };
+  assert.equal(
+    (await request(loginPath, formerLogin, formerOwner)).status,
+    200,
+  );
+  const originalOwner = (await request("/api/auth/me", undefined, formerOwner))
+    .data.viewer;
+  const managerSignup = {
+    ...sharedSignup,
+    email: "shared-manager@integration.example.invalid",
+    firstName: "Space",
+    lastName: "Manager",
+  };
+  assert.equal(
+    (await request(signupPath, { ...sharedSignup, key: "x".repeat(40) }))
+      .status,
+    403,
+  );
+  assert.equal((await request(signupPath, managerSignup)).status, 403);
+  assert.equal((await request(signupPath, sharedSignup)).status, 201);
+  assert.equal(
+    (await request("/api/auth/me", undefined, formerOwner)).status,
+    401,
+  );
+  assert.equal((await request(loginPath, formerLogin)).status, 401);
+  assert.equal((await request(signupPath, sharedSignup)).status, 409);
+  assert.equal((await request(signupPath, managerSignup)).status, 201);
+  const newOwner: Jar = { cookie: "", csrf: "" };
+  const newManager: Jar = { cookie: "", csrf: "" };
+  for (const [account, signup] of [
+    [newOwner, sharedSignup],
+    [newManager, managerSignup],
+  ] as const) {
+    assert.equal(
+      (
+        await request(
+          loginPath,
+          { email: signup.email, password: signup.password },
+          account,
+        )
+      ).status,
+      200,
+    );
+    const workspace = await request("/api/workspace", undefined, account);
+    assert.equal(workspace.status, 200);
+    account.csrf = workspace.data.viewer.csrf;
+    assert.equal(
+      workspace.data.viewer.name,
+      signup.firstName + " " + signup.lastName,
+    );
+    assert.ok(workspace.data.viewer.permissions.includes("team.manage"));
+    assert.equal(workspace.data.viewer.profilePhoto, signup.photo);
+  }
+  assert.equal(
+    (await request("/api/auth/me", undefined, newOwner)).data.viewer.id,
+    originalOwner.id,
+  );
+  assert.equal(
+    (
+      await request(
+        "/api/space-managers",
+        { action: "manual", email: "retired-flow@example.invalid" },
+        newManager,
+      )
+    ).status,
+    410,
+  );
+  assert.equal(
+    (await request("/api/auth/close-signup", {}, newOwner, false)).status,
+    403,
+  );
+  assert.equal(
+    (await request("/api/auth/close-signup", {}, newOwner)).status,
+    200,
+  );
+  assert.equal(
+    (
+      await request(signupPath, {
+        ...managerSignup,
+        email: "closed@example.invalid",
+      })
+    ).status,
+    403,
+  );
+  assert.equal(
+    (
+      await request(loginPath, {
+        email: managerSignup.email,
+        password: managerSignup.password,
+      })
+    ).status,
+    200,
+  );
+  pass(
+    "Shared signup replaces the owner password in place, grants the same permissions, and closes without blocking login",
   );
   console.log(
     `${passed} PostgreSQL/production HTTP integration groups passed.`,

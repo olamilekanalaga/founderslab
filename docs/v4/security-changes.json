@@ -37,9 +37,9 @@
   {
     "file": "server/handlers/space-managers.ts",
     "name": "POST",
-    "reason": "Allow owner-only CSRF-protected password setup and reset link issuance, and clear credentials when revoking access.",
     "originalSha256": "61ac74cb943b1b43558187c5687d987c54b7ff63f960d2b68db7e342ba0e7607",
-    "sha256": "1d4a6a89af131dee8adfada9541ae21e9942d3b6f08ce9d14dd90ea0871b3ace"
+    "sha256": "2e6cb6546e0b7d919f9d7bf18b74c2789e60ef4bad71b7d7c0552afaa95de830",
+    "reason": "Support deployment-authorized shared admin signup and profile data while retaining origin, session, and permission checks."
   },
   {
     "file": "server/services/space-managers.ts",
@@ -96,5 +96,33 @@
     "reason": "Use Sunday recurrence for the existing attendance-gated booking window.",
     "originalSha256": "f0fe85fdc198aadf8f02a79af9ee16c5c22725155b7257369ded79af3a934a33",
     "sha256": "415ab048723d3d1e927c702ccb68e14746b0f2643d5cd679ed796fc19a7b0330"
+  },
+  {
+    "file": "server/auth/session.ts",
+    "name": "isProvisionedAdmin",
+    "originalSha256": "a876437216a45d7cf89666c6a113d44da6594500c34c0901692f488c7ad6d226",
+    "sha256": "95cb2d54fd771f3af4d7ffb0aca135af3be8104f4bb03d3a60dd122427b55d85",
+    "reason": "Support deployment-authorized shared admin signup and profile data while retaining origin, session, and permission checks."
+  },
+  {
+    "file": "server/auth/session.ts",
+    "name": "getViewer",
+    "originalSha256": "67e059cc9c5e21445cffc52848b6c80c95cb0cad2e06c431d1e0d9ecef7916e3",
+    "sha256": "5f95d8d938698069d92c060f7a2d54fda717c683713e798c093ca20c3751fae2",
+    "reason": "Support deployment-authorized shared admin signup and profile data while retaining origin, session, and permission checks."
+  },
+  {
+    "file": "server/auth/session.ts",
+    "name": "startSession",
+    "originalSha256": "b5e29fdd2403d80bbfc37c662312cdcf8d5345c8e6fc560d28850f0e71773d1d",
+    "sha256": "4a41fad403b7d4e249ad416a6262224bd3b33868bceed45177cdbb6132fd94ee",
+    "reason": "Support deployment-authorized shared admin signup and profile data while retaining origin, session, and permission checks."
+  },
+  {
+    "file": "server/handlers/auth.ts",
+    "name": "POST",
+    "originalSha256": "9268c619fb7b92c534379962dac1c597421d05bca6bf2b5c9a45737a40963b34",
+    "sha256": "feada71cc11c833d9862b7711e1ac75de40b40237d4fd3579b872a424f047544",
+    "reason": "Support deployment-authorized shared admin signup and profile data while retaining origin, session, and permission checks."
   }
 ]

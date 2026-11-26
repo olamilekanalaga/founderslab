@@ -9,6 +9,7 @@ datasource db {
 }
 
 model User {
+  signupProfile     Json?
   id                String           @id @default(cuid())
   email             String           @unique
   name              String

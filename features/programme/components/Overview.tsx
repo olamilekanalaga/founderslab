@@ -228,8 +228,7 @@ export default function Overview({ addFounder }: { addFounder: () => void }) {
           <div>
             <h2>Upcoming Spaces</h2>
             <p>
-              Sundays, 7 PM London. Review applications before confirming
-              seats.
+              Sundays, 7 PM London. Review applications before confirming seats.
             </p>
             <Link
               className="button primary"
@@ -300,9 +299,13 @@ export default function Overview({ addFounder }: { addFounder: () => void }) {
           <section className="panel desk-access">
             <ShieldCheck size={28} />
             <h2>Owner access</h2>
-            <p>Manage Space Manager access.</p>
+            <p>
+              {viewer.profilePhoto
+                ? "Control new workspace signups."
+                : "Manage Space Manager access."}
+            </p>
             <Link className="button" href={path("owner-invitations")}>
-              Manage invitations
+              {viewer.profilePhoto ? "Manage signup" : "Manage invitations"}
             </Link>
           </section>
         )}

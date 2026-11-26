@@ -29,3 +29,9 @@ In **Overview → Manage invitations**, use **Set up password** for an existing 
 The manager chooses a password and can sign in again at `/manager/spaces` using the invited email and that password. Sessions expire after eight hours. Generate a **password reset link** if needed. Completing a reset invalidates old sessions and unused links. Revoking access removes the password and invalidates every session and unused invitation.
 
 The release adds two columns through the existing Neon migration pipeline. No email provider or new Vercel settings are required.
+
+## Shared workspace signup
+
+Set a random, unique `WORKSPACE_SIGNUP_KEY` of at least 32 characters as a Sensitive Production variable and redeploy. Keep `BOOTSTRAP_ADMIN_EMAIL` in place through the first registration. The deployment administrator should privately open `/signup#key=YOUR_KEY` and register using the existing owner email. The app replaces the old password and invalidates the old sessions in one transaction. The owner record keeps its existing ID.
+
+Sign in at `/signin` with the new password. Share the full signup URL privately with the Space Manager after the owner setup is complete. Anyone holding the URL can register as a full administrator while registration is open. Once both accounts can sign in, use **Overview → Manage signup → Close signup**. This disables the URL immediately, including after redeployment. You can then remove `WORKSPACE_SIGNUP_KEY` and the old bootstrap password variable. The two registered users keep their own logins and can save them in their own password managers.

@@ -61,6 +61,7 @@ export default function AuthScreen({ configured }: { configured: boolean }) {
               Email address
               <input
                 type="email"
+                name="email"
                 autoComplete="username"
                 required
                 value={email}
@@ -73,6 +74,7 @@ export default function AuthScreen({ configured }: { configured: boolean }) {
             <div className="signin-password-input">
               <input
                 id="signin-password"
+                name="password"
                 type={showPassword ? "text" : "password"}
                 autoComplete="current-password"
                 autoCapitalize="none"
@@ -113,8 +115,7 @@ export default function AuthScreen({ configured }: { configured: boolean }) {
           </button>
         </form>
         <p className="muted">
-          Only the pre-provisioned administrator can sign in. There is no public
-          signup.
+          Use your FoundersLab workspace account to sign in.
         </p>
       </section>
     </main>
