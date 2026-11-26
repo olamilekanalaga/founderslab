@@ -27,6 +27,7 @@ import {
 } from "@/components/layout/WorkspaceContext";
 import { Modal, Empty, Avatar } from "@/components/ui";
 import RecordEditor, { type Resource } from "@/components/shared/RecordEditor";
+import WorkspaceSignupControls from "@/features/auth/components/WorkspaceSignupControls";
 import Operations from "@/features/bd-partners/Operations";
 import Overview from "@/features/programme/components/Overview";
 import Directory from "@/features/directory/components/Directory";
@@ -158,9 +159,24 @@ function Shell({ section, id }: { section: Section; id?: string }) {
     }
   }
   const manager = viewer.roleId === "space-manager";
-  const accountName = manager ? viewer.name : OWNER_NAME;
+  const accountName = manager || viewer.profilePhoto ? viewer.name : OWNER_NAME;
   const profile = (size = 38) =>
-    manager ? <Avatar name={accountName} /> : <OwnerPortrait size={size} />;
+    viewer.profilePhoto ? (
+      <Image
+        unoptimized
+        src={viewer.profilePhoto}
+        alt=""
+        width={size}
+        height={size}
+        className={
+          size === 72 ? "owner-avatar account-portrait" : "owner-avatar"
+        }
+      />
+    ) : manager ? (
+      <Avatar name={accountName} />
+    ) : (
+      <OwnerPortrait size={size} />
+    );
   const visible = navigation.filter((n) =>
     viewer.permissions.includes(SECTION_PERMISSIONS[n.id]),
   );
@@ -195,7 +211,9 @@ function Shell({ section, id }: { section: Section; id?: string }) {
   );
   const title =
     section === "owner-invitations"
-      ? "Owner invitations"
+      ? viewer.profilePhoto
+        ? "Workspace access"
+        : "Owner invitations"
       : section === "companies"
         ? "Directory"
         : section === "settings"
@@ -290,15 +308,19 @@ function Shell({ section, id }: { section: Section; id?: string }) {
           ) : section === "founders" || section === "companies" ? (
             <Directory kind={section} id={id} edit={edit} />
           ) : section === "owner-invitations" ? (
-            <>
-              <div className="page-heading">
-                <div>
-                  <h1>Owner invitations</h1>
-                  <p>Manage reporting access to assigned Spaces.</p>
+            viewer.profilePhoto ? (
+              <WorkspaceSignupControls />
+            ) : (
+              <>
+                <div className="page-heading">
+                  <div>
+                    <h1>Owner invitations</h1>
+                    <p>Manage reporting access to assigned Spaces.</p>
+                  </div>
                 </div>
-              </div>
-              <SpaceManagersSettings />
-            </>
+                <SpaceManagersSettings />
+              </>
+            )
           ) : section === "operations" ? (
             <Operations edit={edit} />
           ) : section === "spaces" ? (

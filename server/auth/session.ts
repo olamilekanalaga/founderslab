@@ -8,14 +8,14 @@ import type { Viewer } from "@/lib/types";
 export function isProvisionedAdmin(user: {
   email: string;
   roleId: string;
+  signupProfile?: unknown;
   active: boolean;
 }) {
   const email = process.env.BOOTSTRAP_ADMIN_EMAIL?.trim().toLowerCase();
   return Boolean(
-    email &&
     user.active &&
     user.roleId === "admin" &&
-    user.email.toLowerCase() === email,
+    (user.signupProfile || (email && user.email.toLowerCase() === email)),
   );
 }
 export async function getViewer(): Promise<Viewer | null> {
@@ -43,6 +43,12 @@ export async function getViewer(): Promise<Viewer | null> {
       ? u.grants.map((p) => p.permissionId)
       : u.role.permissions.map((p) => p.permissionId),
     csrf: session.csrf,
+    ...(u.signupProfile &&
+    typeof u.signupProfile === "object" &&
+    "photo" in u.signupProfile &&
+    typeof u.signupProfile.photo === "string"
+      ? { profilePhoto: u.signupProfile.photo }
+      : {}),
   };
 }
 export async function requireViewer(permission?: string) {
@@ -70,16 +76,29 @@ export function requireCsrf(request: Request, viewer: Viewer) {
   )
     throw new DomainError("Session request token required.", 403);
 }
-export async function startSession(userId: string) {
+export async function startSession(
+  userId: string,
+  expectedPasswordHash: string,
+) {
   const raw = token(),
     csrf = token();
-  await db().authSession.create({
-    data: {
-      userId,
-      tokenHash: hash(raw),
-      csrf,
-      expiresAt: new Date(Date.now() + 7 * 864e5),
-    },
+  await db().$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT id FROM "User" WHERE id = ${userId} FOR UPDATE`;
+    const user = await tx.user.findUnique({ where: { id: userId } });
+    if (
+      !user ||
+      !isProvisionedAdmin(user) ||
+      user.passwordHash !== expectedPasswordHash
+    )
+      throw new DomainError("Email or password is incorrect.", 401);
+    await tx.authSession.create({
+      data: {
+        userId,
+        tokenHash: hash(raw),
+        csrf,
+        expiresAt: new Date(Date.now() + 7 * 864e5),
+      },
+    });
   });
   (await cookies()).set("fl_session", raw, {
     httpOnly: true,

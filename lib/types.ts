@@ -93,6 +93,7 @@ export interface Viewer {
   roleId: string;
   permissions: string[];
   csrf?: string;
+  profilePhoto?: string;
 }
 export interface Command {
   type: string;
