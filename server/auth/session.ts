@@ -61,7 +61,16 @@ export async function requireViewer(permission?: string) {
 }
 export function requireOrigin(request: Request) {
   const origin = request.headers.get("origin");
-  const expected = process.env.APP_ORIGIN || new URL(request.url).origin;
+  const requestOrigin = new URL(request.url).origin;
+  // Both custom domains serve FoundersLab. Allow requests from the exact
+  // served domain even when APP_ORIGIN names the other alias.
+  if (
+    origin === requestOrigin &&
+    (origin === "https://founderslab.fun" ||
+      origin === "https://www.founderslab.fun")
+  )
+    return;
+  const expected = process.env.APP_ORIGIN || requestOrigin;
   if (!origin || origin !== new URL(expected).origin)
     throw new DomainError("Request origin rejected.", 403);
 }

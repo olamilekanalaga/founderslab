@@ -131,5 +131,12 @@
     "originalSha256": "e0dfedd9f325ce13ecaab18d16992417ec109a16c0e81f4ff54f066dd984d03a",
     "sha256": "84e2910267372dc500533ebe97c6a895c4a718e62fc79b287d527a517f21959a",
     "reason": "Publish three Sundays and restrict both public booking endpoints to the head of the completion-gated schedule."
+  },
+  {
+    "file": "server/auth/session.ts",
+    "name": "requireOrigin",
+    "originalSha256": "2bda5effa4af6b2572a9fbb5daf571d7425c14c8db64d1ba9078b17dbb7a7ffe",
+    "sha256": "25c66d305bf47f00ef686f892ef252edc1d0fb839179630062373eaf4f89c4a7",
+    "reason": "Accept exact same-origin requests on either known FoundersLab custom hostname while retaining configured-origin and CSRF checks."
   }
 ]
