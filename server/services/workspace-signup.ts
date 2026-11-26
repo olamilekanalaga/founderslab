@@ -1,5 +1,6 @@
 import "server-only";
 import { createHash, timingSafeEqual } from "node:crypto";
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { db } from "@/server/db";
 import { passwordHash, rateLimit } from "@/server/auth";
@@ -7,6 +8,11 @@ import { body, json } from "@/server/http";
 import { DomainError } from "@/lib/domain";
 
 const setting = "workspace.signup";
+const maximumAccounts = 2;
+const signupAccounts = {
+  roleId: "admin",
+  signupProfile: { not: Prisma.DbNull },
+};
 const input = z
   .object({
     key: z.string().trim().min(32).max(200),
@@ -31,10 +37,11 @@ const input = z
 
 export async function workspaceSignupEnabled() {
   if ((process.env.WORKSPACE_SIGNUP_KEY?.length ?? 0) < 32) return false;
-  return (
-    (await db().setting.findUnique({ where: { key: setting } }))?.value !==
-    false
-  );
+  const [status, registered] = await Promise.all([
+    db().setting.findUnique({ where: { key: setting } }),
+    db().user.count({ where: signupAccounts }),
+  ]);
+  return status?.value !== false && registered < maximumAccounts;
 }
 
 export async function registerWorkspaceAdmin(request: Request) {
@@ -69,52 +76,39 @@ export async function registerWorkspaceAdmin(request: Request) {
   await db().$transaction(async (tx) => {
     await tx.$queryRaw`SELECT id FROM "Role" WHERE id = 'admin' FOR UPDATE`;
     const status = await tx.setting.findUnique({ where: { key: setting } });
-    if (status?.value === false)
+    const registered = await tx.user.count({ where: signupAccounts });
+    if (status?.value === false || registered >= maximumAccounts)
       throw new DomainError("Registration is closed.", 403);
-    const existing = await tx.user.findUnique({ where: { email } });
-    const ownerEmail = process.env.BOOTSTRAP_ADMIN_EMAIL?.trim().toLowerCase();
-    // Require the deployment-configured email for the first signup.
-    if (
-      !status &&
-      (!ownerEmail ||
-        email !== ownerEmail ||
-        (existing &&
-          (!existing.active ||
-            existing.roleId !== "admin" ||
-            existing.signupProfile)))
-    )
+    if (await tx.user.findUnique({ where: { email }, select: { id: true } }))
       throw new DomainError(
-        "The configured owner email must sign up first.",
-        403,
-      );
-    if (status && existing)
-      throw new DomainError(
-        "An account already uses that email. Sign in instead.",
+        "An account already uses that email. Sign in or use a different email.",
         409,
       );
-    const data = {
-      name: `${firstName} ${lastName}`,
-      passwordHash: credentials,
-      signupProfile: profile,
-    };
-    const account = existing
-      ? await tx.user.update({
-          where: { id: existing.id },
-          data: { ...data, customPermissions: false },
-        })
-      : await tx.user.create({ data: { ...data, email, roleId: "admin" } });
-    if (existing)
-      await tx.authSession.deleteMany({ where: { userId: existing.id } });
-    if (!status)
-      await tx.setting.create({ data: { key: setting, value: true } });
+    const account = await tx.user.create({
+      data: {
+        name: `${firstName} ${lastName}`,
+        passwordHash: credentials,
+        signupProfile: profile,
+        email,
+        roleId: "admin",
+      },
+    });
+    const closed = registered + 1 === maximumAccounts;
+    if (closed) {
+      await tx.setting.upsert({
+        where: { key: setting },
+        create: { key: setting, value: false },
+        update: { value: false },
+      });
+    }
     await tx.auditLog.create({
       data: {
         actor: email,
         action: "workspace.signup",
         entityId: account.id,
-        detail: existing
-          ? "Owner credentials replaced through the deployment-authorized signup link."
-          : "Full workspace administrator registered.",
+        detail: closed
+          ? "Second workspace account registered. Shared signup closed automatically."
+          : "Full workspace account registered.",
       },
     });
   });
