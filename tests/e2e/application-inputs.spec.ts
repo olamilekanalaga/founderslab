@@ -7,7 +7,9 @@ test("application starts with honest examples and accepts a bare domain through 
   const contact = page.getByRole("region", {
     name: "Let’s connect before your Space",
   });
-  await expect(page.locator("form + .founder-contact")).toBeVisible();
+  await expect(
+    page.locator(".founder-application-card + .founder-contact"),
+  ).toBeVisible();
   await expect(
     contact.getByRole("link", { name: "X DM", exact: true }),
   ).toHaveAttribute(

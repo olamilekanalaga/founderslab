@@ -15,7 +15,7 @@
     "path": "/apply",
     "status": 200,
     "location": null,
-    "headings": ["Bring your founder story."]
+    "headings": ["Founder application"]
   },
   {
     "path": "/confirmation",
