@@ -1370,16 +1370,6 @@
   border-color: var(--fl-accent);
   color: #fff;
 }
-.public-app .selected-booking {
-  border: 1px solid #dfd2f2;
-  border-radius: 14px;
-  padding: 22px 25px;
-  background: #f6f0fd;
-  margin-bottom: 24px;
-}
-.public-app .selected-booking .visitor-session-time {
-  font-size: 12px;
-}
 .public-app .public-form .form-help {
   font-size: 12px;
   line-height: 1.7;
@@ -1420,39 +1410,6 @@
   margin: 9px 0 0;
   font-size: 14px;
   line-height: 1.5;
-}
-.public-app .founder-application-page .selected-booking {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  column-gap: 16px;
-  row-gap: 4px;
-  margin: 0 0 24px;
-  padding: 13px 16px;
-  border-color: var(--fl-line);
-  border-radius: 17px;
-  background: var(--fl-soft);
-}
-.public-app .founder-application-page .selected-booking > div {
-  min-width: 0;
-  gap: 4px;
-}
-.public-app .founder-application-page .selected-booking .eyebrow {
-  color: var(--fl-muted);
-  font-size: 11px;
-  letter-spacing: 0.045em;
-  text-transform: none;
-}
-.public-app .founder-application-page .selected-booking strong {
-  font-size: 14px;
-  line-height: 1.4;
-}
-.public-app .founder-application-page .selected-booking a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  flex-shrink: 0;
-  font-weight: 600;
 }
 .public-app .founder-application-page .public-form {
   padding: 0;
@@ -1522,12 +1479,6 @@
   font-size: 15px;
   font-weight: 650;
   white-space: normal;
-}
-@media (max-width: 480px) {
-  .public-app .founder-application-page .selected-booking {
-    align-items: flex-start;
-    flex-direction: column;
-  }
 }
 @media (max-width: 359px) {
   .public-app .founder-application-page .record-form {
@@ -2269,9 +2220,6 @@
   }
   .public-app .form-section-title h2 {
     font-size: 21px;
-  }
-  .public-app .selected-booking {
-    padding: 20px;
   }
   .public-app .public-form-page.prose {
     padding: 37px 22px 45px;

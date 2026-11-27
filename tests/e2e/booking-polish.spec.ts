@@ -32,7 +32,15 @@ for (const [label, width, height] of [
     await expect(
       page.getByRole("heading", { name: "Founder application" }),
     ).toBeVisible();
-    await expect(page.locator(".selected-booking")).toBeVisible();
+    await expect(
+      page.getByLabel("Founder name", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("Your selected Space", { exact: true }),
+    ).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Change date" })).toHaveCount(
+      0,
+    );
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
@@ -55,7 +63,7 @@ test("hero date choice is carried directly into the application and mobile Escap
   const target = await preview.getAttribute("href");
   await preview.click();
   await expect(page).toHaveURL(target!);
-  await expect(page.locator(".selected-booking")).toBeVisible();
+  await expect(page.getByLabel("Founder name", { exact: true })).toBeVisible();
   await page.setViewportSize({ width: 393, height: 852 });
   const menu = page.getByRole("button", { name: "Open programme navigation" });
   await menu.click();
@@ -65,6 +73,24 @@ test("hero date choice is carried directly into the application and mobile Escap
   await page.keyboard.press("Escape");
   await expect(menu).toHaveAttribute("aria-expanded", "false");
   await expect(menu).toBeFocused();
+});
+
+test("an unavailable Sunday offers a return to the calendar", async ({
+  page,
+}) => {
+  await page.route("**/api/public/sessions", (route) =>
+    route.fulfill({ json: { sessions: [] } }),
+  );
+  await page.goto("/apply?session=unavailable");
+  await expect(
+    page.getByText("That Sunday is no longer available."),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Return to booking calendar" }),
+  ).toHaveAttribute("href", "/#choose-a-sunday");
+  await expect(
+    page.getByRole("button", { name: "Submit founder application" }),
+  ).toBeHidden();
 });
 
 test("the next Sunday opens only after Space data is submitted", async ({

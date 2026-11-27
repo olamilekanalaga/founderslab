@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Mic } from "lucide-react";
 import PublicHeader from "@/components/layout/PublicHeader";
-import SessionTime from "@/components/shared/SessionTime";
 
 import { publicSlotOpen, type PublicSession } from "@/lib/dates/booking";
 import { COUNTRIES, SECTORS, TEAM_SIZES } from "@/lib/catalog";
@@ -128,38 +127,19 @@ export function ApplicationForm({
             <p role="alert">Applications are temporarily unavailable.</p>
           )}
 
-          {selectedSessionId && (
-            <div className="selected-booking">
-              <div>
-                <span className="eyebrow">Your selected Space</span>
-                <strong>
-                  {chosenSession ? (
-                    <SessionTime startsAt={chosenSession.startsAt} />
-                  ) : availableSessions ? (
-                    "This Space is no longer available."
-                  ) : (
-                    "Loading selected Space…"
-                  )}
-                </strong>
-                <span>{chosenSession?.title}</span>
-                {chosenSession && !selectionValid && (
-                  <span role="alert">
-                    {chosenSession?.bookingLocked
-                      ? "Booking opens after the previous Space data is submitted."
-                      : "This slot is no longer available. Return to the calendar."}
-                  </span>
-                )}
-              </div>
-              <Link className="text-link" href="/#choose-a-sunday">
-                Change date
-              </Link>
-            </div>
-          )}
-          {!selectionValid && error && (
-            <p className="error" role="alert">
-              {error}
-            </p>
-          )}
+          {!selectionValid &&
+            (error || availableSessions ? (
+              <>
+                <p className="error" role="alert">
+                  {error || "That Sunday is no longer available."}
+                </p>
+                <Link className="fl-inline-action" href="/#choose-a-sunday">
+                  Return to booking calendar
+                </Link>
+              </>
+            ) : (
+              <p role="status">Checking availability…</p>
+            ))}
           <form
             hidden={!selectionValid}
             className="public-form"
