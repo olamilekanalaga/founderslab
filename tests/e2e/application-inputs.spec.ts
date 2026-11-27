@@ -130,6 +130,7 @@ test("mobile booking highlights missing and invalid answers, then submits correc
     }),
   );
   await page.goto("/apply?session=test-sunday");
+  await expect(page.getByLabel("Founder name")).toBeVisible();
   for (const [leftName, rightName] of [
     ["xHandle", "founderRole"],
     ["projectXHandle", "website"],
