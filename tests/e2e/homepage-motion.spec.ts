@@ -22,6 +22,7 @@ for (const [width, height] of [
     await page.goto("/");
     const opening = page.locator(".fl-hero-opening");
     await expect(opening).toHaveCSS("animation-name", "fl-opening-wipe");
+    await expect(opening).toHaveCSS("animation-duration", "2s");
     await expect(opening).toHaveCSS("pointer-events", "none");
     await expect(opening).toBeHidden();
     await expect(page.getByRole("heading", { level: 1 })).toHaveCSS(
@@ -33,7 +34,7 @@ for (const [width, height] of [
       2,
     );
 
-    const progress = page.locator(".fl-home-progress");
+    const progress = page.locator(".fl-page-progress");
     const initialTransform = await progress.evaluate(
       (bar) => getComputedStyle(bar).transform,
     );
@@ -44,14 +45,14 @@ for (const [width, height] of [
       "0px",
     );
     await page.locator("#about").scrollIntoViewIfNeeded();
-    await expect(page.locator(".fl-about-intro")).toHaveCSS(
-      "animation-name",
-      "fl-scroll-reveal",
+    await expect(page.locator(".fl-about-intro")).toHaveAttribute(
+      "data-motion-visible",
+      "",
     );
     await page.locator("#how-it-works").scrollIntoViewIfNeeded();
-    await expect(page.locator(".fl-process-steps li").first()).toHaveCSS(
-      "animation-name",
-      "fl-scroll-reveal",
+    await expect(page.locator(".fl-process-steps li").first()).toHaveAttribute(
+      "data-motion-visible",
+      "",
     );
     expect(
       await page.evaluate(
@@ -65,6 +66,10 @@ for (const [width, height] of [
     await page.keyboard.press("Enter");
     await expect(page).toHaveURL(`/apply?session=${sessions[0].id}`);
     await expect(page.getByLabel("Founder name")).toBeVisible();
+    await expect(page.locator(".founder-application-heading")).toHaveAttribute(
+      "data-motion-visible",
+      "",
+    );
     await expect(page.locator(".fl-hero-opening")).toHaveCount(0);
   });
 }
@@ -76,7 +81,7 @@ test("reduced motion makes the homepage and anchored booking immediately availab
   await page.setViewportSize({ width: 393, height: 852 });
   await page.goto("/#choose-a-sunday");
   await expect(page.locator(".fl-hero-opening")).toBeHidden();
-  await expect(page.locator(".fl-home-progress")).toBeHidden();
+  await expect(page.locator(".fl-page-progress")).toBeHidden();
   await expect(page.getByRole("heading", { level: 1 })).toHaveCSS(
     "animation-name",
     "none",
@@ -84,4 +89,33 @@ test("reduced motion makes the homepage and anchored booking immediately availab
   await expect(page.locator("#choose-a-sunday")).toBeVisible();
   await page.locator("#how-it-works").scrollIntoViewIfNeeded();
   await expect(page.locator(".fl-process-intro")).toHaveCSS("opacity", "1");
+});
+
+test("public account and programme screens share motion and retain keyboard focus", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 393, height: 852 });
+  for (const [url, surface] of [
+    ["/signin", ".auth-card"],
+    ["/signup", ".auth-card"],
+    ["/terms", ".prose h1"],
+    ["/manager/spaces", ".manager-page h1"],
+    ["/bd", ".manager-page h1"],
+  ]) {
+    await page.goto(url);
+    await expect(page.locator(surface)).toHaveAttribute(
+      "data-motion-visible",
+      "",
+    );
+    await expect(page.locator(".fl-hero-opening")).toHaveCount(0);
+  }
+  await page.goto("/signin");
+  const email = page.getByLabel("Email address");
+  await email.focus();
+  await expect(email).toBeFocused();
+  await expect(page.locator(".auth-card")).toHaveCSS("opacity", "1");
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/signup");
+  await expect(page.locator(".auth-card")).toHaveCSS("animation-name", "none");
+  await expect(page.locator(".fl-page-progress")).toBeHidden();
 });

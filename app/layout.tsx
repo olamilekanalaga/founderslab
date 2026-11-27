@@ -5,6 +5,8 @@ import "./admin-experience.css";
 import "./admin-studio.css";
 import "./admin-desk.css";
 import "./admin-themes.css";
+import "./platform-motion.css";
+import PlatformMotion from "@/components/layout/PlatformMotion";
 import localFont from "next/font/local";
 const publicFont = localFont({
   src: "./fonts/geist-latin.ttf",
@@ -29,6 +31,7 @@ export default function RootLayout({
         <a href="#main-content" className="skip-link">
           Skip to content
         </a>
+        <PlatformMotion />
         {children}
       </body>
     </html>
