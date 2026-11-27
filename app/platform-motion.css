@@ -1,0 +1,164 @@
+/* Shared motion for the public programme, account screens and workspaces. */
+:root {
+  --fl-motion-ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.fl-page-progress {
+  display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .fl-page-progress {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 41;
+    display: block;
+    height: 3px;
+    background: linear-gradient(90deg, #a682ef, #6946d3);
+    transform: scaleX(0);
+    transform-origin: left;
+    pointer-events: none;
+  }
+
+  body:has([data-visual-effects="reduced"]) .fl-page-progress {
+    display: none;
+  }
+
+  [data-motion-entering] {
+    --fl-reveal-distance: 12px;
+    animation: fl-scroll-reveal 520ms var(--fl-motion-ease)
+      var(--fl-reveal-delay, 0ms) backwards;
+  }
+
+  .fl-home [data-motion-entering] {
+    --fl-reveal-distance: 20px;
+    --fl-reveal-opacity: 0.52;
+  }
+
+  .public-form
+    :is(
+      label,
+      .application-logo,
+      .privacy-notice,
+      button[type="submit"]
+    )[data-motion-entering] {
+    --fl-reveal-distance: 0px;
+    --fl-reveal-opacity: 0.86;
+  }
+
+  :is(.founder-card-grid, .desk-grid) > [data-motion-entering]:nth-child(even) {
+    --fl-reveal-delay: 55ms;
+  }
+
+  [data-motion-entering]:focus-within {
+    opacity: 1 !important;
+    translate: none !important;
+  }
+
+  :is(.app-shell, .public-app, .auth-page, .manager-page)
+    :is(a, button, summary):where(
+      button,
+      summary,
+      a.button,
+      a.fl-action,
+      a.fl-inline-action,
+      a.icon-button,
+      a.metric-card,
+      a.desk-ticket,
+      a.desk-queue-row,
+      a.founder-tile-name,
+      a.entity-row,
+      a.table-person,
+      nav a
+    ) {
+    transition:
+      scale 150ms var(--fl-motion-ease),
+      translate 190ms var(--fl-motion-ease),
+      transform 180ms var(--fl-motion-ease),
+      background-color 180ms,
+      color 180ms,
+      border-color 180ms,
+      box-shadow 180ms;
+  }
+
+  :is(.app-shell, .public-app, .auth-page, .manager-page)
+    :where(
+      button:enabled,
+      summary,
+      a.button,
+      a.fl-action,
+      a.fl-inline-action,
+      a.icon-button,
+      a.metric-card,
+      a.desk-ticket,
+      a.desk-queue-row,
+      a.founder-tile-name,
+      a.entity-row,
+      a.table-person,
+      nav a
+    ):active {
+    scale: 0.97;
+  }
+
+  .founder-tile {
+    transition:
+      translate 200ms var(--fl-motion-ease),
+      scale 150ms var(--fl-motion-ease),
+      box-shadow 200ms;
+  }
+
+  .founder-tile:has(a:active) {
+    scale: 0.985;
+  }
+
+  .workspace-bottom-nav > a[aria-current="page"] > svg,
+  .operations-tabs > button[aria-pressed="true"],
+  .tab-row > button.active,
+  .segmented > button[aria-pressed="true"],
+  .heading-actions > a[aria-current="page"] {
+    animation: fl-control-settle 320ms var(--fl-motion-ease);
+  }
+
+  .app-shell .modal,
+  .fl-header nav.is-expanded {
+    animation: fl-scroll-reveal 280ms var(--fl-motion-ease);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine) {
+  .founder-tile:hover {
+    translate: 0 -3px;
+    box-shadow: 0 10px 28px
+      color-mix(in srgb, var(--accent, #6946d3) 14%, transparent);
+  }
+
+  :is(.workspace-bottom-nav, .operations-tabs, .fl-header nav)
+    > :where(a, button:enabled):hover {
+    translate: 0 -2px;
+  }
+}
+
+[data-visual-effects="reduced"]
+  :is(.founder-tile, .workspace-bottom-nav > a, .operations-tabs > button) {
+  translate: none;
+}
+
+[data-visual-effects="reduced"] :is(a, button, summary, .founder-tile) {
+  scale: none;
+}
+
+@keyframes fl-scroll-reveal {
+  from {
+    opacity: var(--fl-reveal-opacity, 0.78);
+    translate: 0 var(--fl-reveal-distance, 9px);
+  }
+}
+
+@keyframes fl-control-settle {
+  28% {
+    scale: 0.93;
+  }
+  68% {
+    scale: 1.04;
+  }
+}

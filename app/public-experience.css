@@ -2306,14 +2306,10 @@
     font-size: 11px;
   }
 }
-.fl-hero-opening,
-.fl-home-progress {
+.fl-hero-opening {
   display: none;
 }
 @media (prefers-reduced-motion: no-preference) {
-  .fl-home {
-    --fl-motion-ease: cubic-bezier(0.16, 1, 0.3, 1);
-  }
   .fl-home .fl-hero {
     position: relative;
     isolation: isolate;
@@ -2333,7 +2329,7 @@
       #f4eefb 46%,
       #fdfcff 80%
     );
-    animation: fl-opening-wipe 820ms var(--fl-motion-ease) both;
+    animation: fl-opening-wipe 2s var(--fl-motion-ease) both;
   }
   .fl-opening-mark {
     position: relative;
@@ -2344,7 +2340,7 @@
     height: 88px;
     border-radius: 23px;
     box-shadow: 0 14px 50px #5533a44d;
-    animation: fl-opening-mark 720ms var(--fl-motion-ease) both;
+    animation: fl-opening-mark 1.95s var(--fl-motion-ease) both;
   }
   .fl-opening-mark img {
     clip-path: inset(0 round 23px);
@@ -2357,10 +2353,10 @@
     content: "";
     border: 1px solid #8b60d560;
     border-radius: 40%;
-    animation: fl-opening-ring 700ms var(--fl-motion-ease) both;
+    animation: fl-opening-ring 1.45s var(--fl-motion-ease) both;
   }
   .fl-opening-mark::after {
-    animation-delay: 80ms;
+    animation-delay: 160ms;
   }
   .fl-home:has(:target, :focus-visible) .fl-hero-opening,
   [data-home-interacted] .fl-hero-opening {
@@ -2375,58 +2371,39 @@
   }
   .fl-home .fl-hero-copy > *,
   .fl-home .fl-preview-wrap {
-    animation: fl-enter 520ms var(--fl-motion-ease) var(--fl-enter-delay, 210ms)
-      both;
+    animation: fl-enter 440ms var(--fl-motion-ease)
+      var(--fl-enter-delay, 1510ms) both;
   }
   .fl-home .fl-hero-copy > h1 {
-    --fl-enter-delay: 300ms;
+    --fl-enter-delay: 1580ms;
   }
   .fl-home .fl-hero-copy > p {
-    --fl-enter-delay: 365ms;
+    --fl-enter-delay: 1650ms;
   }
   .fl-home .fl-hero-actions {
-    --fl-enter-delay: 410ms;
+    --fl-enter-delay: 1710ms;
   }
   .fl-home .fl-preview-wrap {
-    --fl-enter-delay: 445ms;
+    --fl-enter-delay: 1760ms;
   }
   .fl-home:has(:target, :focus-visible) .fl-hero-copy > *,
   .fl-home:has(:target, :focus-visible) .fl-preview-wrap,
   [data-home-interacted] :is(.fl-hero-copy > *, .fl-preview-wrap) {
     animation: none;
   }
-  .fl-home-progress {
-    position: fixed;
-    inset: 0 0 auto;
-    z-index: 41;
-    display: block;
-    height: 3px;
-    background: linear-gradient(90deg, #a682ef, var(--fl-accent));
-    transform: scaleX(0);
-    transform-origin: left;
-    pointer-events: none;
-  }
-  .fl-home [data-home-visible] {
-    animation: fl-scroll-reveal 560ms var(--fl-motion-ease)
-      var(--fl-reveal-delay, 0ms) both;
-  }
-  .fl-home [data-home-visible]:focus-within {
-    opacity: 1 !important;
-    transform: none !important;
-  }
   .fl-home
     :is(.fl-benefit-composition, .fl-process-steps, .fl-faq-list)
     > :nth-child(even) {
     --fl-reveal-delay: 65ms;
   }
-  .fl-home .fl-process-steps [data-home-visible]:not(:last-child)::after {
-    animation: fl-process-line 640ms var(--fl-motion-ease) 150ms both;
+  .fl-home .fl-process-steps [data-motion-entering]:not(:last-child)::after {
+    animation: fl-process-line 420ms var(--fl-motion-ease) 70ms both;
     transform-origin: left top;
   }
 }
 @keyframes fl-opening-wipe {
   0%,
-  43% {
+  76% {
     clip-path: circle(150%);
     opacity: 1;
   }
@@ -2441,7 +2418,8 @@
     transform: translateY(15px) scale(0.66) rotate(-9deg);
     opacity: 0.2;
   }
-  58% {
+  25%,
+  78% {
     transform: none;
     opacity: 1;
   }
@@ -2461,16 +2439,6 @@
   100% {
     transform: scale(2);
     opacity: 0;
-  }
-}
-@keyframes fl-scroll-reveal {
-  from {
-    opacity: 0.45;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
   }
 }
 @keyframes fl-process-line {

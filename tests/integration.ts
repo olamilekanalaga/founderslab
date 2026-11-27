@@ -2022,6 +2022,10 @@ try {
     await page.getByRole("button", { name: "Sign in", exact: true }).click();
     await page.waitForURL("**/dashboard");
     await page.locator(".desk-grid").waitFor();
+    await expect(page.locator(".desk-heading")).toHaveAttribute(
+      "data-motion-visible",
+      "",
+    );
     await page.screenshot({
       path: artifactPath("admin-desk-populated-mobile.png"),
       fullPage: true,
@@ -2186,6 +2190,7 @@ try {
     });
     const companyCardLogo = companyCard.locator(".person-avatar-logo");
     await expect(companyCardLogo).toHaveAttribute("src", logoPath);
+    await expect(companyCard).toHaveAttribute("data-motion-visible", "");
     await expect
       .poll(() =>
         companyCardLogo.evaluate(
@@ -2237,6 +2242,16 @@ try {
     const navigation = page.getByRole("navigation", {
       name: "Workspace navigation",
     });
+    const directory = navigation.getByRole("link", { name: "Directory" });
+    await directory.click();
+    await expect(directory).toHaveAttribute("aria-current", "page");
+    await expect(directory.locator("svg")).toHaveCSS(
+      "animation-name",
+      "fl-control-settle",
+    );
+    const founderCard = page.locator(".founder-tile").first();
+    await founderCard.scrollIntoViewIfNeeded();
+    await expect(founderCard).toHaveAttribute("data-motion-visible", "");
     await navigation.getByRole("link", { name: "Settings" }).click();
     await page.getByRole("heading", { name: "⭕️La_Crrypt💰₿" }).waitFor();
     assert.equal(
@@ -2288,6 +2303,8 @@ try {
     await page.getByRole("button", { name: /Open account menu/ }).click();
     const account = page.getByRole("dialog", { name: "Your account" });
     await account.getByRole("button", { name: "Reduced effects" }).click();
+    await expect(page.locator(".fl-page-progress")).toBeHidden();
+    await expect(account).toHaveCSS("animation-name", "none");
     assert.equal(
       await account.evaluate((el) => getComputedStyle(el).backgroundColor),
       "rgb(255, 255, 255)",

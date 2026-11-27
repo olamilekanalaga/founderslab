@@ -16,7 +16,6 @@ import PublicHeader from "@/components/layout/PublicHeader";
 import PublicFooter from "@/components/layout/PublicFooter";
 import BrandMark from "@/components/shared/BrandMark";
 import HeroBookingPreview from "./HeroBookingPreview";
-import HomeMotion from "./HomeMotion";
 import { ProgrammeAvailability } from "./ProgrammeAvailability";
 const questions = [
   [
@@ -49,7 +48,7 @@ export default function HomePage() {
     <ProgrammeAvailability>
       <div className="public-app programme-home fl-home">
         <PublicHeader />
-        <HomeMotion>
+        <main id="main-content">
           <section
             className="fl-hero fl-container"
             aria-labelledby="programme-title"
@@ -285,7 +284,7 @@ export default function HomePage() {
               account needed.
             </p>
           </section>
-        </HomeMotion>
+        </main>
         <PublicFooter />
       </div>
     </ProgrammeAvailability>
