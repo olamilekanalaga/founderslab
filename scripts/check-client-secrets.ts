@@ -17,6 +17,8 @@ for (const name of [
   "DATABASE_URL",
   "DATABASE_DATABASE_URL",
   "RESEND_API_KEY",
+  "TELEGRAM_BOT_TOKEN",
+  "TELEGRAM_CHAT_ID",
 ]) {
   // Configuration key labels in Admin setup help are public names, not credentials.
   if (

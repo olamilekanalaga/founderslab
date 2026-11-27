@@ -10,8 +10,8 @@
     "file": "server/handlers/workspace.ts",
     "name": "POST",
     "originalSha256": "8fc73275e6caa624c60bf55675915d45192bb44a5b9ab461773ca9903a33aba1",
-    "sha256": "11c55b8b34e72045d122af68a53d249f957933b27f60c1cdf51f262cb89a1158",
-    "reason": "Allow active All Spaces managers to run existing operational commands with CSRF and command permission checks while keeping owner commands gated."
+    "sha256": "e7744783ebdb94b3e7b77dd10298dbbdf708bb9f8eec494ac1b302b09287585f",
+    "reason": "Allow active All Spaces managers to run existing operational commands with CSRF and command permission checks while keeping owner commands gated. Record booking notification metadata at commit and schedule Telegram delivery after the response."
   },
   {
     "file": "server/handlers/monthly-winner.ts",
@@ -66,8 +66,8 @@
     "file": "server/handlers/public.ts",
     "name": "POST",
     "originalSha256": "714e50f62f02baf27528bb45a11ec3087afcb19fe73227cbaf4b15b891e0f38b",
-    "sha256": "a71d31d52df9a825bdf82664dc5ab0fc80e5beacec5f7e043910ae23e6e8201d",
-    "reason": "Publish three Sundays and restrict both public booking endpoints to the head of the completion-gated schedule."
+    "sha256": "025c952fb12a57289bae719b5919fef35f4417be1579db361d431f87b8a56a02",
+    "reason": "Publish three Sundays and restrict both public booking endpoints to the head of the completion-gated schedule. Record booking notification metadata at commit and schedule Telegram delivery after the response."
   },
   {
     "file": "server/services/space-managers.ts",

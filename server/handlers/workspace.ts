@@ -10,6 +10,7 @@ import { requireCsrf } from "@/server/auth";
 import { requireWorkspaceViewer } from "@/server/auth/workspace";
 import { actionPermission } from "@/lib/catalog";
 import { DomainError, scopeState } from "@/lib/domain";
+import { scheduleBookingTelegram } from "@/server/services/booking-telegram";
 import { schemas } from "@/lib/validation";
 
 export async function GET() {
@@ -82,7 +83,12 @@ export async function POST(request: Request) {
       });
       return json({ state: scopeState(await loadState(), viewer.permissions) });
     }
-    return json({ state: await executeCommand(command, viewer) });
+    const { state, notificationBookingIds } = await executeCommand(
+      command,
+      viewer,
+    );
+    scheduleBookingTelegram(notificationBookingIds);
+    return json({ state });
   } catch (e) {
     return failure(e);
   }

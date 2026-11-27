@@ -74,6 +74,45 @@ await new Promise<void>((resolve) =>
 const mailAddress = mailServer.address();
 if (!mailAddress || typeof mailAddress === "string")
   throw new Error("Mock email unavailable");
+type TelegramPayload = {
+  chat_id: string;
+  text: string;
+  reply_parameters?: {
+    message_id: number;
+    allow_sending_without_reply: boolean;
+  };
+};
+const telegramChatId = "-1001234567890";
+const telegram: { messageId: number; payload: TelegramPayload }[] = [];
+const telegramServer = createServer(async (req, res) => {
+  let raw = "";
+  for await (const chunk of req) raw += chunk.toString();
+  const payload = JSON.parse(raw) as TelegramPayload;
+  const messageId = telegram.length + 101;
+  telegram.push({ messageId, payload });
+  const outage = payload.text.includes("Telegram outage founder");
+  res.writeHead(outage ? 503 : 200, { "Content-Type": "application/json" });
+  res.end(
+    JSON.stringify(
+      outage
+        ? { ok: false }
+        : {
+            ok: true,
+            result: {
+              message_id: messageId,
+              chat: { id: Number(telegramChatId) },
+            },
+          },
+    ),
+  );
+});
+await new Promise<void>((resolve) =>
+  telegramServer.listen(0, "127.0.0.1", resolve),
+);
+const telegramAddress = telegramServer.address();
+if (!telegramAddress || typeof telegramAddress === "string")
+  throw new Error("Mock Telegram unavailable");
+
 const env = {
   ...process.env,
   DATABASE_URL: "",
@@ -84,6 +123,9 @@ const env = {
   APP_ORIGIN: origin,
   RESEND_API_KEY: "isolated-provider-mock",
   MANAGER_EMAIL_FROM: "Founders Lab <test@example.invalid>",
+  TELEGRAM_BOT_TOKEN: "123:integration-fixture",
+  TELEGRAM_CHAT_ID: telegramChatId,
+  TEST_TELEGRAM_ENDPOINT: `http://127.0.0.1:${telegramAddress.port}`,
   TEST_EMAIL_ENDPOINT: `http://127.0.0.1:${mailAddress.port}`,
 
   BOOTSTRAP_ADMIN_EMAIL: "admin@integration.example.invalid",
@@ -384,6 +426,8 @@ try {
   server = spawn(
     process.execPath,
     [
+      "--import",
+      "./tests/fixtures/mock-telegram.mjs",
       "node_modules/next/dist/bin/next",
       "start",
       "-p",
@@ -804,6 +848,7 @@ try {
       (entry: { id: string }) => entry.id === lockedBooking.id,
     ).availableSeats as number;
   const seatsBeforeApproval = await availableSeats();
+  await new Promise((resolve) => setTimeout(resolve, 1100));
   for (let attempt = 0; attempt < 2; attempt++)
     await command("application.review", {
       id: calendarRecord.id,
@@ -860,6 +905,84 @@ try {
   pass(
     "Calendar-first submission creates a linked pending booking; full and weekday submissions roll back without orphan applications",
   );
+  const telegramDb = new Client({ connectionString: url.toString() });
+  await telegramDb.connect();
+  const notificationFor = async (id: string) =>
+    (
+      await telegramDb.query(
+        'SELECT n.*, b."createdAt" FROM "BookingTelegramNotification" n JOIN "BookingRequest" b ON b.id=n."bookingId" WHERE b."applicationId"=$1',
+        [id],
+      )
+    ).rows[0];
+  const textFor = (messageId: number) =>
+    telegram.find((entry) => entry.messageId === messageId)!.payload;
+  try {
+    await expect
+      .poll(async () => (await notificationFor(app.id))?.initialState)
+      .toBe("sent");
+    await expect
+      .poll(
+        async () => (await notificationFor(calendarRecord.id))?.approvalState,
+      )
+      .toBe("sent");
+    const original = await notificationFor(app.id);
+    const calendar = await notificationFor(calendarRecord.id);
+    assert.notEqual(original.originalMessageId, calendar.originalMessageId);
+    const alert = textFor(Number(original.originalMessageId));
+    assert.equal(alert.chat_id, telegramChatId);
+    assert.match(alert.text, /^FOUNDERSLAB — NEW BOOKING/);
+    assert.ok(alert.text.includes("Founder: " + linked.founderName));
+    assert.match(alert.text, /Founder X: https:\/\/x\.com\/isolated_example/);
+    assert.match(alert.text, /Project X: https:\/\/x\.com\/isolated_project/);
+    assert.match(
+      alert.text,
+      /Project website: https:\/\/isolated\.example\.invalid\//,
+    );
+    assert.match(alert.text, /Speakers: 3/);
+    assert.match(
+      alert.text,
+      /Requested session: Sunday, 27 December 2026 at 19:00:00 UK time/,
+    );
+    assert.match(alert.text, /Status: Pending approval/);
+    assert.match(alert.text, /Submitted: .+ UK time/);
+    assert.doesNotMatch(alert.text, /Contact:|Comments:|BD referrer/);
+    const approval = textFor(Number(calendar.approvalMessageId));
+    assert.deepEqual(approval.reply_parameters, {
+      message_id: Number(calendar.originalMessageId),
+      allow_sending_without_reply: false,
+    });
+    assert.match(approval.text, /Approved by: Integration Admin/);
+    assert.match(approval.text, /Role: Admin/);
+    assert.match(approval.text, /Approved at: .+ UK time/);
+    const seconds = Math.floor(
+      (+calendar.approvedAt - +calendar.createdAt) / 1000,
+    );
+    const duration = approval.text.match(
+      /Time to approval: (?:(\d+)h )?(?:(\d+)m )?(\d+)s/,
+    );
+    assert.ok(duration);
+    assert.ok(seconds >= 1);
+    assert.equal(
+      Number(duration[1] ?? 0) * 3600 +
+        Number(duration[2] ?? 0) * 60 +
+        Number(duration[3]),
+      seconds,
+    );
+    assert.equal(
+      telegram.filter(
+        ({ payload }) =>
+          payload.reply_parameters?.message_id ===
+          Number(calendar.originalMessageId),
+      ).length,
+      1,
+    );
+  } finally {
+    await telegramDb.end();
+  }
+  pass(
+    "Public booking alerts contain only booking data and a confirmed booking gets one threaded approval reply",
+  );
+  const messagesBeforeSpaceData = telegram.length;
   const stats = {
     sessionId: session.id,
     postUrl: "https://posts.example.invalid/shared/week",
@@ -876,6 +999,8 @@ try {
     150,
   );
   state = await command("space-data.save", { ...stats, liveListeners: 160 });
+  assert.equal(telegram.length, messagesBeforeSpaceData);
+
   assert.equal(
     state.sessions.find((row) => row.id === session.id)!.postUrl,
     stats.postUrl,
@@ -1872,6 +1997,14 @@ try {
     });
     await page.setViewportSize({ width: 1358, height: 644 });
     await page.mouse.move(0, 0);
+    // Measure the rendered chart after fonts and the resized viewport settle.
+    await page.locator(".desk-activity .studio-chart").waitFor();
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+      await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      });
+    });
     const populatedCards = await page
       .locator(".desk-grid > *")
       .evaluateAll((cards) =>
@@ -4242,6 +4375,136 @@ try {
   pass(
     "Two peers can sign up in either order and registration closes automatically without blocking login",
   );
+  const telegramChecks = new Client({ connectionString: url.toString() });
+  await telegramChecks.connect();
+  try {
+    const sessionList = (await request("/api/public/sessions")).data.sessions;
+    const slot = sessionList.find(
+      (entry: { bookingLocked: boolean }) => !entry.bookingLocked,
+    );
+    assert.ok(slot, "Active booking slot for Telegram tests");
+    // Earlier tests deliberately expire or fill programme slots.
+    const { startsAt, deadline } = sundaySessions(new Date(), 1)[0];
+    await telegramChecks.query(
+      `UPDATE "Session" SET "startsAt"=$2, deadline=$3, status='Scheduled',
+         capacity=GREATEST(capacity, (SELECT count(DISTINCT "companyId") + 1
+           FROM "SessionParticipant" WHERE "sessionId"=$1 AND attendance <> 'Cancelled'))
+       WHERE id=$1`,
+      [slot.id, startsAt, deadline],
+    );
+    const managerToken = randomBytes(32).toString("base64url");
+    const managerCsrf = randomBytes(32).toString("base64url");
+    const telegramManagerEmail = "telegram-manager@example.invalid";
+    await telegramChecks.query(
+      'INSERT INTO "SpaceManager" (id, email, "allSpaces", "verifiedAt") VALUES ($1, $2, true, now())',
+      ["telegram-manager", telegramManagerEmail],
+    );
+    await telegramChecks.query(
+      'INSERT INTO "SpaceManagerSession" (id, "managerId", "tokenHash", csrf, "expiresAt") VALUES ($1, $2, $3, $4, now() + interval \'1 hour\')',
+      [
+        "telegram-manager-session",
+        "telegram-manager",
+        createHash("sha256").update(managerToken).digest("hex"),
+        managerCsrf,
+      ],
+    );
+    const telegramManager = {
+      cookie: `fl_space_manager=${managerToken}`,
+      csrf: managerCsrf,
+    };
+    async function telegramBooking(founderName: string, xHandle: string) {
+      const submitted = await request("/api/public/apply", {
+        ...application,
+        founderName,
+        companyName: `${founderName} project`,
+        xHandle,
+        sessionId: slot.id,
+      });
+      assert.equal(submitted.status, 201, JSON.stringify(submitted.data));
+      const records = (await request("/api/workspace", undefined, newOwner))
+        .data.state as DataState;
+      const founder = records.applications.find(
+        (entry) => entry.reference === submitted.data.reference,
+      )!;
+      return records.bookings.find(
+        (entry) => entry.applicationId === founder.id,
+      )!;
+    }
+    const booked = await telegramBooking(
+      "Telegram manager founder",
+      "telegram_mgr",
+    );
+    const approve = {
+      type: "application.review",
+      payload: { id: booked.applicationId, status: "Approved" },
+    };
+    assert.equal((await request("/api/workspace", approve)).status, 401);
+    assert.equal(
+      (await request("/api/workspace", approve, telegramManager, false)).status,
+      403,
+    );
+    await command(approve.type, approve.payload, telegramManager);
+    await command(approve.type, approve.payload, telegramManager);
+    const notification = async (bookingId: string) =>
+      (
+        await telegramChecks.query(
+          'SELECT * FROM "BookingTelegramNotification" WHERE "bookingId"=$1',
+          [bookingId],
+        )
+      ).rows[0];
+    await expect
+      .poll(async () => (await notification(booked.id))?.approvalState)
+      .toBe("sent");
+    const delivered = await notification(booked.id);
+    const threaded = telegram.filter(
+      ({ payload }) =>
+        payload.reply_parameters?.message_id ===
+        Number(delivered.originalMessageId),
+    );
+    assert.equal(threaded.length, 1);
+    assert.match(threaded[0].payload.text, /Founder: Telegram manager founder/);
+    assert.ok(
+      threaded[0].payload.text.includes(`Approved by: ${telegramManagerEmail}`),
+    );
+    assert.match(threaded[0].payload.text, /Role: Space Manager/);
+    assert.equal(delivered.approverId, "telegram-manager");
+    await command(
+      "application.review",
+      { id: booked.applicationId, status: "Declined" },
+      telegramManager,
+    );
+    const outage = await telegramBooking(
+      "Telegram outage founder",
+      "telegram_outage",
+    );
+    await expect
+      .poll(async () => (await notification(outage.id))?.initialState)
+      .toBe("unknown");
+    const recovered = await command(
+      "application.review",
+      { id: outage.applicationId, status: "Approved" },
+      telegramManager,
+    );
+    assert.equal(
+      recovered.bookings.find((entry) => entry.id === outage.id)?.status,
+      "Approved",
+    );
+    const undelivered = await notification(outage.id);
+    assert.ok(undelivered.approvedAt);
+    assert.equal(undelivered.originalMessageId, null);
+    assert.equal(undelivered.approvalMessageId, null);
+    assert.equal(
+      telegram.filter(({ payload }) =>
+        payload.text.includes("Telegram outage founder"),
+      ).length,
+      1,
+    );
+    pass(
+      "Authorised Space Manager approval is threaded and Telegram downtime does not affect booking or approval",
+    );
+  } finally {
+    await telegramChecks.end();
+  }
   console.log(
     `${passed} PostgreSQL/production HTTP integration groups passed.`,
   );
@@ -4260,4 +4523,5 @@ try {
   await control.query(`DROP DATABASE "${database}" WITH (FORCE)`);
   await control.end();
   await new Promise<void>((resolve) => mailServer.close(() => resolve()));
+  await new Promise<void>((resolve) => telegramServer.close(() => resolve()));
 }
