@@ -17,9 +17,9 @@ CREATE TABLE "BookingTelegramNotification" (
         FOREIGN KEY ("bookingId") REFERENCES "BookingRequest"("id") ON DELETE CASCADE
 );
 
-CREATE UNIQUE INDEX "BookingTelegramNotification_chatId_originalMessageId_key"
+CREATE UNIQUE INDEX "booking_telegram_chat_message_key"
     ON "BookingTelegramNotification"("chatId", "originalMessageId");
-CREATE INDEX "BookingTelegramNotification_chatId_initialState_initialRetryAt_idx"
+CREATE INDEX "booking_telegram_initial_due_idx"
     ON "BookingTelegramNotification"("chatId", "initialState", "initialRetryAt");
-CREATE INDEX "BookingTelegramNotification_chatId_approvalState_approvalRetryAt_idx"
+CREATE INDEX "booking_telegram_approval_due_idx"
     ON "BookingTelegramNotification"("chatId", "approvalState", "approvalRetryAt");

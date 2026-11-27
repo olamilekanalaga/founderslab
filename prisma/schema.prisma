@@ -265,9 +265,9 @@ model BookingTelegramNotification {
   approvalState     String         @default("pending")
   approvalRetryAt   DateTime?
 
-  @@unique([chatId, originalMessageId])
-  @@index([chatId, initialState, initialRetryAt])
-  @@index([chatId, approvalState, approvalRetryAt])
+  @@unique([chatId, originalMessageId], map: "booking_telegram_chat_message_key")
+  @@index([chatId, initialState, initialRetryAt], map: "booking_telegram_initial_due_idx")
+  @@index([chatId, approvalState, approvalRetryAt], map: "booking_telegram_approval_due_idx")
 }
 
 model ResearchRecord {

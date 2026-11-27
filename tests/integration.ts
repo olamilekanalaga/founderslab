@@ -4375,6 +4375,15 @@ try {
       (entry: { bookingLocked: boolean }) => !entry.bookingLocked,
     );
     assert.ok(slot, "Active booking slot for Telegram tests");
+    // Earlier tests deliberately expire or fill programme slots.
+    const { startsAt, deadline } = sundaySessions(new Date(), 1)[0];
+    await telegramChecks.query(
+      `UPDATE "Session" SET "startsAt"=$2, deadline=$3, status='Scheduled',
+         capacity=GREATEST(capacity, (SELECT count(DISTINCT "companyId") + 1
+           FROM "SessionParticipant" WHERE "sessionId"=$1 AND attendance <> 'Cancelled'))
+       WHERE id=$1`,
+      [slot.id, startsAt, deadline],
+    );
     const managerToken = randomBytes(32).toString("base64url");
     const managerCsrf = randomBytes(32).toString("base64url");
     const telegramManagerEmail = "telegram-manager@example.invalid";
