@@ -1997,6 +1997,14 @@ try {
     });
     await page.setViewportSize({ width: 1358, height: 644 });
     await page.mouse.move(0, 0);
+    // Measure the rendered chart after fonts and the resized viewport settle.
+    await page.locator(".desk-activity .studio-chart").waitFor();
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+      await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      });
+    });
     const populatedCards = await page
       .locator(".desk-grid > *")
       .evaluateAll((cards) =>
