@@ -592,7 +592,6 @@ html:has(.admin-desk)::-webkit-scrollbar-thumb:hover {
     .studio-review-consent,
     .studio-review-actions > span,
     .studio-applicant-comments b,
-    .studio-review-context-note,
     .studio-review-context-list small,
     .studio-review-delete
   ) {

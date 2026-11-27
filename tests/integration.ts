@@ -1523,6 +1523,19 @@ try {
       .getByRole("navigation", { name: "Workspace navigation" })
       .getByRole("link", { name: /Admin operations/ })
       .click();
+    await managerPage.goto(
+      `${origin}/operations?tab=applications&review=${application.id}`,
+    );
+    const applicationDialog = managerPage.getByRole("dialog", {
+      name: /^Application/,
+    });
+    await expect(
+      applicationDialog.getByText("Booking confirmed", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      applicationDialog.getByText(/A project seat is reserved for .*27 Dec/),
+    ).toBeVisible();
+    await managerPage.getByRole("button", { name: "Close dialog" }).click();
     await managerPage.getByRole("button", { name: "BD details" }).click();
     await managerPage.getByLabel("BD X handle").waitFor();
   } finally {

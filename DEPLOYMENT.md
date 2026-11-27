@@ -1,56 +1,32 @@
-# Deploy and operate Founders Lab
+# Deploy and operate FoundersLab
 
-Use the existing Vercel project connected to `olamilekanalaga/founderslab`, production branch `main`. Keep one project, one PostgreSQL database and one canonical website origin. The current Vercel website address works without buying a custom domain.
+Use the existing Vercel project connected to `olamilekanalaga/founderslab`. Production tracks `main` and serves [www.founderslab.fun](https://www.founderslab.fun).
 
-## Build configuration
+## Build
 
-The repository root contains `package.json` and `vercel.json`. Use Next.js and Node.js 24. The checked-in configuration installs with `npm ci`, builds with `npm run build:vercel` and outputs `.next`.
+The project uses Node.js 24, `npm ci` and `npm run build:vercel`. The Production build generates the Prisma client, applies migrations through the direct PostgreSQL connection, seeds programme defaults and publishes the rolling Sunday schedule before compiling Next.js. Workspace sign-in uses the accounts and password hashes stored in the connected database.
 
-In Vercel Production, the build generates Prisma, applies checked-in SQL migrations using the direct database connection, provisions defaults, ensures the attendance-gated booking window and provisions the configured Admin if absent. Existing passwords are not reset. Preparation failures fail the deployment. Public requests never run bootstrap account creation.
+## Production settings
 
-## Production configuration
+Use server-side Vercel Production environment variables. Keep credentials out of Git and public-prefixed variables.
 
-Set values in the existing project's Production environment, never in public-prefixed variables or Git:
-
-| Variable | Purpose |
-|---|---|
-| `DATABASE_URL` | PostgreSQL application connection; Neon pooled connection is supported. |
+| Variable                | Purpose                                                                   |
+| ----------------------- | ------------------------------------------------------------------------- |
+| `DATABASE_URL`          | PostgreSQL application connection. Neon pooled connections are supported. |
 | `DATABASE_URL_UNPOOLED` | Direct connection for migrations when the application uses Neon's pooler. |
-| `APP_ORIGIN` | Exact canonical HTTPS website origin, initially `https://founderslab-orcin.vercel.app`. |
-| `BOOTSTRAP_ADMIN_EMAIL` | Sole Admin allowlist. **Keep this configured after provisioning.** |
-| `BOOTSTRAP_ADMIN_PASSWORD` | Initial provisioning password, 12–200 characters. No default exists. |
-| `BOOTSTRAP_ADMIN_NAME` | Optional Admin display name. |
-| `RESEND_API_KEY` | Transactional email provider credential for Space Manager invitations/sign-in. |
-| `MANAGER_EMAIL_FROM` | Sender address on a domain verified in Resend. |
+| `APP_ORIGIN`            | Canonical HTTPS origin, `https://www.founderslab.fun`.                    |
+| `TELEGRAM_BOT_TOKEN`    | Optional bot token for booking notifications. Use a Sensitive variable.   |
+| `TELEGRAM_CHAT_ID`      | Optional private management chat ID, including the leading minus sign.    |
 
-`DATABASE_DATABASE_URL` / `STORAGE_DATABASE_URL` and corresponding direct-connection aliases are also supported. Prefer the standard integration variables when available.
+The database connection also accepts the existing integration aliases in [.env.example](.env.example). Both Telegram variables are needed to send notifications. Changes to Vercel variables take effect on the next deployment. [Telegram setup and verification](docs/telegram-bookings.md)
 
-The bootstrap password is used only when creating the Admin. After confirming real sign-in, it can be removed from Vercel; do not remove the allowlist email. Existing credentials remain hashed in PostgreSQL. There is no public signup, founder account or administrator invitation acceptance.
+Accounts created through workspace signup use their stored credentials. `BOOTSTRAP_ADMIN_EMAIL` is only relevant to an existing legacy bootstrap Admin's sign-in. The manual `db:admin` script uses the bootstrap password and name when creating that account. `RESEND_API_KEY` and `MANAGER_EMAIL_FROM` are used by legacy manager email workflows. [Space Manager access](SPACE-MANAGERS.md)
 
-Use an existing domain you own for the email sender, or acquire one if needed. A custom website domain and a verified email-sending domain are separate configuration tasks; they may use the same owned domain. No provider subscription or domain purchase is performed by this repository. Provider acceptance of an email is recorded separately from actual inbox delivery.
+## Live checks
 
-## Live launch checks
+1. Visit [Booking](https://www.founderslab.fun/book). Confirm that the first of three Sundays is open when places remain and that the other two are locked.
+2. Submit an application for the open Sunday. Check the confirmation page and the pending booking in **Admin operations**.
+3. Approve the application for the selected Space. Check that the project occupies one seat. If Telegram is configured, verify the booking alert and its threaded approval reply.
+4. After a real Space, submit its Space Data and verify that the next Sunday opens. Use isolated tests for fixture attendance and schedule changes.
 
-1. `/book` shows eight Saturdays in two four-week cycles, at 7 PM Europe/London with GMT/BST conversion and slots left.
-2. A public application creates a pending request and a limited private confirmation link, without login.
-3. Anonymous private pages redirect to `/signin`; `/api/workspace` and manager/admin APIs reject unauthorised requests. `/demo`, `/invite` and public signup are unavailable.
-4. The real Admin can sign in, approve a booking, assign Spaces, review reports, select a monthly winner and sign out.
-5. A real manager email arrives, the single-use link works, assigned Space data saves, and revocation immediately blocks the session and outstanding links.
-6. Saved shared links appear on the associated founder/company profiles. Drafts do not complete a cycle. Four distinct explicit attendance submissions advance the public window by four weeks while retaining history.
-7. Configure database backups and confirm the programme's actual privacy terms and recovery process before relying on the service operationally.
-
-Do not submit invented production attendance just to move the calendar. Use isolated local tests for cycle progression. Permanent deletion must be intentional: the Admin confirmation removes owned records; shared Spaces remain.
-
-Automated tests use a local production build, an isolated PostgreSQL database and a mock email provider. They do not prove deployed authentication or real inbox delivery. The workspace used for development has been unable to reach the live site through its network proxy, so owner sign-in and real email checks remain owner-side validation steps. See SECURITY-REVIEW.md.
-
-## Optional custom website domain
-
-Add the domain to this same Vercel project's Domains settings and apply Vercel's DNS instructions. Set it as the canonical address, redirect old aliases, change `APP_ORIGIN` to that exact HTTPS origin, and redeploy. Verify the public application and real email links again. Preserve PostgreSQL and `BOOTSTRAP_ADMIN_EMAIL`; no new application or account migration is needed.
-
-## Other environments
-
-Preview/local environments still require PostgreSQL; there is no browser demo. Use an isolated database and a matching origin. Do not let preview deployments mutate production records. Vercel automatic database preparation runs only in Production; prepare isolated environments using the documented migration/default-seed commands.
-
-For a persistent Node host, use the same server environment variables and database, run `npm run db:migrate`, `npm run db:seed`, initial `npm run db:admin`, `npx tsx scripts/publish-saturdays.ts`, then `npm run build` and `npm start`. Serve it behind HTTPS and use a process supervisor.
-
-Applied migrations are immutable. Keep the full migration history, including tables used by existing historical records. See prisma/README.md.
+Keep preview and local databases separate from production. The Vercel preparation step runs in Production. For a persistent Node host, run the migrations, defaults seed, and Sunday publication from the [local setup guide](README.md#local-setup), then build and start the application. Keep applied migrations intact. [Database migrations](prisma/README.md)

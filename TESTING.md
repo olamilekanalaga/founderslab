@@ -1,19 +1,12 @@
 # Verification
 
-Current checks use Node.js 24, PostgreSQL and a Next.js production build.
+Use Node.js 24, local PostgreSQL and a Next.js production build. The [README](README.md#checks) lists the commands.
 
-- TypeScript, ESLint and production compilation.
-- 22 unit/domain checks: validation, capacity, shared records, reports, permissions, London GMT/BST offsets, Nigeria time conversion and duplicate-free schedule planning.
-- 16 isolated PostgreSQL/HTTP groups: public application, duplicate rejection, approval, booking capacity, profile inheritance, Admin allowlist, protected routes, credentials, CSRF/cookies, manager invitations and resource scope, expiry/revocation, reporting, mobile browser saving and logout.
-- Attendance-cycle checks: eight published weeks, drafts excluded, repeated submission of one week counted once, advancement only after four distinct oldest-cycle submissions, eight active weeks after rollover, archived sessions retained, existing booking IDs unchanged and out-of-season public booking rejected.
-- Three backend-backed browser checks: an eight-date light calendar with slots left, anonymous/storage-forged access denial, no public signup/demo controls, and Axe WCAG A/AA on the public calendar. Manager mobile forms also receive Axe checks in integration tests.
-- `npm run check:client-secrets`: compiled browser files checked for configured server credential values and removed browser fixtures; private environment files must not be tracked.
-- `npm audit --omit=dev`: zero known production dependency vulnerabilities after compatible transitive dependency updates.
+- **Lint, type checking, unit tests and build** cover validation, project capacity, permissions, date conversion and the production bundle.
+- **PostgreSQL integration tests** cover signup closure, authenticated access, booking approval, legacy manager boundaries, the Sunday calendar, attendance, BD verification and payment records, permanent deletion, and Telegram alerts and approval replies.
+- **Browser checks** cover the mobile booking form, field errors, public availability, accessibility and private routes.
+- **Client secret checks** scan compiled browser files for configured server-side credentials and confirm that private environment files are outside Git.
 
-The integration runner creates a random local-only PostgreSQL database and password, uses a mock transactional email provider, and removes that database when complete. Fictional fixtures are test infrastructure only and are blocked from hosted databases. No production records or real inboxes are used by these tests.
+The integration runner creates a disposable local PostgreSQL database, seeds fictional records, uses mock email and Telegram providers, and drops that database afterward. Live Telegram delivery requires a booking in the configured production environment. [Verification steps](docs/telegram-bookings.md#test-on-iphone)
 
-Screenshots are captured at iPhone (393 × 852) and desktop dimensions. No claim of production end-to-end security or real email delivery is made: this workspace's direct live requests are blocked by its network proxy. See SECURITY-REVIEW.md.
-
-Monthly winner tests cover month-scoped participants, one winner after reselection, no assessment requirement and Admin-only CSRF checks. Deletion tests exercise the mobile confirmation flow, declined applications, approved founders, revoked confirmation links, removal of owned company/application/booking data and preservation of shared sessions.
-
-Manager scope regression also asserts that no team-count inputs appear, direct team-edit requests return 400, existing attendance is unchanged, and a report containing only listener/duration totals and links can complete an assigned past Space.
+Screenshots are QA evidence from local fixtures. Set `TEST_ARTIFACT_DIR` to a scratch directory when running integration checks to keep tracked screenshots out of local diffs.
