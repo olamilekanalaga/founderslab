@@ -13,7 +13,8 @@
       "redesign/admin-studio": false,
       "feature/bd-reward-rules": false,
       "feature/bd-partner-workflow": false,
-      "feature/founder-project-identity": false
+      "feature/founder-project-identity": false,
+      "feature/telegram-booking-notifications": false
     }
   }
 }

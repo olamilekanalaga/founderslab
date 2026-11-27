@@ -123,6 +123,7 @@ test("Next server entry points and HTTP handlers are explicitly server-only", ()
     "server/db/index.ts",
     "server/http.ts",
     "server/services/space-managers.ts",
+    "server/services/booking-telegram.ts",
     ...files.filter((f) => f.startsWith("server/handlers/")),
   ]) {
     assert.match(readFileSync(file, "utf8"), /import "server-only";/, file);
@@ -190,6 +191,8 @@ test("historical Prisma migrations remain byte-identical and BD tables are addit
             )
             .replace(/^  passwordSetup +Boolean +@default\(false\)\n/m, "")
             .replace(/^  manual +Boolean +@default\(false\)\n/m, "")
+            .replace(/  telegram BookingTelegramNotification\?\n\n/, "")
+            .replace(/model BookingTelegramNotification \{[\s\S]*?\n\}\n\n/, "")
             .replace(/\nmodel BdPartner \{[\s\S]*$/, "")
         : readFileSync(entry.file);
     assert.equal(digest(contents), entry.sha256, entry.file);
@@ -237,6 +240,7 @@ test("historical Prisma migrations remain byte-identical and BD tables are addit
         "prisma/migrations/202611240006_manager_password/migration.sql",
         "prisma/migrations/202611240007_sunday_programme/migration.sql",
         "prisma/migrations/202611260001_shared_admin_signup/migration.sql",
+        "prisma/migrations/202611270001_booking_telegram_notifications/migration.sql",
       )
       .sort(),
   );

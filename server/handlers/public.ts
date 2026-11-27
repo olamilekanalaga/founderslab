@@ -22,6 +22,8 @@ import {
   referralSelection,
   signedInBdPartner,
 } from "@/server/services/bd-referral";
+import { trackFounderBooking } from "@/server/db/booking-telegram";
+import { scheduleBookingTelegram } from "@/server/services/booking-telegram";
 import { defaultSettings } from "@/lib/catalog";
 
 export async function GET(
@@ -267,7 +269,10 @@ export async function POST(
                 }
               : {}),
           },
+          include: { bookings: { select: { id: true } } },
         });
+        const booking = created.bookings[0];
+        if (booking) await trackFounderBooking(tx, booking.id);
         if (review)
           await tx.auditLog.create({
             data: {
@@ -282,6 +287,7 @@ export async function POST(
         return created;
       });
       if (selected) (await cookies()).delete(BD_REFERRAL_COOKIE);
+      scheduleBookingTelegram(application.bookings.map(({ id }) => id));
       return json(
         {
           token: raw,
@@ -353,7 +359,7 @@ export async function POST(
               409,
             );
           const status = "Pending";
-          return tx.bookingRequest.create({
+          const booking = await tx.bookingRequest.create({
             data: {
               applicationId: a.id,
               sessionId: session.id,
@@ -361,9 +367,12 @@ export async function POST(
               status,
             },
           });
+          await trackFounderBooking(tx, booking.id);
+          return booking;
         },
         { timeout: 30000 },
       );
+      scheduleBookingTelegram([result.id]);
       return json({ status: result.status }, 201);
     }
     return json({ error: "Not found" }, 404);

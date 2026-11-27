@@ -245,7 +245,29 @@ model BookingRequest {
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
+  telegram BookingTelegramNotification?
+
   @@unique([applicationId, sessionId])
+}
+
+model BookingTelegramNotification {
+  bookingId         String         @id
+  booking           BookingRequest @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  chatId            String?
+  originalMessageId String?
+  approvalMessageId String?
+  approvedAt        DateTime?
+  approverId        String?
+  approverName      String?
+  approverRole      String?
+  initialState      String         @default("pending")
+  initialRetryAt    DateTime?
+  approvalState     String         @default("pending")
+  approvalRetryAt   DateTime?
+
+  @@unique([chatId, originalMessageId])
+  @@index([chatId, initialState, initialRetryAt])
+  @@index([chatId, approvalState, approvalRetryAt])
 }
 
 model ResearchRecord {

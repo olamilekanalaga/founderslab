@@ -1,3 +1,4 @@
+import { trackBookingApproval } from "./booking-telegram";
 import { db } from "./client";
 import { hash, token } from "@/server/security/tokens";
 import {
@@ -294,11 +295,45 @@ export async function executeCommand(command: Command, viewer: Viewer) {
           );
       }
       await persistDiff(tx, before, after);
+      const notificationBookingIds = [];
+      if (
+        command.type === "application.review" ||
+        command.type === "booking.review"
+      ) {
+        const previouslyUnconfirmed = new Set(
+          before.bookings
+            .filter(
+              (booking) =>
+                !["Approved", "Attended", "No-show"].includes(booking.status),
+            )
+            .map((booking) => booking.id),
+        );
+        for (const booking of after.bookings) {
+          if (
+            booking.status === "Approved" &&
+            previouslyUnconfirmed.has(booking.id)
+          ) {
+            const tracked = await trackBookingApproval(
+              tx,
+              booking.id,
+              booking.updatedAt,
+              viewer,
+            );
+            if (tracked.count) notificationBookingIds.push(booking.id);
+          }
+        }
+      }
       if (command.type === "space-data.save" && command.payload.submit) {
         await ensureProgrammeWindow(tx);
-        return scopeState(await loadState(tx), viewer.permissions);
+        return {
+          state: scopeState(await loadState(tx), viewer.permissions),
+          notificationBookingIds,
+        };
       }
-      return scopeState(after, viewer.permissions);
+      return {
+        state: scopeState(after, viewer.permissions),
+        notificationBookingIds,
+      };
     },
     { maxWait: 10000, timeout: 30000 },
   );
