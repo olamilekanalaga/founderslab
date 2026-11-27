@@ -1317,6 +1317,17 @@
   min-height: 46px;
   padding: 11px 13px;
 }
+.public-app .public-form :is(input, textarea, select)[aria-invalid="true"] {
+  border-color: #ad433c;
+  outline: 1px solid #ad433c;
+  outline-offset: 1px;
+}
+.public-app .public-form .application-field-error {
+  display: block;
+  color: #a33832;
+  font-size: 13px;
+  font-weight: 500;
+}
 .public-app .public-form :is(input, textarea)::placeholder {
   color: #83798e;
 }
