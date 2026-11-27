@@ -1,121 +1,68 @@
-# Founders Lab
+# FoundersLab
 
-A Web3 founder conversation and relationship-building programme, supported by private operational workspaces and hosted by **⭕️La_Crrypt💰₿**. The application uses one domain, a light interface, Next.js, TypeScript, Prisma and PostgreSQL.
+FoundersLab hosts weekly conversations with Web3 founders about what they are building, who needs it, and why it matters now. The site uses Next.js, TypeScript, Prisma and PostgreSQL on Vercel. [Live site](https://www.founderslab.fun)
 
-## V4 public experience
+## Public booking
 
-The SaaS-style public UI upgrade adds a product-led homepage, real availability preview and a calendar with persistent selected-date continuation on desktop and mobile. See the [UI upgrade](docs/saas/README.md) and [current validation](docs/saas/VALIDATION.md). The programme, public routes, application/approval rules and private workspaces remain on the existing backend.
+Founders start at [Booking](https://www.founderslab.fun/book), choose the open Sunday, and complete the application. A successful submission gives them a private confirmation link. A pending application does not reserve a seat.
 
-`/` introduces the programme in a light, responsive homepage. Founders book through `/book`, apply through `/apply` and retain their existing private confirmation link. Public navigation contains no workspace login links; Admin bookmarks `/signin` and invited managers use their existing passwordless email flow.
+The public calendar shows three weeks at 7 PM Europe/London. The first week accepts bookings when seats are available, and the next two are visible as **Locked**. Submitting the current week's Space Data moves the public window forward one week while retaining the completed Space in private history. Saving a draft or marking the Space complete without submitting its data does not advance the calendar.
 
-Founder awards are retired for new participation. `/campaigns` is a protected read-only archive, available from Admin Settings → Programme. Historical award records and payment references remain intact; no new award decisions can be written through the old endpoints. BD introductions are invitation-only and informational; no referral accounts, commission rules or payouts are implemented.
+The application collects the founder's personal X username and the project's official X username separately. Contact email and promotional consent are optional. Submission highlights missing or invalid answers and focuses the first field that needs attention.
 
-See the [V4 implementation audit](docs/v4/IMPLEMENTATION.md), [award audit](docs/v4/AWARD-AUDIT.md), [future BD proposal](docs/v4/BD-REFERRAL-PROPOSAL.md) and [test results/screenshots](docs/v4/VALIDATION.md). This product PR depends on architecture PR #1 and is not deployed automatically.
+## Workspace
 
-## What you do next
+- **Sign in** using your workspace account. The two team members who created their profiles during workspace signup share Admin access. Signup closes automatically after the second account. [Workspace sign-in](https://www.founderslab.fun/signin) · [Space Manager access](SPACE-MANAGERS.md)
+- **Admin operations → Applications** is where you review submissions. Approving a booking-linked application reserves a project seat in its upcoming Space, subject to capacity. When an application has no upcoming booking, choose its Space in the review before approving. **Bookings** shows the requested date and seat status.
+- **Space Data** records the Space after it takes place. Use **Submit attendance** to advance the calendar. BD attendance verification is a separate operation.
+- **BD details** is where you register approved partners and copy their referral links. **BD Performance** shows attributed applications, verified appearances and payments. Four verified founder appearances in completed Spaces earn ₦20,000. Record payments after making them manually.
+- **Telegram** optionally alerts the configured private chat when a founder books and replies to that alert when the seat is confirmed. [Telegram setup and live verification](docs/telegram-bookings.md)
 
-The application is implemented on the existing Vercel project. A custom website domain is optional; the current `founderslab-orcin.vercel.app` address can be used.
+## Permanent deletion
 
-1. Sign in at `/signin` using your pre-provisioned Admin account and confirm you can see Overview, approvals and Reports.
-2. Configure or verify transactional email in Vercel: `RESEND_API_KEY`, `MANAGER_EMAIL_FROM` and the canonical HTTPS `APP_ORIGIN`. The sending domain must be verified in Resend. You can use an existing domain you own; you do not need to buy a second domain.
-3. In Settings → Space Managers, invite your friend, assign their Spaces, and test one real email link, save and revocation. Real inbox delivery has not been verified by the automated tests.
-4. Check one public application → approval → actual attendance submission → Overview/Reports journey on the deployed site.
-5. If you later add a custom domain, connect it to this same Vercel project, update `APP_ORIGIN`, redirect the old website address to the canonical one, and redeploy. Keep the same database and Admin allowlist.
+In **Admin operations → Applications**, open the record, expand **Remove this application**, select **Delete permanently** and type `DELETE` to confirm. You can also delete a founder from their profile. An administrator with directory write permission can perform permanent deletion.
 
-Keep `BOOTSTRAP_ADMIN_EMAIL` configured. Do not share passwords or API keys in chat. No new application, server or Supabase project is required.
-
-## Repository layout
-
-```text
-app/          Routing: public and Admin groups, manager entry, thin API adapters
-features/     Focused screens and browser-safe feature calculations
-components/   Shared UI, layout, workspace shell and record editor
-server/       Authentication, security, Prisma, services and HTTP handlers
-lib/          Browser-safe types/catalog, validation, domain logic and dates
-prisma/       Original relational schema and immutable SQL migrations
-scripts/      Node provisioning, migrations and verification commands
-tests/        Unit, architecture, browser and isolated PostgreSQL integration tests
-docs/         Architecture, audit inventories and refactor validation evidence
-artifacts/    Existing QA screenshots, not live programme records
-```
-
-See [architecture and frontend/backend boundaries](docs/ARCHITECTURE.md), the [pre-refactor audit](docs/architecture/AUDIT.md) and [validation results](docs/architecture/VALIDATION.md). The architecture refactor preserves existing URLs, API contracts, UI and security behaviour; it does not deploy or modify production data.
-
-Removed screens and unused forms are not kept in the frontend. Historical database models/migrations remain so existing records and references are preserved. Test fixtures are server-side testing infrastructure, never a browser demo or production seed.
-
-## Founder and project identities
-
-The homepage focuses on introducing a product, sharing a founder journey and reaching an interested audience. It uses the supplied founder logo; the redundant large date-card section is removed while the hero preview and full booking calendar remain. The application separates **About you** from **About your project**. Personal X belongs to Founder; official Project X belongs to Company and is automatically transferred from the application during approval. Admin can view/edit both independently.
-
-For new applications, only the private contact email is optional; the box says **Optional**. Required programme answers use browser/field-error focus, and usernames/countries normalize capitalization and extra spaces. Existing research fields remain; use **None** where business details do not apply. Promotional consent remains a separate voluntary choice.
-
-Migration `202611220004_project_x_identity` adds nullable Company/Application columns without altering old data. Legacy applications and companies without Project X remain valid. See [ownership and migration details](docs/identity/README.md) and [test results](docs/identity/VALIDATION.md).
-
-## Public workflow
-
-`/` displays the public programme homepage; its calls to action open `/book`. A founder chooses an available Saturday, completes `/apply`, and receives a private, limited-scope `/confirmation#token=…` link. There are no founder accounts or public signup. Every submission is stored in PostgreSQL. Missing database configuration produces an unavailable state, never a fictional fallback. Browser demo routes and mode switches have been removed.
-
-The calendar shows **eight Saturdays as two four-week cycles**, with the number of **slots left**. Full, cancelled and past weeks cannot be booked. All programme sessions start at **7 PM Europe/London**, automatically applying GMT/BST. Booking details and confirmations also show the visitor's browser-local time and date.
-
-## Attendance-gated calendar
-
-Admin and assigned Space Managers can save drafts and explicitly **Submit attendance**. The manager form contains only listener count, duration (hours/minutes), X recording URL and weekly X post URL. A manager’s final report requires listener count and duration; zero counts are valid. Detailed founder/team attendance remains Admin-only and existing records are preserved. Future sessions cannot be submitted. A distinct session counts once regardless of later edits.
-
-When all four Spaces in the oldest cycle have submitted attendance, that cycle leaves the public calendar and the next four Saturdays are opened. The public window remains eight weeks. The calendar does not advance merely because time passes. Completed sessions, submissions, bookings, founders, recording links and audit logs remain in private history; no historical records are deleted. Existing sessions are reused by London date and their bookings/capacities are preserved.
-
-New booking requests outside the active season are rejected by the server, including direct API requests. Pending requests do not reserve seats. Admin approval uses transactional capacity checks and counts founder projects separately from speakers.
-
-## Private access
-
-- `/signin` → `/dashboard`: only the active Admin matching `BOOTSTRAP_ADMIN_EMAIL` can sign in. No default password or public administrator creation endpoint exists.
-- `/manager/spaces`: separately invited, passwordless Space Managers can edit only assigned listener totals, duration and X links. They cannot access the Admin dashboard or founder contacts. See [SPACE-MANAGERS.md](SPACE-MANAGERS.md).
-- Admin: Founder Spaces → Applications / Bookings to review requests. Founder/company profiles share their associated weekly session data and recording links. Reports and charts derive from stored records.
-
-## Historical awards and permanent deletion
-
-The former Monthly Winner operation is archived. Admin Settings links to the read-only historical campaign/award table. Recorded decisions and payment references remain; no cryptocurrency payment is sent and no new founder awards are offered. Current public terms describe participation without future awards and do not overwrite stored historical policy or incurred obligations.
-
-Open a founder profile or an application review and choose **Delete permanently**. Type `DELETE` to confirm. Declined, pending and approved records can be removed. Deleting a linked approved application also deletes its founder record and owned applications/bookings/research/opportunities. Orphaned company records are removed; companies and Spaces shared with other founders remain. Deleted confirmation links stop working. Only the pre-provisioned Admin can delete records.
+Deleting an application removes its owned bookings and their Telegram tracking rows. Existing Telegram messages stay in the chat. For a linked approved application, first check the founder profile. Deletion can also remove that profile, associated applications, and other owned records. Shared Spaces are kept. Deleted confirmation links stop working.
 
 ## Local setup
 
-Use Node.js 24 and PostgreSQL. Copy `.env.example` to `.env`, configure the local database and bootstrap credentials, then run:
+Use Node.js 24 and a local PostgreSQL database. Start with [.env.example](.env.example).
 
 ```sh
 npm install
 npm run db:generate
 npm run db:migrate
 npm run db:seed
-npm run db:admin
-npx tsx scripts/publish-saturdays.ts
+npx tsx scripts/publish-sundays.ts
 npm run dev
 ```
 
-`db:seed` creates programme defaults and taxonomies, not fictional founders. Isolated test fixtures remain available to the integration runner on localhost only and are blocked on hosted Vercel databases.
-
-Keep `BOOTSTRAP_ADMIN_EMAIL` configured: it remains the Admin allowlist after provisioning. Provisioning never overwrites an existing password. Passwords use salted scrypt; sessions use hashed random tokens and HTTP-only cookies. Environment values must never be committed or exposed as `NEXT_PUBLIC_` variables.
+Create local workspace accounts through `/signup`. For a legacy bootstrap account in local development, configure the bootstrap variables and run `npm run db:admin`. Use a dedicated local database for test fixtures.
 
 ## Checks
 
 ```sh
-npm run typecheck
 npm run lint
+npm run typecheck
 npm test
 npm run build
 npm run check:client-secrets
 npm run test:integration
-# Against a running backend-backed local server:
+# Against a running backend-backed local server
 npm run test:e2e
-npx tsx scripts/check-route-contracts.ts
-npm run screenshots
 ```
 
-The architecture tests guard client/server boundaries, runtime cycles, original security handler implementations and byte-identical database migrations. Route checks compare status codes, redirects and headings against reviewed V4 contracts; the original architecture route captures remain historical evidence.
+The integration suite creates and drops its own local PostgreSQL database and uses mock providers for Telegram and legacy manager email. [Testing guide](TESTING.md)
 
-The integration runner creates its own random local PostgreSQL database and password, uses a mock transactional email provider, and removes the database afterward. It verifies applications, approvals, capacity, private access, manager permissions/revocation, shared records, eight-week cycle progression, booking preservation, award archive retention/write rejection and logout. No real emails or cryptocurrency transfers are sent by tests.
+## Repository layout
 
-## Deploy and limits
+| Directory                  | Contents                                                  |
+| -------------------------- | --------------------------------------------------------- |
+| `app/`                     | Pages and API route adapters                              |
+| `features/`, `components/` | Screens and shared UI                                     |
+| `server/`, `lib/`          | Server handlers, permissions, domain logic and validation |
+| `prisma/`                  | Prisma schema and immutable SQL migrations                |
+| `scripts/`, `tests/`       | Provisioning and verification                             |
+| `docs/`, `artifacts/`      | Guides and historical QA evidence                         |
 
-Use the existing Vercel project. `npm run build:vercel` applies checked-in migrations, provisions defaults, ensures the current attendance-gated window, provisions the configured Admin if absent, and compiles the application. No additional project/domain is needed. See [DEPLOYMENT.md](DEPLOYMENT.md).
-
-Manager invitations require a verified Resend sender and configured email variables. MFA, password recovery and automatic award transfers are not implemented. Reports describe programme participants, not the entire industry. A passing deployment is not proof that the deployed authentication journey or real email delivery has been tested. See [SECURITY-REVIEW.md](SECURITY-REVIEW.md) for verification scope.
+Production uses the existing Vercel project and its connected database. [Deployment guide](DEPLOYMENT.md) · [Architecture](docs/ARCHITECTURE.md)

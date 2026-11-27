@@ -41,6 +41,12 @@ export default function ApplicationReview({
   const bookedSpace = upcomingSpaces.find(
     (session) => session.id === upcomingBookings[0]?.sessionId,
   );
+  const confirmedBooking = upcomingBookings.find(
+    (booking) => booking.status === "Approved",
+  );
+  const confirmedSpace = upcomingSpaces.find(
+    (session) => session.id === confirmedBooking?.sessionId,
+  );
   const selectedSpace =
     upcomingSpaces.find(
       (session) =>
@@ -86,9 +92,6 @@ export default function ApplicationReview({
           ))}
         </div>
         {!pending.length && <p>All pending applications have been reviewed.</p>}
-        <p className="studio-review-context-note">
-          Application approval and project seat approval are separate steps.
-        </p>
       </aside>
       <article
         className="studio-review-content"
@@ -223,10 +226,17 @@ export default function ApplicationReview({
           <div className="studio-review-approved">
             <CheckCircle2 size={19} />
             <div>
-              <b>Application approved</b>
+              <b>
+                {confirmedSpace ? "Booking confirmed" : "Application approved"}
+              </b>
               <p>
-                Founder and company records are linked. A booking still needs
-                separate seat approval.
+                {confirmedSpace
+                  ? `A project seat is reserved for ${formatSpaceDate(confirmedSpace.startsAt)} (London time).`
+                  : hasUnconfirmedBooking
+                    ? "The selected Space is awaiting seat confirmation."
+                    : selectedSpace && can
+                      ? "Choose an upcoming Space to reserve a project seat."
+                      : "Founder and project records are linked."}
               </p>
               <div>
                 {a.founderId && (

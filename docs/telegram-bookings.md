@@ -30,7 +30,7 @@ This integration sends management-group alerts for founder-submitted bookings an
 2. Check the private Telegram group for one **FOUNDERSLAB — NEW BOOKING** message. Tap the X and website links and verify the speaker count, Sunday and submitted time. No approval reply should appear yet.
 3. Sign in to FoundersLab using the reviewer’s own account. Open **Admin operations → Applications**, choose the dummy booking and tap **Approve**. The booking should show as approved and occupy one slot.
 4. In Telegram, open **FOUNDERSLAB — BOOKING APPROVED**. Tap the quoted message to verify it links to the original alert. Check the reviewer identity, role, London timestamp and elapsed time. For a legacy Space Manager whose profile only has an email address, that existing account identifier is shown. Review or save the approved booking again to verify a second reply does not appear.
-5. Cancel the test booking in FoundersLab to release its slot, and remove the dummy records if appropriate. Cancel and Space Data actions have no Telegram messages.
+5. To remove the test record, open its application, select **Remove this application → Delete permanently**, and type `DELETE`. This clears the booking and its FoundersLab Telegram tracking. Posted messages stay in Telegram. Review the linked founder first if you already approved the test application. [Permanent deletion](../README.md#permanent-deletion)
 
 ## Migration and delivery behaviour
 
