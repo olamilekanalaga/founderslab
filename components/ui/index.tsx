@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
+import Image from "next/image";
 import { X, ArrowUpRight, Search, CheckCircle2 } from "lucide-react";
 let activeDialogLocks = 0;
 let previousBodyOverflow = "";
@@ -31,15 +32,34 @@ export function Status({ value }: { value: string }) {
     </span>
   );
 }
-export function Avatar({ name, index = 0 }: { name: string; index?: number }) {
+export function Avatar({
+  name,
+  index = 0,
+  logo,
+}: {
+  name: string;
+  index?: number;
+  logo?: string;
+}) {
   return (
     <span className={`person-avatar tone-${index % 5}`} aria-hidden="true">
-      {name
-        .split(" ")
-        .filter((word) => /^[\p{L}\p{N}]/u.test(word))
-        .map((v) => v[0])
-        .slice(0, 2)
-        .join("")}
+      {logo ? (
+        <Image
+          src={logo}
+          alt=""
+          width={48}
+          height={48}
+          unoptimized
+          className="person-avatar-logo"
+        />
+      ) : (
+        name
+          .split(" ")
+          .filter((word) => /^[\p{L}\p{N}]/u.test(word))
+          .map((v) => v[0])
+          .slice(0, 2)
+          .join("")
+      )}
     </span>
   );
 }

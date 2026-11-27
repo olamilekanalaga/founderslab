@@ -1461,6 +1461,30 @@
 .public-app .founder-application-page .record-form textarea {
   border-radius: 17px;
 }
+.public-app .founder-application-page .record-form input[type="file"] {
+  border-radius: 14px;
+  overflow: hidden;
+}
+.application-logo > small {
+  display: block;
+  margin-top: 6px;
+}
+.application-logo-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+}
+.application-logo-preview img {
+  object-fit: contain;
+  border: 1px solid var(--fl-line);
+  border-radius: 8px;
+}
+.application-logo-preview button {
+  min-height: 44px;
+  background: transparent;
+  border: 0;
+}
 .public-app .founder-application-page .record-form input[readonly] {
   background: var(--fl-soft);
 }

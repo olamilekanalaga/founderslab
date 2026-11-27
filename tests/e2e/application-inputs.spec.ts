@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { projectLogoPng } from "../fixtures/project-logo";
 
 test("application starts with honest examples and accepts a bare domain through browser validation", async ({
   page,
@@ -25,22 +26,23 @@ test("application starts with honest examples and accepts a bare domain through 
   await expect(
     page.getByRole("heading", { name: "About your project", exact: true }),
   ).toBeVisible();
-  await expect(
-    page.getByLabel("Your personal X username", { exact: true }),
-  ).toHaveAttribute("required", "");
+  await expect(page.locator('input[name="xHandle"]')).toHaveAttribute(
+    "required",
+    "",
+  );
   await expect(page.locator('input[name="projectXHandle"]')).toHaveAttribute(
     "required",
     "",
   );
-  await expect(page.getByLabel("Contact email (optional)")).toHaveAttribute(
+  await expect(page.getByLabel("Email (optional)")).toHaveAttribute(
     "type",
     "email",
   );
-  await expect(page.getByLabel("Contact email (optional)")).toHaveAttribute(
+  await expect(page.getByLabel("Email (optional)")).toHaveAttribute(
     "placeholder",
     "Optional",
   );
-  await expect(page.getByLabel("Contact email (optional)")).not.toHaveAttribute(
+  await expect(page.getByLabel("Email (optional)")).not.toHaveAttribute(
     "required",
   );
   await expect(page.locator('input[name="country"]')).toHaveValue("");
@@ -48,13 +50,19 @@ test("application starts with honest examples and accepts a bare domain through 
     "placeholder",
     "United Kingdom",
   );
-  const website = page.getByLabel("Company website or public project link");
+  const website = page.getByLabel("Website");
   await expect(website).toHaveAttribute("placeholder", "example.com");
   await website.fill("Ola.com");
   expect(
     await website.evaluate((el: HTMLInputElement) => el.checkValidity()),
   ).toBe(true);
-  for (const name of ["stage", "teamCountries", "seeking"]) {
+  for (const name of [
+    "stage",
+    "teamCountries",
+    "seeking",
+    "focus",
+    "comments",
+  ]) {
     await expect(page.locator(`.public-form [name="${name}"]`)).toHaveCount(0);
   }
   await expect(
@@ -63,9 +71,7 @@ test("application starts with honest examples and accepts a bare domain through 
   for (const name of ["sector", "teamSize"]) {
     const field = page.locator(`select[name="${name}"]`);
     await expect(field).toHaveValue("");
-    await expect(field.locator("option:checked")).toHaveText(
-      "Select an option",
-    );
+    await expect(field.locator("option:checked")).toHaveText("Select");
     expect(
       await field.evaluate((el: HTMLSelectElement) => el.checkValidity()),
     ).toBe(false);
@@ -124,6 +130,23 @@ test("mobile booking highlights missing and invalid answers, then submits correc
     }),
   );
   await page.goto("/apply?session=test-sunday");
+  for (const [leftName, rightName] of [
+    ["xHandle", "founderRole"],
+    ["projectXHandle", "website"],
+    ["speakers", "sector"],
+    ["ecosystem", "hiring"],
+  ]) {
+    const left = await page.locator(`[name="${leftName}"]`).boundingBox();
+    const right = await page.locator(`[name="${rightName}"]`).boundingBox();
+    expect(left).not.toBeNull();
+    expect(right).not.toBeNull();
+    expect(left!.y).toBeCloseTo(right!.y);
+    expect(left!.x + left!.width).toBeLessThan(right!.x);
+  }
+  const nameWidth = (await page.getByLabel("Founder name").boundingBox())!
+    .width;
+  const xWidth = (await page.locator('[name="xHandle"]').boundingBox())!.width;
+  expect(nameWidth).toBeGreaterThan(2 * xWidth);
   const submit = page.getByRole("button", {
     name: "Submit founder application",
   });
@@ -136,12 +159,9 @@ test("mobile booking highlights missing and invalid answers, then submits correc
   await expect(founderName).toBeFocused();
   await expect(founderName).toHaveAttribute("aria-invalid", "true");
   await expect(founderName).toHaveAccessibleDescription("Fill in this field.");
-  await expect(
-    page.getByLabel("Are you actively hiring?"),
-  ).toHaveAccessibleDescription("Select an option.");
-  await expect(
-    page.getByLabel("Additional comments"),
-  ).toHaveAccessibleDescription("Enter a comment or type None.");
+  await expect(page.getByLabel("Hiring?")).toHaveAccessibleDescription(
+    "Select an option.",
+  );
   await expect(
     page.getByLabel("I agree to the privacy notice and programme terms."),
   ).toHaveAccessibleDescription(
@@ -151,14 +171,11 @@ test("mobile booking highlights missing and invalid answers, then submits correc
   await expect(feedback).toContainText(/Check the \d+ highlighted fields/);
   expect(submitted).toBeUndefined();
 
-  const personalX = page.getByRole("textbox", {
-    name: "Your personal X username",
-    exact: true,
-  });
+  const personalX = page.locator('input[name="xHandle"]');
   await personalX.fill("https://x.com/sample");
-  const contactEmail = page.getByLabel("Contact email (optional)");
+  const contactEmail = page.getByLabel("Email (optional)");
   await contactEmail.fill("invalid-email");
-  const speakers = page.getByLabel("Speakers representing your project");
+  const speakers = page.locator('select[name="speakers"]');
   await speakers.selectOption("Other");
   const numberOfSpeakers = page.getByLabel("Number of speakers");
   await numberOfSpeakers.fill("3");
@@ -183,12 +200,29 @@ test("mobile booking highlights missing and invalid answers, then submits correc
     website: "Example.com",
     country: "  united   KINGDOM  ",
     description: "A product",
-    focus: "A customer need",
     ecosystem: " SOLANA , Base, solana ",
-    comments: "None",
   })) {
     await page.locator(`.public-form [name="${name}"]`).fill(value);
   }
+  const logo = page.getByLabel("Company logo (optional)", { exact: true });
+  await logo.setInputFiles({
+    name: "fake.svg",
+    mimeType: "image/svg+xml",
+    buffer: Buffer.from("<svg/>"),
+  });
+  await expect(
+    page.getByText("Choose a JPG, PNG or WebP image under 8 MB."),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Remove logo" }).click();
+  await expect(logo).toHaveValue("");
+  await logo.setInputFiles({
+    name: "company.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(projectLogoPng, "base64"),
+  });
+  await expect(
+    page.getByRole("img", { name: "Company logo preview" }),
+  ).toBeVisible();
   await page.locator('select[name="teamSize"]').selectOption("2–5");
   await speakers.selectOption("1");
   await page.locator('select[name="hiring"]').selectOption("no");
@@ -218,6 +252,9 @@ test("mobile booking highlights missing and invalid answers, then submits correc
     contact.getByRole("link", { name: "Telegram", exact: true }),
   ).toHaveAttribute("href", "https://t.me/ola_crrypt");
   expect(submitted?.contact).toBe("");
+  expect(submitted?.projectLogo).toMatch(/^data:image\/png;base64,/);
+  expect(submitted?.focus).toBe("");
+  expect(submitted?.comments).toBe("");
   expect(submitted?.sessionId).toBe("test-sunday");
   expect(submitted?.promotionalConsent).toBe(false);
   expect(submitted?.xHandle).toBe("personal_founder");

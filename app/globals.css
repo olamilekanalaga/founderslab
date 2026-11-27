@@ -346,6 +346,13 @@ summary:focus-visible {
   font-size: 10px;
   font-weight: 600;
 }
+.person-avatar-logo {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: contain;
+}
+
 .tone-0 {
   background: #eee8ff !important;
   color: #544575 !important;

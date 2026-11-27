@@ -153,6 +153,7 @@ model FounderCompanyMembership {
 }
 
 model Application {
+  projectLogo         ProjectLogo?
   projectXHandle      String?
   bdReferrerXHandle   String?
   bdReviewStatus      String?
@@ -193,6 +194,12 @@ model Application {
   updatedAt           DateTime         @updatedAt
 
   @@index([bdPartnerId])
+}
+
+model ProjectLogo {
+  applicationId String      @id
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  image         String
 }
 
 model Session {

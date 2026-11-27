@@ -61,9 +61,15 @@ export interface DataState {
   fictional?: boolean;
   founders: Person[];
   companies: CompanyRow[];
+  companyLogoApplicationIds?: Record<string, string>;
   memberships: Serialized<FounderCompanyMembership>[];
   applications: Serialized<
-    Omit<Application, "dedupeKey" | "confirmationHash" | "confirmationExpires">
+    Omit<
+      Application,
+      "dedupeKey" | "confirmationHash" | "confirmationExpires"
+    > & {
+      hasProjectLogo?: boolean;
+    }
   >[];
   sessions: Serialized<Session>[];
   participants: Serialized<SessionParticipant>[];

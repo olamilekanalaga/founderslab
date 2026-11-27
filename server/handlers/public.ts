@@ -196,7 +196,7 @@ export async function POST(
 
       const raw = token();
       const id = crypto.randomUUID();
-      const { websiteTrap: ignored, ...data } = p;
+      const { websiteTrap: ignored, projectLogo, ...data } = p;
       void ignored;
       const application = await db().$transaction(async (tx) => {
         if (sessionId) {
@@ -247,6 +247,9 @@ export async function POST(
         const created = await tx.application.create({
           data: {
             ...data,
+            ...(projectLogo
+              ? { projectLogo: { create: { image: projectLogo } } }
+              : {}),
             bdReferrerXHandle: linkedPartner?.name.startsWith("@")
               ? linkedPartner.name.slice(1).toLowerCase()
               : null,
