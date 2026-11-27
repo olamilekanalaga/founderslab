@@ -14,7 +14,9 @@ import {
 } from "lucide-react";
 import PublicHeader from "@/components/layout/PublicHeader";
 import PublicFooter from "@/components/layout/PublicFooter";
+import BrandMark from "@/components/shared/BrandMark";
 import HeroBookingPreview from "./HeroBookingPreview";
+import HomeMotion from "./HomeMotion";
 import { ProgrammeAvailability } from "./ProgrammeAvailability";
 const questions = [
   [
@@ -47,11 +49,16 @@ export default function HomePage() {
     <ProgrammeAvailability>
       <div className="public-app programme-home fl-home">
         <PublicHeader />
-        <main id="main-content">
+        <HomeMotion>
           <section
             className="fl-hero fl-container"
             aria-labelledby="programme-title"
           >
+            <div className="fl-hero-opening" aria-hidden="true">
+              <div className="fl-opening-mark">
+                <BrandMark size={88} />
+              </div>
+            </div>
             <div className="fl-hero-copy">
               <span className="fl-eyebrow">
                 <Mic2 size={15} aria-hidden="true" /> FoundersLab · WEEKLY WEB3
@@ -114,16 +121,16 @@ export default function HomePage() {
             className="fl-about fl-container"
             aria-labelledby="about-title"
           >
-            <div className="fl-about-intro">
+            <div className="fl-about-intro" data-home-reveal>
               <span className="fl-eyebrow">Built around the conversation</span>
               <h2 id="about-title">
                 Beyond the product. Let’s talk about why it exists.
               </h2>
               <p>
                 Markets change. New technologies emerge. User behaviour shifts.
-                Yet founders continue building. What problems are worth
-                solving? Who needs these products? Why are builders making
-                these decisions now?
+                Yet founders continue building. What problems are worth solving?
+                Who needs these products? Why are builders making these
+                decisions now?
               </p>
               <p>
                 Each week, we bring different founders into one conversation to
@@ -136,7 +143,7 @@ export default function HomePage() {
               </Link>
             </div>
             <div className="fl-benefit-composition">
-              <article className="fl-benefit-lead">
+              <article className="fl-benefit-lead" data-home-reveal>
                 <span className="fl-benefit-symbol">
                   <Lightbulb size={30} aria-hidden="true" />
                 </span>
@@ -151,7 +158,7 @@ export default function HomePage() {
                   Your perspective.
                 </span>
               </article>
-              <article className="fl-benefit-small">
+              <article className="fl-benefit-small" data-home-reveal>
                 <MessageCircle size={23} aria-hidden="true" />
                 <h3>Talk through the real questions.</h3>
                 <p>
@@ -159,7 +166,7 @@ export default function HomePage() {
                   is changing and what that means for your next decision.
                 </p>
               </article>
-              <article className="fl-benefit-small">
+              <article className="fl-benefit-small" data-home-reveal>
                 <Network size={23} aria-hidden="true" />
                 <h3>Find common ground.</h3>
                 <p>
@@ -174,12 +181,12 @@ export default function HomePage() {
             className="fl-process fl-container"
             aria-labelledby="process-title"
           >
-            <div className="fl-process-intro">
+            <div className="fl-process-intro" data-home-reveal>
               <h2 id="process-title">How It Works</h2>
               <p>Your next conversation starts with a Sunday.</p>
             </div>
             <ol className="fl-process-steps">
-              <li>
+              <li data-home-reveal>
                 <span>
                   <CalendarDays size={23} aria-hidden="true" />
                 </span>
@@ -189,7 +196,7 @@ export default function HomePage() {
                   where you are.
                 </p>
               </li>
-              <li>
+              <li data-home-reveal>
                 <span>
                   <FileText size={23} aria-hidden="true" />
                 </span>
@@ -199,7 +206,7 @@ export default function HomePage() {
                   reviews your request.
                 </p>
               </li>
-              <li>
+              <li data-home-reveal>
                 <span>
                   <Mic2 size={23} aria-hidden="true" />
                 </span>
@@ -215,7 +222,7 @@ export default function HomePage() {
             className="fl-questions fl-container"
             aria-labelledby="questions-title"
           >
-            <div>
+            <div data-home-reveal>
               <span className="fl-eyebrow">Before you join</span>
               <h2 id="questions-title">
                 A few things
@@ -233,7 +240,7 @@ export default function HomePage() {
             </div>
             <div className="fl-faq-list">
               {questions.map(([question, answer]) => (
-                <details key={question}>
+                <details key={question} data-home-reveal>
                   <summary>
                     {question}
                     <Plus size={19} aria-hidden="true" />
@@ -245,7 +252,7 @@ export default function HomePage() {
               ))}
             </div>
           </section>
-          <section className="fl-partner-note fl-container">
+          <section className="fl-partner-note fl-container" data-home-reveal>
             <Network size={23} aria-hidden="true" />
             <div>
               <h3>Know a founder who should be here?</h3>
@@ -261,6 +268,7 @@ export default function HomePage() {
           <section
             className="fl-final fl-container"
             aria-labelledby="cta-title"
+            data-home-reveal
           >
             <div>
               <h2 id="cta-title">What are you building?</h2>
@@ -277,7 +285,7 @@ export default function HomePage() {
               account needed.
             </p>
           </section>
-        </main>
+        </HomeMotion>
         <PublicFooter />
       </div>
     </ProgrammeAvailability>
