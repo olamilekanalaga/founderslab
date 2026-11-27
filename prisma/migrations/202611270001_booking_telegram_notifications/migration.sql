@@ -14,7 +14,7 @@ CREATE TABLE "BookingTelegramNotification" (
 
     CONSTRAINT "BookingTelegramNotification_pkey" PRIMARY KEY ("bookingId"),
     CONSTRAINT "BookingTelegramNotification_bookingId_fkey"
-        FOREIGN KEY ("bookingId") REFERENCES "BookingRequest"("id") ON DELETE CASCADE
+        FOREIGN KEY ("bookingId") REFERENCES "BookingRequest"("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE UNIQUE INDEX "booking_telegram_chat_message_key"
