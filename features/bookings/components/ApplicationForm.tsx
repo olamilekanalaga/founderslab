@@ -2,13 +2,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight } from "lucide-react";
 import PublicHeader from "@/components/layout/PublicHeader";
 import SessionTime from "@/components/shared/SessionTime";
 
 import { publicSlotOpen, type PublicSession } from "@/lib/dates/booking";
 import { COUNTRIES, SECTORS, TEAM_SIZES } from "@/lib/catalog";
-import { formError } from "@/lib/validation/form-errors";
 import { publicApplicationSchema as applicationSchema } from "@/lib/validation/application";
 
 import PublicFooter from "@/components/layout/PublicFooter";
@@ -28,7 +26,8 @@ export function ApplicationForm({
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [speakers, setSpeakers] = useState(""),
-    [other, setOther] = useState(4);
+    [other, setOther] = useState("4");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [fields, setFields] = useState<Record<string, string>>({
     founderName: "",
     companyName: "",
@@ -89,6 +88,23 @@ export function ApplicationForm({
     sectors = catalog.sectors;
   const change = (key: string, value: string) =>
     setFields((f) => ({ ...f, [key]: value }));
+  const fieldAttributes = (name: string) => ({
+    "aria-invalid": fieldErrors[name] ? true : undefined,
+    "aria-describedby": fieldErrors[name]
+      ? `application-${name}-error`
+      : undefined,
+  });
+  const fieldMessage = (name: string) =>
+    fieldErrors[name] && (
+      <small
+        className="application-field-error"
+        id={`application-${name}-error`}
+        aria-hidden="true"
+      >
+        {fieldErrors[name]}
+      </small>
+    );
+  const errorCount = Object.keys(fieldErrors).length;
   return (
     <div className="public-app">
       <PublicHeader />
@@ -134,35 +150,96 @@ export function ApplicationForm({
         <form
           hidden={!selectionValid}
           className="panel public-form"
-          onSubmit={async (e) => {
-            e.preventDefault();
+          noValidate
+          onChange={(event) => {
+            const name = event.target.getAttribute("name");
+            if (!name) return;
+            if (
+              fieldErrors[name] ||
+              (name === "speakers" && fieldErrors.otherSpeakers)
+            )
+              setFieldErrors((current) => {
+                const next = { ...current };
+                delete next[name];
+                if (name === "speakers") delete next.otherSpeakers;
+                return next;
+              });
+          }}
+          onSubmit={async (event) => {
+            event.preventDefault();
+            if (busy || !selectionValid || !configured) return;
             setError("");
-            const form = e.currentTarget;
+            const form = event.currentTarget;
+            // Read current inputs, including values supplied by browser autofill.
+            const answers = Object.fromEntries(new FormData(form));
+            const controls = Array.from(
+              form.querySelectorAll<
+                HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+              >("input[name], select[name], textarea[name]"),
+            );
+            const issues: Record<string, string> = {};
+            for (const control of controls) {
+              const { name, validity } = control;
+              if (name === "otherSpeakers" && !validity.valid)
+                issues[name] = "Enter a whole number from 4 to 10.";
+              else if (validity.valueMissing)
+                issues[name] =
+                  control instanceof HTMLSelectElement
+                    ? "Select an option."
+                    : name === "privacyConsent"
+                      ? "Accept the privacy notice and programme terms."
+                      : name === "comments"
+                        ? "Enter a comment or type None."
+                        : "Fill in this field.";
+            }
+            const parsed = applicationSchema.safeParse({
+              ...answers,
+              speakers:
+                answers.speakers === "Other"
+                  ? answers.otherSpeakers
+                  : answers.speakers,
+              privacyConsent: answers.privacyConsent === "on",
+              promotionalConsent: answers.promotionalConsent === "on",
+              hiring: answers.hiring === "yes",
+            });
+            if (!parsed.success)
+              for (const issue of parsed.error.issues) {
+                const name =
+                  issue.path[0] === "speakers" && answers.speakers === "Other"
+                    ? "otherSpeakers"
+                    : String(issue.path[0] ?? "");
+                if (name === "websiteTrap" || !name)
+                  setError(
+                    "Could not submit the application. Please try again.",
+                  );
+                else
+                  issues[name] ??=
+                    name === "contact"
+                      ? "Enter a valid email address or leave this blank."
+                      : issue.message;
+              }
+            setFieldErrors(issues);
+            const firstInvalid = controls.find(
+              (control) => issues[control.name],
+            );
+            if (firstInvalid) {
+              requestAnimationFrame(() => firstInvalid.focus());
+              return;
+            }
+            if (!parsed.success) return;
             setBusy(true);
             try {
-              const p = applicationSchema.parse({
-                ...fields,
-                speakers: speakers === "Other" ? other : Number(speakers),
-                privacyConsent: privacy,
-                promotionalConsent: promo,
-                hiring: hiring === "yes",
-              });
-              if (!selectionValid)
-                throw new Error(
-                  "Choose an available Sunday from the booking calendar.",
-                );
               const result = await api("apply", {
-                ...p,
+                ...parsed.data,
                 ...(selectedSessionId ? { sessionId: selectedSessionId } : {}),
               });
-              sessionStorage.setItem("fl-confirmation-token", result.token);
               router.push("/confirmation#token=" + result.token);
             } catch (e) {
-              const result = formError(e, "Could not submit application");
-              setError(result.message);
-              const field =
-                result.field && form.elements.namedItem(result.field);
-              if (field instanceof HTMLElement) field.focus();
+              setError(
+                e instanceof Error && e.message
+                  ? e.message
+                  : "Could not submit the application. Please try again.",
+              );
             } finally {
               setBusy(false);
             }
@@ -177,17 +254,20 @@ export function ApplicationForm({
               Founder name
               <input
                 name="founderName"
+                {...fieldAttributes("founderName")}
                 value={fields.founderName}
                 onChange={(e) => change("founderName", e.target.value)}
                 required
                 maxLength={200}
                 autoComplete="name"
               />
+              {fieldMessage("founderName")}
             </label>
             <label>
               Your personal X username
               <input
                 name="xHandle"
+                {...fieldAttributes("xHandle")}
                 value={fields.xHandle}
                 onChange={(e) => change("xHandle", e.target.value)}
                 required
@@ -196,6 +276,7 @@ export function ApplicationForm({
                 autoCorrect="off"
                 maxLength={50}
               />
+              {fieldMessage("xHandle")}
             </label>
             {referral.valid && (
               <label>
@@ -215,6 +296,7 @@ export function ApplicationForm({
               Contact email (optional)
               <input
                 name="contact"
+                {...fieldAttributes("contact")}
                 type="email"
                 placeholder="Optional"
                 autoComplete="email"
@@ -222,16 +304,19 @@ export function ApplicationForm({
                 value={fields.contact}
                 onChange={(e) => change("contact", e.target.value)}
               />
+              {fieldMessage("contact")}
             </label>
             <label>
               Your role
               <input
                 name="founderRole"
+                {...fieldAttributes("founderRole")}
                 required
                 maxLength={200}
                 value={fields.founderRole}
                 onChange={(e) => change("founderRole", e.target.value)}
               />
+              {fieldMessage("founderRole")}
             </label>
           </div>
           <div className="form-section-title">
@@ -243,16 +328,19 @@ export function ApplicationForm({
               Company / project name
               <input
                 name="companyName"
+                {...fieldAttributes("companyName")}
                 value={fields.companyName}
                 onChange={(e) => change("companyName", e.target.value)}
                 required
                 maxLength={200}
               />
+              {fieldMessage("companyName")}
             </label>
             <label>
               Official project X username
               <input
                 name="projectXHandle"
+                {...fieldAttributes("projectXHandle")}
                 required
                 value={fields.projectXHandle}
                 onChange={(e) => change("projectXHandle", e.target.value)}
@@ -261,6 +349,7 @@ export function ApplicationForm({
                 autoCapitalize="none"
                 autoCorrect="off"
               />
+              {fieldMessage("projectXHandle")}
             </label>
             <label>
               Company website or public project link
@@ -270,18 +359,21 @@ export function ApplicationForm({
                 autoCapitalize="none"
                 autoCorrect="off"
                 name="website"
+                {...fieldAttributes("website")}
                 value={fields.website}
                 onChange={(e) => change("website", e.target.value)}
                 required
                 placeholder="example.com"
                 maxLength={2000}
               />
+              {fieldMessage("website")}
             </label>
             <label>
               Country
               <input
                 list="application-countries"
                 name="country"
+                {...fieldAttributes("country")}
                 value={fields.country}
                 onChange={(e) => change("country", e.target.value)}
                 required
@@ -293,11 +385,13 @@ export function ApplicationForm({
                   <option key={c}>{c}</option>
                 ))}
               </datalist>
+              {fieldMessage("country")}
             </label>
             <label>
               Team size
               <select
                 name="teamSize"
+                {...fieldAttributes("teamSize")}
                 required
                 value={fields.teamSize}
                 onChange={(e) => change("teamSize", e.target.value)}
@@ -309,11 +403,13 @@ export function ApplicationForm({
                   <option key={v}>{v}</option>
                 ))}
               </select>
+              {fieldMessage("teamSize")}
             </label>
             <label>
               Speakers representing your project
               <select
                 name="speakers"
+                {...fieldAttributes("speakers")}
                 required
                 value={speakers}
                 onChange={(e) => setSpeakers(e.target.value)}
@@ -325,18 +421,22 @@ export function ApplicationForm({
                   <option key={v}>{v}</option>
                 ))}
               </select>
+              {fieldMessage("speakers")}
             </label>
             {speakers === "Other" && (
               <label>
                 Number of speakers
                 <input
+                  name="otherSpeakers"
+                  {...fieldAttributes("otherSpeakers")}
                   type="number"
                   min={4}
                   max={10}
                   value={other}
-                  onChange={(e) => setOther(Number(e.target.value))}
+                  onChange={(e) => setOther(e.target.value)}
                   required
                 />
+                {fieldMessage("otherSpeakers")}
               </label>
             )}
 
@@ -347,15 +447,18 @@ export function ApplicationForm({
                 maxLength={5000}
                 rows={3}
                 name="description"
+                {...fieldAttributes("description")}
                 value={fields.description}
                 onChange={(e) => change("description", e.target.value)}
                 placeholder="What does it do, and who is it for?"
               />
+              {fieldMessage("description")}
             </label>
             <label>
               Primary sector
               <select
                 name="sector"
+                {...fieldAttributes("sector")}
                 required
                 value={fields.sector}
                 onChange={(e) => change("sector", e.target.value)}
@@ -367,6 +470,7 @@ export function ApplicationForm({
                   <option key={v}>{v}</option>
                 ))}
               </select>
+              {fieldMessage("sector")}
             </label>
             <label className="span-2">
               Main business focus
@@ -374,10 +478,12 @@ export function ApplicationForm({
                 required
                 maxLength={5000}
                 name="focus"
+                {...fieldAttributes("focus")}
                 value={fields.focus}
                 onChange={(e) => change("focus", e.target.value)}
                 placeholder="The main problem or market you are focused on"
               />
+              {fieldMessage("focus")}
             </label>
           </div>
           <div className="record-form">
@@ -385,6 +491,7 @@ export function ApplicationForm({
               Chain
               <input
                 name="ecosystem"
+                {...fieldAttributes("ecosystem")}
                 required
                 placeholder="e.g. Solana, Ethereum, Base"
                 maxLength={200}
@@ -392,11 +499,13 @@ export function ApplicationForm({
                 onChange={(e) => change("ecosystem", e.target.value)}
               />
               <small>Separate multiple chains with commas.</small>
+              {fieldMessage("ecosystem")}
             </label>
             <label>
               Are you actively hiring?
               <select
                 name="hiring"
+                {...fieldAttributes("hiring")}
                 required
                 value={hiring}
                 onChange={(e) => setHiring(e.target.value)}
@@ -407,17 +516,20 @@ export function ApplicationForm({
                 <option value="yes">Yes</option>
                 <option value="no">No</option>
               </select>
+              {fieldMessage("hiring")}
             </label>
             <label className="span-2">
               Additional comments
               <textarea
                 name="comments"
+                {...fieldAttributes("comments")}
                 required
                 placeholder="Enter None if no additional comments"
                 value={fields.comments}
                 onChange={(e) => change("comments", e.target.value)}
                 maxLength={5000}
               />
+              {fieldMessage("comments")}
             </label>
           </div>
           <label className="honeypot" aria-hidden="true">
@@ -442,6 +554,8 @@ export function ApplicationForm({
             </p>
             <label className="check-label">
               <input
+                name="privacyConsent"
+                {...fieldAttributes("privacyConsent")}
                 type="checkbox"
                 checked={privacy}
                 onChange={(e) => setPrivacy(e.target.checked)}
@@ -449,8 +563,10 @@ export function ApplicationForm({
               />{" "}
               I agree to the privacy notice and programme terms.
             </label>
+            {fieldMessage("privacyConsent")}
             <label className="check-label">
               <input
+                name="promotionalConsent"
                 type="checkbox"
                 checked={promo}
                 onChange={(e) => setPromo(e.target.checked)}
@@ -459,6 +575,13 @@ export function ApplicationForm({
               project information.
             </label>
           </div>
+          {errorCount > 0 && (
+            <p className="error" role="alert">
+              {errorCount === 1
+                ? "Check the highlighted field before submitting."
+                : `Check the ${errorCount} highlighted fields before submitting.`}
+            </p>
+          )}
           {error && (
             <p className="error" role="alert">
               {error}
@@ -470,7 +593,6 @@ export function ApplicationForm({
             className="button primary full-width"
           >
             {busy ? "Submitting…" : "Submit founder application"}
-            <ArrowRight size={17} />
           </button>
           <small>
             Submitting an application does not guarantee a speaking slot.

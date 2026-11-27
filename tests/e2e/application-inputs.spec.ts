@@ -30,15 +30,15 @@ test("application starts with honest examples and accepts a bare domain through 
     "required",
     "",
   );
-  await expect(page.getByLabel("Contact email (private)")).toHaveAttribute(
+  await expect(page.getByLabel("Contact email (optional)")).toHaveAttribute(
     "type",
     "email",
   );
-  await expect(page.getByLabel("Contact email (private)")).toHaveAttribute(
+  await expect(page.getByLabel("Contact email (optional)")).toHaveAttribute(
     "placeholder",
     "Optional",
   );
-  await expect(page.getByLabel("Contact email (private)")).not.toHaveAttribute(
+  await expect(page.getByLabel("Contact email (optional)")).not.toHaveAttribute(
     "required",
   );
   await expect(page.locator('input[name="country"]')).toHaveValue("");
@@ -70,9 +70,34 @@ test("application starts with honest examples and accepts a bare domain through 
   }
 });
 
-test("missing required answers focus the field, while optional email and normalized casing/spacing submit", async ({
+test("mobile booking highlights missing and invalid answers, then submits corrected inputs", async ({
   page,
 }) => {
+  await page.setViewportSize({ width: 393, height: 852 });
+  await page.route("**/api/public/sessions", (route) =>
+    route.fulfill({
+      json: {
+        sessions: [
+          {
+            id: "test-sunday",
+            title: "Test Space",
+            startsAt: "2030-01-06T19:00:00.000Z",
+            deadline: "2030-01-06T19:00:00.000Z",
+            status: "Scheduled",
+            availableSeats: 3,
+          },
+        ],
+      },
+    }),
+  );
+  await page.addInitScript(() => {
+    const setItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (name, value) {
+      if (name === "fl-confirmation-token")
+        throw new DOMException("Storage is blocked", "SecurityError");
+      setItem.call(this, name, value);
+    };
+  });
   let submitted: Record<string, unknown> | undefined;
   await page.route("**/api/public/apply", async (route) => {
     submitted = route.request().postDataJSON();
@@ -96,11 +121,58 @@ test("missing required answers focus the field, while optional email and normali
       },
     }),
   );
-  await page.goto("/apply");
-  await page
-    .getByRole("button", { name: "Submit founder application" })
-    .click();
-  await expect(page.locator('input[name="founderName"]')).toBeFocused();
+  await page.goto("/apply?session=test-sunday");
+  const submit = page.getByRole("button", {
+    name: "Submit founder application",
+  });
+  await expect(submit.locator("svg")).toHaveCount(0);
+  await submit.click();
+  const founderName = page.getByRole("textbox", {
+    name: "Founder name",
+    exact: true,
+  });
+  await expect(founderName).toBeFocused();
+  await expect(founderName).toHaveAttribute("aria-invalid", "true");
+  await expect(founderName).toHaveAccessibleDescription("Fill in this field.");
+  await expect(
+    page.getByLabel("Are you actively hiring?"),
+  ).toHaveAccessibleDescription("Select an option.");
+  await expect(
+    page.getByLabel("Additional comments"),
+  ).toHaveAccessibleDescription("Enter a comment or type None.");
+  await expect(
+    page.getByLabel("I agree to the privacy notice and programme terms."),
+  ).toHaveAccessibleDescription(
+    "Accept the privacy notice and programme terms.",
+  );
+  const feedback = page.locator(".public-form > .error");
+  await expect(feedback).toContainText(/Check the \d+ highlighted fields/);
+  expect(submitted).toBeUndefined();
+
+  const personalX = page.getByRole("textbox", {
+    name: "Your personal X username",
+    exact: true,
+  });
+  await personalX.fill("https://x.com/sample");
+  const contactEmail = page.getByLabel("Contact email (optional)");
+  await contactEmail.fill("invalid-email");
+  const speakers = page.getByLabel("Speakers representing your project");
+  await speakers.selectOption("Other");
+  const numberOfSpeakers = page.getByLabel("Number of speakers");
+  await numberOfSpeakers.fill("3");
+  await submit.click();
+  await expect(personalX).toHaveAccessibleDescription(
+    "Use an X username without a URL",
+  );
+  await expect(contactEmail).toHaveAccessibleDescription(
+    "Enter a valid email address or leave this blank.",
+  );
+  await expect(numberOfSpeakers).toHaveAccessibleDescription(
+    "Enter a whole number from 4 to 10.",
+  );
+  expect(submitted).toBeUndefined();
+  await contactEmail.clear();
+
   for (const [name, value] of Object.entries({
     founderName: "Example Founder",
     companyName: "Example Project",
@@ -116,15 +188,13 @@ test("missing required answers focus the field, while optional email and normali
     await page.locator(`.public-form [name="${name}"]`).fill(value);
   }
   await page.locator('select[name="teamSize"]').selectOption("2–5");
-  await page.locator('select[name="speakers"]').selectOption("1");
+  await speakers.selectOption("1");
   await page.locator('select[name="hiring"]').selectOption("no");
   await page.locator('select[name="sector"]').selectOption("Payments");
   await page
     .getByLabel("I agree to the privacy notice and programme terms.")
     .check();
-  await page
-    .getByRole("button", { name: "Submit founder application" })
-    .click();
+  await submit.click();
   await expect(page).toHaveURL(/\/confirmation#token=/);
   const contact = page.getByRole("region", {
     name: "Let’s connect before your Space",
@@ -146,6 +216,8 @@ test("missing required answers focus the field, while optional email and normali
     contact.getByRole("link", { name: "Telegram", exact: true }),
   ).toHaveAttribute("href", "https://t.me/ola_crrypt");
   expect(submitted?.contact).toBe("");
+  expect(submitted?.sessionId).toBe("test-sunday");
+  expect(submitted?.promotionalConsent).toBe(false);
   expect(submitted?.xHandle).toBe("personal_founder");
   expect(submitted?.projectXHandle).toBe("official_project");
   expect(submitted?.country).toBe("United Kingdom");
