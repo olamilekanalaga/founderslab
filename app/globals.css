@@ -5712,26 +5712,6 @@ td > b,
   font-size: 12px;
   margin-bottom: 14px;
 }
-.selected-booking {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 20px 24px;
-  margin-bottom: 20px;
-}
-.selected-booking > div {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-.selected-booking > div > span:not(.eyebrow) {
-  font-size: 13px;
-  color: #65708a;
-}
-.selected-booking strong {
-  font-size: 15px;
-}
 @media (max-width: 950px) {
   .booking-calendar {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -5787,10 +5767,6 @@ td > b,
   }
   .booking-time > span {
     font-size: 12px;
-  }
-  .selected-booking {
-    align-items: flex-start;
-    flex-direction: column;
   }
   .booking-page-heading .eyebrow {
     font-size: 10px;
