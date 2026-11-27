@@ -312,34 +312,45 @@ export default function Directory({
                   </article>
                 );
               })
-            : shownCompanies.map((c, i) => (
-                <article className="founder-tile" key={c.id}>
-                  <div className="row-between">
-                    <Avatar name={c.name} index={i} />
+            : shownCompanies.map((c, i) => {
+                const logoApplicationId = s.companyLogoApplicationIds?.[c.id];
+                return (
+                  <article className="founder-tile" key={c.id}>
+                    <div className="row-between">
+                      <Avatar
+                        name={c.name}
+                        index={i}
+                        logo={
+                          logoApplicationId
+                            ? `/api/project-logo/${encodeURIComponent(logoApplicationId)}`
+                            : undefined
+                        }
+                      />
+                      <Link
+                        className="icon-button"
+                        href={path("companies", c.id)}
+                        aria-label={`Open ${c.name}`}
+                      >
+                        <ArrowUpRight size={17} />
+                      </Link>
+                    </div>
                     <Link
-                      className="icon-button"
+                      className="founder-tile-name"
                       href={path("companies", c.id)}
-                      aria-label={`Open ${c.name}`}
                     >
-                      <ArrowUpRight size={17} />
+                      {c.name}
                     </Link>
-                  </div>
-                  <Link
-                    className="founder-tile-name"
-                    href={path("companies", c.id)}
-                  >
-                    {c.name}
-                  </Link>
-                  <span className="founder-tile-company">
-                    {c.sector} · {c.stage}
-                  </span>
-                  <p className="founder-short-description">{c.description}</p>
-                  <div className="founder-tile-footer">
-                    <span>{c.country}</span>
-                    <span>{c.teamSize} people</span>
-                  </div>
-                </article>
-              ))}
+                    <span className="founder-tile-company">
+                      {c.sector} · {c.stage}
+                    </span>
+                    <p className="founder-short-description">{c.description}</p>
+                    <div className="founder-tile-footer">
+                      <span>{c.country}</span>
+                      <span>{c.teamSize} people</span>
+                    </div>
+                  </article>
+                );
+              })}
           {pagination}
         </div>
       ) : (

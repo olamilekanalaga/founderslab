@@ -177,6 +177,8 @@ test("historical Prisma migrations remain byte-identical and BD tables are addit
         ? readFileSync(entry.file, "utf8")
             .replace(/^  signupProfile +Json\?\n/m, "")
             .replace(/^  xHandle +String\?\n/m, "")
+            .replace(/^  projectLogo +ProjectLogo\?\n/m, "")
+            .replace(/model ProjectLogo \{[\s\S]*?\n\}\n\n/, "")
             .replace(/^  projectXHandle +String\?\n/m, "")
             .replace(
               /^  (?:bdReferrerXHandle|bdReviewStatus|bdPartnerId|bdPartner) +.*\n/gm,
@@ -241,6 +243,7 @@ test("historical Prisma migrations remain byte-identical and BD tables are addit
         "prisma/migrations/202611240007_sunday_programme/migration.sql",
         "prisma/migrations/202611260001_shared_admin_signup/migration.sql",
         "prisma/migrations/202611270001_booking_telegram_notifications/migration.sql",
+        "prisma/migrations/202611270002_project_logos/migration.sql",
       )
       .sort(),
   );

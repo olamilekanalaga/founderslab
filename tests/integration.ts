@@ -21,6 +21,7 @@ import {
   PARTICIPATION_TERMS,
   RETIRED_AWARD_COMMANDS,
 } from "@/lib/programme-policy";
+import { projectLogoPng } from "./fixtures/project-logo";
 const artifactDir = process.env.TEST_ARTIFACT_DIR || "artifacts";
 mkdirSync(artifactDir, { recursive: true });
 const artifactPath = (name: string) => join(artifactDir, name);
@@ -589,7 +590,10 @@ try {
     ).status,
     400,
   );
-  const result = await request("/api/public/apply", application);
+  const result = await request("/api/public/apply", {
+    ...application,
+    projectLogo: "data:image/png;base64," + projectLogoPng,
+  });
   assert.equal(result.status, 201, JSON.stringify(result.data));
   const capability = result.data.token;
   assert.equal(
@@ -629,6 +633,20 @@ try {
     status: "Approved",
   });
   const linked = state.applications.find((a) => a.id === app.id)!;
+  const logoPath = "/api/project-logo/" + app.id;
+  assert.equal(linked.hasProjectLogo, true);
+  assert.equal(state.companyLogoApplicationIds?.[linked.companyId!], app.id);
+  assert.equal((await fetch(origin + logoPath)).status, 401);
+  const logo = await fetch(origin + logoPath, {
+    headers: { Cookie: admin.cookie },
+  });
+  assert.equal(logo.status, 200);
+  assert.equal(logo.headers.get("content-type"), "image/png");
+  assert.deepEqual(
+    Buffer.from(await logo.arrayBuffer()),
+    Buffer.from(projectLogoPng, "base64"),
+  );
+
   assert.ok(linked.founderId && linked.companyId);
   assert.equal(linked.xHandle, "isolated_example");
   assert.equal(linked.projectXHandle, "isolated_project");
@@ -2162,7 +2180,25 @@ try {
       .getByRole("button", { name: "Save record", exact: true })
       .click();
     await page.getByRole("dialog").waitFor({ state: "hidden" });
-    await page.goto(origin + "/companies/" + linked.companyId);
+    await page.goto(origin + "/companies?q=Isolated%20Example");
+    const companyCard = page.locator("article.founder-tile").filter({
+      has: page.getByRole("link", { name: "Isolated Example", exact: true }),
+    });
+    const companyCardLogo = companyCard.locator(".person-avatar-logo");
+    await expect(companyCardLogo).toHaveAttribute("src", logoPath);
+    await expect
+      .poll(() =>
+        companyCardLogo.evaluate(
+          (image: HTMLImageElement) => image.naturalWidth,
+        ),
+      )
+      .toBeGreaterThan(0);
+    await companyCard
+      .getByRole("link", { name: "Isolated Example", exact: true })
+      .click();
+    await expect(
+      page.locator(".profile-banner .person-avatar-logo"),
+    ).toHaveAttribute("src", logoPath);
     await page
       .getByRole("button", { name: "Edit company", exact: true })
       .click();

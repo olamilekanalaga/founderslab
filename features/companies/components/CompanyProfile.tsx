@@ -21,6 +21,7 @@ export default function CompanyProfile({
   const { state: s, path, viewer } = useWorkspace();
   const company = s.companies.find((c) => c.id === id);
   if (!company) return <Empty>Company not found.</Empty>;
+  const logoApplicationId = s.companyLogoApplicationIds?.[id];
   const founders = s.memberships
     .filter((m) => m.companyId === id)
     .map((m) => s.founders.find((f) => f.id === m.founderId))
@@ -32,7 +33,14 @@ export default function CompanyProfile({
         Company directory
       </Link>
       <div className="profile-banner">
-        <Avatar name={company.name} />
+        <Avatar
+          name={company.name}
+          logo={
+            logoApplicationId
+              ? `/api/project-logo/${encodeURIComponent(logoApplicationId)}`
+              : undefined
+          }
+        />
         <div>
           <h1>{company.name}</h1>
           <p>

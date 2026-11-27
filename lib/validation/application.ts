@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { TEAM_SIZES } from "@/lib/catalog";
 import { chainNames } from "@/lib/chains";
+import { projectLogoSchema } from "./project-logo";
 import {
   text,
   short,
@@ -75,7 +76,8 @@ export const publicApplicationSchema = applicationSchema.extend({
     .transform((value) => chainNames(value).join(", "))
     .pipe(required),
   hiring: z.boolean(),
-  comments: text.min(1, "Enter an answer, or None if not applicable"),
+  focus: text.optional().default(""),
+  projectLogo: projectLogoSchema.optional(),
   contact: z
     .string()
     .trim()

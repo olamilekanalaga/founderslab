@@ -51,7 +51,14 @@ export async function loadState(client: Client = db()): Promise<DataState> {
   const pairs = await Promise.all(
     registry.map(
       async ([key, model]) =>
-        [key, await delegate(client, model).findMany()] as const,
+        [
+          key,
+          key === "applications"
+            ? await client.application.findMany({
+                include: { projectLogo: { select: { applicationId: true } } },
+              })
+            : await delegate(client, model).findMany(),
+        ] as const,
     ),
   );
   const settings = await client.setting.findUnique({
@@ -100,12 +107,13 @@ export async function loadState(client: Client = db()): Promise<DataState> {
       confirmationHash: ignored,
       confirmationExpires: ignored2,
       dedupeKey: ignored3,
+      projectLogo,
       ...a
     }) => {
       void ignored;
       void ignored2;
       void ignored3;
-      return a;
+      return { ...a, hasProjectLogo: Boolean(projectLogo) };
     },
   );
   return JSON.parse(
@@ -160,10 +168,12 @@ export async function persistDiff(
       const where =
         keys.length === 1 ? keyValues : { [keys.join("_")]: keyValues };
       if (key === "applications") {
+        const { hasProjectLogo, ...application } = row;
+        void hasProjectLogo;
         if (old) {
           // Attribution changes are owned by the BD workflow.
           const { bdPartnerId, bdReferrerXHandle, bdReviewStatus, ...data } =
-            row;
+            application;
           void bdPartnerId;
           void bdReferrerXHandle;
           void bdReviewStatus;
@@ -174,9 +184,9 @@ export async function persistDiff(
         } else if (seed)
           await delegate(client, model).upsert({
             where,
-            update: row,
+            update: application,
             create: {
-              ...row,
+              ...application,
               dedupeKey: normaliseKey(
                 String(row.xHandle),
                 String(row.companyName),

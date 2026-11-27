@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Mic } from "lucide-react";
@@ -11,6 +12,7 @@ import { publicApplicationSchema as applicationSchema } from "@/lib/validation/a
 
 import PublicFooter from "@/components/layout/PublicFooter";
 import { api } from "@/features/bookings/lib/public-api";
+import { prepareProjectLogo } from "@/features/bookings/lib/project-logo";
 import { FounderContact } from "@/features/bookings/components/FounderContact";
 export function ApplicationForm({
   configured,
@@ -38,13 +40,42 @@ export function ApplicationForm({
     description: "",
     teamSize: "",
     sector: "",
-    focus: "",
     founderRole: "Founder",
     contact: "",
     ecosystem: "",
-    comments: "",
     websiteTrap: "",
   });
+  const logoInput = useRef<HTMLInputElement>(null);
+  const logoSelection = useRef(0);
+  const [logo, setLogo] = useState("");
+  const [logoError, setLogoError] = useState("");
+  const [preparingLogo, setPreparingLogo] = useState(false);
+  async function changeLogo(file?: File) {
+    const selection = ++logoSelection.current;
+    setFieldErrors((current) => {
+      if (!current.projectLogo) return current;
+      const next = { ...current };
+      delete next.projectLogo;
+      return next;
+    });
+    setLogo("");
+    setLogoError("");
+    setPreparingLogo(Boolean(file));
+    if (!file) return;
+    try {
+      const prepared = await prepareProjectLogo(file);
+      if (selection === logoSelection.current) setLogo(prepared);
+    } catch (error) {
+      if (selection === logoSelection.current)
+        setLogoError(
+          error instanceof Error && error.name === "Error"
+            ? error.message
+            : "Could not open that image.",
+        );
+    } finally {
+      if (selection === logoSelection.current) setPreparingLogo(false);
+    }
+  }
   const [privacy, setPrivacy] = useState(false),
     [promo, setPromo] = useState(false),
     [hiring, setHiring] = useState("");
@@ -160,7 +191,8 @@ export function ApplicationForm({
             }}
             onSubmit={async (event) => {
               event.preventDefault();
-              if (busy || !selectionValid || !configured) return;
+              if (busy || preparingLogo || !selectionValid || !configured)
+                return;
               setError("");
               const form = event.currentTarget;
               // Read current inputs, including values supplied by browser autofill.
@@ -171,6 +203,7 @@ export function ApplicationForm({
                 >("input[name], select[name], textarea[name]"),
               );
               const issues: Record<string, string> = {};
+              if (logoError) issues.projectLogo = logoError;
               for (const control of controls) {
                 const { name, validity } = control;
                 if (name === "otherSpeakers" && !validity.valid)
@@ -181,12 +214,11 @@ export function ApplicationForm({
                       ? "Select an option."
                       : name === "privacyConsent"
                         ? "Accept the privacy notice and programme terms."
-                        : name === "comments"
-                          ? "Enter a comment or type None."
-                          : "Fill in this field.";
+                        : "Fill in this field.";
               }
               const parsed = applicationSchema.safeParse({
                 ...answers,
+                projectLogo: logo || undefined,
                 speakers:
                   answers.speakers === "Other"
                     ? answers.otherSpeakers
@@ -244,7 +276,7 @@ export function ApplicationForm({
               <h2>About you</h2>
             </div>
             <div className="record-form">
-              <label>
+              <label className="span-2">
                 Founder name
                 <input
                   name="founderName"
@@ -258,19 +290,7 @@ export function ApplicationForm({
                 {fieldMessage("founderName")}
               </label>
               <label>
-                Your role
-                <input
-                  name="founderRole"
-                  {...fieldAttributes("founderRole")}
-                  required
-                  maxLength={200}
-                  value={fields.founderRole}
-                  onChange={(e) => change("founderRole", e.target.value)}
-                />
-                {fieldMessage("founderRole")}
-              </label>
-              <label className="span-2">
-                Your personal X username
+                X handle
                 <input
                   name="xHandle"
                   {...fieldAttributes("xHandle")}
@@ -283,6 +303,18 @@ export function ApplicationForm({
                   maxLength={50}
                 />
                 {fieldMessage("xHandle")}
+              </label>
+              <label>
+                Role
+                <input
+                  name="founderRole"
+                  {...fieldAttributes("founderRole")}
+                  required
+                  maxLength={200}
+                  value={fields.founderRole}
+                  onChange={(e) => change("founderRole", e.target.value)}
+                />
+                {fieldMessage("founderRole")}
               </label>
               {referral.valid && (
                 <label className="span-2">
@@ -299,7 +331,7 @@ export function ApplicationForm({
                 </p>
               )}
               <label className="span-2">
-                Contact email (optional)
+                Email (optional)
                 <input
                   name="contact"
                   {...fieldAttributes("contact")}
@@ -318,7 +350,7 @@ export function ApplicationForm({
             </div>
             <div className="record-form">
               <label className="span-2">
-                Company / project name
+                Company name
                 <input
                   name="companyName"
                   {...fieldAttributes("companyName")}
@@ -329,8 +361,8 @@ export function ApplicationForm({
                 />
                 {fieldMessage("companyName")}
               </label>
-              <label className="span-2">
-                Official project X username
+              <label>
+                X handle
                 <input
                   name="projectXHandle"
                   {...fieldAttributes("projectXHandle")}
@@ -344,8 +376,8 @@ export function ApplicationForm({
                 />
                 {fieldMessage("projectXHandle")}
               </label>
-              <label className="span-2">
-                Company website or public project link
+              <label>
+                Website
                 <input
                   type="text"
                   inputMode="url"
@@ -390,7 +422,7 @@ export function ApplicationForm({
                   onChange={(e) => change("teamSize", e.target.value)}
                 >
                   <option value="" disabled>
-                    Select an option
+                    Select
                   </option>
                   {TEAM_SIZES.map((v) => (
                     <option key={v}>{v}</option>
@@ -398,8 +430,8 @@ export function ApplicationForm({
                 </select>
                 {fieldMessage("teamSize")}
               </label>
-              <label className="span-2">
-                Speakers representing your project
+              <label>
+                Speakers
                 <select
                   name="speakers"
                   {...fieldAttributes("speakers")}
@@ -408,13 +440,31 @@ export function ApplicationForm({
                   onChange={(e) => setSpeakers(e.target.value)}
                 >
                   <option value="" disabled>
-                    Select an option
+                    Select
                   </option>
                   {["1", "2", "3", "Other"].map((v) => (
                     <option key={v}>{v}</option>
                   ))}
                 </select>
                 {fieldMessage("speakers")}
+              </label>
+              <label>
+                Sector
+                <select
+                  name="sector"
+                  {...fieldAttributes("sector")}
+                  required
+                  value={fields.sector}
+                  onChange={(e) => change("sector", e.target.value)}
+                >
+                  <option value="" disabled>
+                    Select
+                  </option>
+                  {sectors.map((v) => (
+                    <option key={v}>{v}</option>
+                  ))}
+                </select>
+                {fieldMessage("sector")}
               </label>
               {speakers === "Other" && (
                 <label className="span-2">
@@ -434,7 +484,7 @@ export function ApplicationForm({
               )}
 
               <label className="span-2">
-                Short product description
+                Description &amp; Business
                 <textarea
                   required
                   maxLength={5000}
@@ -443,42 +493,11 @@ export function ApplicationForm({
                   {...fieldAttributes("description")}
                   value={fields.description}
                   onChange={(e) => change("description", e.target.value)}
-                  placeholder="What does it do, and who is it for?"
+                  placeholder="What are you building, who is it for, and how does the business work?"
                 />
                 {fieldMessage("description")}
               </label>
-              <label className="span-2">
-                Primary sector
-                <select
-                  name="sector"
-                  {...fieldAttributes("sector")}
-                  required
-                  value={fields.sector}
-                  onChange={(e) => change("sector", e.target.value)}
-                >
-                  <option value="" disabled>
-                    Select an option
-                  </option>
-                  {sectors.map((v) => (
-                    <option key={v}>{v}</option>
-                  ))}
-                </select>
-                {fieldMessage("sector")}
-              </label>
-              <label className="span-2">
-                Main business focus
-                <input
-                  required
-                  maxLength={5000}
-                  name="focus"
-                  {...fieldAttributes("focus")}
-                  value={fields.focus}
-                  onChange={(e) => change("focus", e.target.value)}
-                  placeholder="The main problem or market you are focused on"
-                />
-                {fieldMessage("focus")}
-              </label>
-              <label className="span-2">
+              <label>
                 Chain
                 <input
                   name="ecosystem"
@@ -492,8 +511,8 @@ export function ApplicationForm({
                 <small>Separate multiple chains with commas.</small>
                 {fieldMessage("ecosystem")}
               </label>
-              <label className="span-2">
-                Are you actively hiring?
+              <label>
+                Hiring?
                 <select
                   name="hiring"
                   {...fieldAttributes("hiring")}
@@ -502,26 +521,73 @@ export function ApplicationForm({
                   onChange={(e) => setHiring(e.target.value)}
                 >
                   <option value="" disabled>
-                    Select an option
+                    Select
                   </option>
                   <option value="yes">Yes</option>
                   <option value="no">No</option>
                 </select>
                 {fieldMessage("hiring")}
               </label>
-              <label className="span-2">
-                Additional comments
-                <textarea
-                  name="comments"
-                  {...fieldAttributes("comments")}
-                  required
-                  placeholder="Enter None if no additional comments"
-                  value={fields.comments}
-                  onChange={(e) => change("comments", e.target.value)}
-                  maxLength={5000}
-                />
-                {fieldMessage("comments")}
-              </label>
+              <div className="span-2 application-logo">
+                <label>
+                  Company logo (optional)
+                  <input
+                    ref={logoInput}
+                    name="projectLogo"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    aria-invalid={Boolean(logoError || fieldErrors.projectLogo)}
+                    aria-describedby={
+                      logoError
+                        ? "company-logo-help company-logo-error"
+                        : fieldErrors.projectLogo
+                          ? "company-logo-help application-projectLogo-error"
+                          : "company-logo-help"
+                    }
+                    onChange={(event) =>
+                      void changeLogo(event.currentTarget.files?.[0])
+                    }
+                  />
+                </label>
+                <small id="company-logo-help">
+                  JPG, PNG or WebP. Up to 8 MB.
+                </small>
+                {preparingLogo && <p role="status">Preparing logo…</p>}
+                {logoError ? (
+                  <p
+                    id="company-logo-error"
+                    className="application-field-error"
+                    role="alert"
+                  >
+                    {logoError}
+                  </p>
+                ) : (
+                  fieldMessage("projectLogo")
+                )}
+                {(logo || logoError || preparingLogo) && (
+                  <div className="application-logo-preview">
+                    {logo && (
+                      <Image
+                        src={logo}
+                        alt="Company logo preview"
+                        unoptimized
+                        width={48}
+                        height={48}
+                      />
+                    )}
+                    <button
+                      type="button"
+                      className="text-link"
+                      onClick={() => {
+                        if (logoInput.current) logoInput.current.value = "";
+                        void changeLogo();
+                      }}
+                    >
+                      Remove logo
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
             <label className="honeypot" aria-hidden="true">
               Leave empty
@@ -580,7 +646,7 @@ export function ApplicationForm({
             )}
             <button
               type="submit"
-              disabled={busy || !selectionValid || !configured}
+              disabled={busy || preparingLogo || !selectionValid || !configured}
               className="button primary full-width"
             >
               {busy ? "Submitting…" : "Submit founder application"}

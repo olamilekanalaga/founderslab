@@ -98,7 +98,14 @@ export default function ApplicationReview({
         aria-label={`Review ${a.companyName}`}
       >
         <div className="studio-review-identity">
-          <Avatar name={a.companyName} />
+          <Avatar
+            name={a.companyName}
+            logo={
+              a.hasProjectLogo
+                ? `/api/project-logo/${encodeURIComponent(a.id)}`
+                : undefined
+            }
+          />
           <div>
             <span className="page-eyebrow">Project application</span>
             <h3>{a.companyName}</h3>

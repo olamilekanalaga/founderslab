@@ -29,6 +29,19 @@ export function scopeState(s: DataState, permissions: string[]): DataState {
     copy.companies = [];
     copy.memberships = [];
     copy.companyLabels = [];
+    delete copy.companyLogoApplicationIds;
+  } else {
+    copy.companyLogoApplicationIds = Object.fromEntries(
+      copy.applications
+        .filter(
+          (application) =>
+            application.status === "Approved" &&
+            application.hasProjectLogo &&
+            application.companyId,
+        )
+        .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+        .map((application) => [application.companyId!, application.id]),
+    );
   }
   if (
     !has("directory.write") &&

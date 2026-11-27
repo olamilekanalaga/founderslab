@@ -184,13 +184,26 @@ test("simplified public intake omits retired questions, retaining required chain
     stage: undefined,
     ecosystem: " SOLANA , Base, solana ",
     hiring: false,
-    comments: "None",
   };
   assert.equal(publicApplicationSchema.safeParse(input).success, true);
   const parsed = publicApplicationSchema.parse(input);
   assert.equal(parsed.stage, "Live");
   assert.deepEqual(parsed.teamCountries, []);
   assert.equal(parsed.seeking, "");
+  const simplified = publicApplicationSchema.parse({
+    ...input,
+    focus: undefined,
+    comments: undefined,
+  });
+  assert.equal(simplified.focus, "");
+  assert.equal(simplified.comments, "");
+  assert.equal(
+    publicApplicationSchema.safeParse({
+      ...input,
+      projectLogo: "data:image/png;base64,PHN2Zy8+",
+    }).success,
+    false,
+  );
   assert.equal(parsed.ecosystem, "solana, base");
   let state = approved(parsed);
   const company = state.companies.at(-1)!;
@@ -219,7 +232,6 @@ test("simplified public intake omits retired questions, retaining required chain
     "founderRole",
     "ecosystem",
     "hiring",
-    "comments",
   ]) {
     assert.equal(
       publicApplicationSchema.safeParse({ ...input, [field]: undefined })
