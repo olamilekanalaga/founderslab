@@ -30,7 +30,7 @@ for (const [label, width, height] of [
     await next.click();
     await expect(page).toHaveURL(target!);
     await expect(
-      page.getByRole("heading", { name: "Bring your founder story." }),
+      page.getByRole("heading", { name: "Founder application" }),
     ).toBeVisible();
     await expect(page.locator(".selected-booking")).toBeVisible();
     expect(
