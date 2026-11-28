@@ -1,32 +1,30 @@
 import "server-only";
 import type { Prisma } from "@prisma/client";
-import { clinicSettings, consultationSettingsKey } from "@/lib/consultations";
+import { sessionSettings, consultationSettingsKey } from "@/lib/consultations";
 import { db } from "@/server/db";
-import { firstBookableTime } from "@/server/services/consultation-payments";
 
 type Client = Prisma.TransactionClient;
 export const activeAppointment = {
   bookingStatus: { not: "Cancelled" },
 } as const;
+
 export const appointmentSelect = {
   id: true,
   bookingStatus: true,
-  paymentStatus: true,
-  feePence: true,
   slot: { select: { startsAt: true, endsAt: true } },
 } satisfies Prisma.ConsultationAppointmentSelect;
 
-export async function readClinicSettings(client: Client = db()) {
+export async function readSessionSettings(client: Client = db()) {
   const row = await client.setting.findUnique({
     where: { key: consultationSettingsKey },
   });
-  return clinicSettings.safeParse(row?.value).data ?? null;
+  return sessionSettings.safeParse(row?.value).data ?? null;
 }
 
-export function availableSlots(client: Client = db()) {
-  return client.consultationSlot.findMany({
+export function availableSlots() {
+  return db().consultationSlot.findMany({
     where: {
-      startsAt: { gt: firstBookableTime() },
+      startsAt: { gt: new Date() },
       withdrawnAt: null,
       appointments: { none: activeAppointment },
     },

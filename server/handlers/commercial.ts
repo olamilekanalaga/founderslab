@@ -2,13 +2,16 @@ import "server-only";
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 import {
-  clinicSettings,
+  sessionSettings,
   consultationSettingsKey,
   engagementSchema,
   followUpSchema,
   followUpStatuses,
   stageLabels,
   type PipelineStage,
+  relationshipName,
+  relationshipSources,
+  engagementStatuses,
 } from "@/lib/consultations";
 import { DomainError } from "@/lib/domain";
 import { requireCsrf } from "@/server/auth";
@@ -18,25 +21,20 @@ import { body, failure, json } from "@/server/http";
 import {
   activeAppointment,
   lockAppointment,
-  readClinicSettings,
+  readSessionSettings,
 } from "@/server/services/consultations";
-import {
-  checkoutEnabled,
-  checkoutExpiry,
-  expireCheckout,
-} from "@/server/services/consultation-payments";
 import { researchQueueEligible } from "@/server/services/business-research";
 
 const id = z.string().min(1).max(100);
-const name = z.string().trim().min(1).max(180);
 const command = z.discriminatedUnion("action", [
-  z.object({ action: z.literal("settings"), settings: clinicSettings }),
+  z.object({ action: z.literal("settings"), settings: sessionSettings }),
   z.object({ action: z.literal("add-slot"), startsAt: z.iso.datetime() }),
   z.object({ action: z.literal("withdraw-slot"), slotId: id }),
   z.object({
     action: z.literal("new-lead"),
-    founderName: name,
-    businessName: name,
+    founderName: relationshipName,
+    businessName: relationshipName,
+    source: z.enum(relationshipSources),
   }),
   z.object({ action: z.literal("issue-link"), leadId: id }),
   z.object({ action: z.literal("issue-space-link"), applicationId: id }),
@@ -50,7 +48,7 @@ const command = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("appointment"),
     appointmentId: id,
-    status: z.enum(["record-payment", "complete", "cancel"]),
+    status: z.enum(["complete", "cancel"]),
   }),
   z.object({
     action: z.literal("engagement"),
@@ -77,17 +75,19 @@ const pipelineLead = {
   founderName: true,
   businessName: true,
   offeredAt: true,
+  requestedAt: true,
+  source: true,
   followUpStatus: true,
   consultations: {
     where: activeAppointment,
-    select: { bookingStatus: true, paymentStatus: true, paidAt: true },
+    select: { completedAt: true, slot: { select: { startsAt: true } } },
   },
   engagements: {
     select: {
-      discussionAt: true,
+      status: true,
       proposalAt: true,
-      securedAt: true,
-      closedAt: true,
+      securedContractAt: true,
+      securedEmploymentAt: true,
     },
   },
 } as const;
@@ -120,17 +120,9 @@ const programmeSelect = {
 } satisfies Prisma.ApplicationSelect;
 
 function milestones(
-  lead: {
-    offeredAt: Date | null;
-    followUpStatus: string;
-    consultations: { bookingStatus: string; paymentStatus: string }[];
-    engagements: {
-      discussionAt: Date | null;
-      proposalAt: Date | null;
-      securedAt: Date | null;
-      closedAt: Date | null;
-    }[];
-  } | null,
+  lead: Prisma.ConsultationLeadGetPayload<{
+    select: typeof pipelineLead;
+  }> | null,
   spaceBooked: boolean,
   spaceCompleted: boolean,
 ) {
@@ -146,26 +138,20 @@ function milestones(
       ].includes(lead.followUpStatus)
     )
       stages.add("Business opportunity identified");
+    if (lead.requestedAt) stages.add("Private session requested");
     if (lead.offeredAt) stages.add("Private session offered");
     if (lead.consultations.length) stages.add("Private session booked");
-    if (
-      lead.consultations.some(({ paymentStatus }) => paymentStatus === "Paid")
-    )
-      stages.add("Payment received");
-    if (
-      lead.consultations.some(
-        ({ bookingStatus }) => bookingStatus === "Completed",
-      )
-    )
+    if (lead.consultations.some(({ completedAt }) => completedAt))
       stages.add("Private session completed");
-    if (lead.engagements.some(({ discussionAt }) => discussionAt))
-      stages.add("Commercial discussion");
-    if (lead.engagements.some(({ proposalAt }) => proposalAt))
-      stages.add("Proposal submitted");
-    if (lead.engagements.some(({ securedAt }) => securedAt))
-      stages.add("Hired or contract secured");
-    if (lead.engagements.some(({ closedAt }) => closedAt))
-      stages.add("Declined or closed");
+    for (const engagement of lead.engagements) {
+      const status = engagementStatuses.find(
+        (status) => status === engagement.status,
+      );
+      if (status) stages.add(status);
+      if (engagement.proposalAt) stages.add("Contract proposal");
+      if (engagement.securedContractAt) stages.add("Secured contract");
+      if (engagement.securedEmploymentAt) stages.add("Secured employment");
+    }
     if (lead.followUpStatus === "Declined or closed")
       stages.add("Declined or closed");
   }
@@ -200,17 +186,17 @@ export async function GET(request: Request) {
           businessName: true,
           applicationId: true,
           offeredAt: true,
+          source: true,
+          requestedAt: true,
+          replyEmail: true,
+          requestContext: true,
           consultations: {
             orderBy: { createdAt: "desc" },
             select: {
               id: true,
               bookingStatus: true,
-              paymentStatus: true,
-              feePence: true,
-              paidAt: true,
               email: true,
               discovery: true,
-              checkoutStartedAt: true,
               slot: { select: { startsAt: true, endsAt: true } },
             },
           },
@@ -218,10 +204,10 @@ export async function GET(request: Request) {
         },
       });
       if (!lead) throw new DomainError("Business record not found.", 404);
-      return json({ lead, checkout: checkoutEnabled() });
+      return json({ lead });
     }
     const [settings, slots, applications, independent] = await Promise.all([
-      readClinicSettings(),
+      readSessionSettings(),
       db().consultationSlot.findMany({
         where: { startsAt: { gt: new Date() }, withdrawnAt: null },
         orderBy: { startsAt: "asc" },
@@ -254,8 +240,8 @@ export async function GET(request: Request) {
     ]);
     const conversions = {
       publicParticipants: 0,
-      paidAfterSpace: 0,
-      securedAfterConsultation: 0,
+      privateSessionsAfterSpace: 0,
+      securedAfterPrivateSession: 0,
     };
     const rows = [
       ...applications.map((app) => {
@@ -276,18 +262,21 @@ export async function GET(request: Request) {
           const firstSpace = Math.min(
             ...completed.map(({ session }) => session.startsAt.getTime()),
           );
-          const paid = app.consultationLead?.consultations.find(
-            ({ paidAt }) => paidAt && paidAt.getTime() >= firstSpace,
+          const conversation = app.consultationLead?.consultations.find(
+            ({ completedAt, slot }) =>
+              completedAt && slot.startsAt.getTime() >= firstSpace,
           );
-          if (paid?.paidAt) {
-            conversions.paidAfterSpace++;
-            const payment = paid.paidAt;
+          if (conversation?.completedAt) {
+            conversions.privateSessionsAfterSpace++;
+            const completedAt = conversation.completedAt;
             if (
               app.consultationLead?.engagements.some(
-                ({ securedAt }) => securedAt && securedAt >= payment,
+                ({ securedContractAt, securedEmploymentAt }) =>
+                  (securedContractAt && securedContractAt >= completedAt) ||
+                  (securedEmploymentAt && securedEmploymentAt >= completedAt),
               )
             )
-              conversions.securedAfterConsultation++;
+              conversions.securedAfterPrivateSession++;
           }
         }
         return {
@@ -296,6 +285,7 @@ export async function GET(request: Request) {
           businessName: app.companyName,
           founderName: app.founderName,
           researchStatus: app.businessResearch?.status ?? "Pending",
+          source: app.consultationLead?.source ?? "Public Space",
           stages: milestones(
             app.consultationLead,
             Boolean(app.bookings.length),
@@ -309,6 +299,7 @@ export async function GET(request: Request) {
         businessName: lead.businessName,
         founderName: lead.founderName,
         researchStatus: null,
+        source: lead.source,
         stages: milestones(lead, false, false),
       })),
     ];
@@ -322,7 +313,6 @@ export async function GET(request: Request) {
       conversions,
       settings,
       slots,
-      checkout: checkoutEnabled(),
     });
   } catch (error) {
     return failure(error);
@@ -345,10 +335,10 @@ export async function POST(request: Request) {
         }
         if (input.action === "add-slot") {
           await tx.$queryRaw`SELECT key FROM "Setting" WHERE key = ${consultationSettingsKey} FOR UPDATE`;
-          const settings = await readClinicSettings(tx);
+          const settings = await readSessionSettings(tx);
           if (!settings)
             throw new DomainError(
-              "Set the fee and duration before adding appointments.",
+              "Set a session duration before adding appointments.",
               409,
             );
           const startsAt = new Date(input.startsAt);
@@ -397,6 +387,7 @@ export async function POST(request: Request) {
             data: {
               founderName: input.founderName,
               businessName: input.businessName,
+              source: input.source,
             },
             select: { id: true },
           });
@@ -405,60 +396,25 @@ export async function POST(request: Request) {
           const appointment = await lockAppointment(tx, input.appointmentId);
           if (!appointment)
             throw new DomainError("Appointment not found.", 404);
+          const isCompletion = input.status === "complete";
+          const bookingStatus = isCompletion ? "Completed" : "Cancelled";
+          if (appointment.bookingStatus === bookingStatus)
+            return { id: appointment.id };
+          if (appointment.bookingStatus !== "Confirmed")
+            throw new DomainError(
+              "Only confirmed sessions can be completed or cancelled.",
+              409,
+            );
           const now = new Date();
-          let data;
-          if (input.status === "record-payment") {
-            if (appointment.paymentStatus === "Paid")
-              return { id: appointment.id };
-            if (
-              appointment.bookingStatus !== "Reserved" ||
-              checkoutEnabled() ||
-              appointment.checkoutStartedAt
-            )
-              throw new DomainError(
-                "Manual payment recording is available only for open offline reservations.",
-                409,
-              );
-            data = {
-              paymentStatus: "Paid",
-              bookingStatus: "Confirmed",
-              paidAt: now,
-            };
-          } else if (input.status === "complete") {
-            if (appointment.bookingStatus === "Completed")
-              return { id: appointment.id };
-            if (
-              appointment.bookingStatus !== "Confirmed" ||
-              appointment.slot.endsAt > now
-            )
-              throw new DomainError(
-                "Complete the session after the confirmed appointment has ended.",
-                409,
-              );
-            data = { bookingStatus: "Completed", completedAt: now };
-          } else {
-            if (appointment.bookingStatus === "Cancelled")
-              return { id: appointment.id };
-            if (appointment.bookingStatus !== "Reserved")
-              throw new DomainError(
-                "Only unpaid reservations can be cancelled here.",
-                409,
-              );
-            if (appointment.stripeSessionId)
-              await expireCheckout(appointment.stripeSessionId);
-            else if (
-              appointment.checkoutStartedAt &&
-              checkoutExpiry(
-                appointment.slot.startsAt,
-                appointment.checkoutStartedAt,
-              ) >= now.getTime()
-            )
-              throw new DomainError(
-                "Checkout may still be open. Try after it expires.",
-                409,
-              );
-            data = { bookingStatus: "Cancelled" };
-          }
+          if (isCompletion && appointment.slot.endsAt > now)
+            throw new DomainError(
+              "Complete the session after the confirmed appointment has ended.",
+              409,
+            );
+          const data = {
+            bookingStatus,
+            ...(isCompletion && { completedAt: now }),
+          };
           return tx.consultationAppointment.update({
             where: { id: appointment.id },
             data,
@@ -486,28 +442,39 @@ export async function POST(request: Request) {
             ...values,
             followUpOn: followUpOn ? new Date(followUpOn) : null,
           };
-          const milestone = {
-            "Commercial discussion": "discussionAt",
-            "Proposal submitted": "proposalAt",
-            "Hired or contract secured": "securedAt",
-            "Declined or closed": "closedAt",
-          } as const;
-          const reached = milestone[values.status];
+          const reached: Partial<
+            Record<
+              z.infer<typeof engagementSchema>["status"],
+              "proposalAt" | "securedContractAt" | "securedEmploymentAt"
+            >
+          > = {
+            "Contract proposal": "proposalAt",
+            "Secured contract": "securedContractAt",
+            "Secured employment": "securedEmploymentAt",
+          };
+          const milestone = reached[values.status];
           const now = new Date();
           if (input.engagementId) {
             await tx.$queryRaw`SELECT id FROM "CommercialEngagement" WHERE id = ${input.engagementId} AND "leadId" = ${input.leadId} FOR UPDATE`;
             const record = await tx.commercialEngagement.findUnique({
               where: { id: input.engagementId, leadId: input.leadId },
             });
-            if (!record) throw new DomainError("Engagement not found.", 404);
+            if (!record) throw new DomainError("Opportunity not found.", 404);
             return tx.commercialEngagement.update({
               where: { id: record.id },
-              data: { ...data, [reached]: record[reached] ?? now },
+              data: {
+                ...data,
+                ...(milestone && { [milestone]: record[milestone] ?? now }),
+              },
               select: { id: true },
             });
           }
           return tx.commercialEngagement.create({
-            data: { leadId: input.leadId, ...data, [reached]: now },
+            data: {
+              leadId: input.leadId,
+              ...data,
+              ...(milestone && { [milestone]: now }),
+            },
             select: { id: true },
           });
         }
@@ -527,6 +494,7 @@ export async function POST(request: Request) {
               applicationId: application.id,
               founderName: application.founderName,
               businessName: application.companyName,
+              source: "Outbound",
             },
             update: {},
             select: { id: true },

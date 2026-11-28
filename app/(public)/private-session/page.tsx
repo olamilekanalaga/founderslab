@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import PrivateSession from "@/features/consultations/components/PrivateSession";
 
 export const metadata: Metadata = {
-  title: "Private Business Session | Founders Lab",
+  title: "Private session | Founders Lab",
   robots: { index: false, follow: false },
   referrer: "no-referrer",
 };

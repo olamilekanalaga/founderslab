@@ -218,6 +218,11 @@ model ConsultationLead {
   application    Application?               @relation(fields: [applicationId], references: [id], onDelete: SetNull)
   founderName     String
   businessName    String
+  source          String
+  inboundKey      String?                   @unique
+  requestedAt     DateTime?
+  replyEmail      String?
+  requestContext  String?
   followUp        Json?
   followUpStatus  String                    @default("Not started")
   followUpVersion Int                       @default(0)
@@ -246,13 +251,7 @@ model ConsultationAppointment {
   slot              ConsultationSlot @relation(fields: [slotId], references: [id])
   email             String
   discovery         Json
-  bookingStatus     String           @default("Reserved")
-  paymentStatus     String           @default("Unpaid")
-  feePence          Int
-  checkoutStartedAt DateTime?
-  checkoutOrigin    String?
-  stripeSessionId   String?          @unique
-  paidAt            DateTime?
+  bookingStatus     String           @default("Confirmed")
   completedAt       DateTime?
   createdAt         DateTime         @default(now())
 
@@ -264,16 +263,15 @@ model CommercialEngagement {
   id             String           @id @default(cuid())
   leadId         String
   lead           ConsultationLead @relation(fields: [leadId], references: [id])
-  type           String
+  type           String?
   problem        String
   solution       String
   estimatedPence Int?
   agreedPence    Int?
   status         String
-  discussionAt   DateTime?
   proposalAt     DateTime?
-  securedAt      DateTime?
-  closedAt       DateTime?
+  securedContractAt DateTime?
+  securedEmploymentAt DateTime?
   followUpOn     DateTime?        @db.Date
   outcome        String
   updatedAt      DateTime         @updatedAt

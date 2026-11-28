@@ -4,6 +4,11 @@ CREATE TABLE "ConsultationLead" (
     "applicationId" TEXT,
     "founderName" TEXT NOT NULL,
     "businessName" TEXT NOT NULL,
+    "source" TEXT NOT NULL,
+    "inboundKey" TEXT,
+    "requestedAt" TIMESTAMP(3),
+    "replyEmail" TEXT,
+    "requestContext" TEXT,
     "followUp" JSONB,
     "followUpStatus" TEXT NOT NULL DEFAULT 'Not started',
     "followUpVersion" INTEGER NOT NULL DEFAULT 0,
@@ -31,13 +36,7 @@ CREATE TABLE "ConsultationAppointment" (
     "slotId" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "discovery" JSONB NOT NULL,
-    "bookingStatus" TEXT NOT NULL DEFAULT 'Reserved',
-    "paymentStatus" TEXT NOT NULL DEFAULT 'Unpaid',
-    "feePence" INTEGER NOT NULL,
-    "checkoutStartedAt" TIMESTAMP(3),
-    "checkoutOrigin" TEXT,
-    "stripeSessionId" TEXT,
-    "paidAt" TIMESTAMP(3),
+    "bookingStatus" TEXT NOT NULL DEFAULT 'Confirmed',
     "completedAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -48,16 +47,15 @@ CREATE TABLE "ConsultationAppointment" (
 CREATE TABLE "CommercialEngagement" (
     "id" TEXT NOT NULL,
     "leadId" TEXT NOT NULL,
-    "type" TEXT NOT NULL,
+    "type" TEXT,
     "problem" TEXT NOT NULL,
     "solution" TEXT NOT NULL,
     "estimatedPence" INTEGER,
     "agreedPence" INTEGER,
     "status" TEXT NOT NULL,
-    "discussionAt" TIMESTAMP(3),
     "proposalAt" TIMESTAMP(3),
-    "securedAt" TIMESTAMP(3),
-    "closedAt" TIMESTAMP(3),
+    "securedContractAt" TIMESTAMP(3),
+    "securedEmploymentAt" TIMESTAMP(3),
     "followUpOn" DATE,
     "outcome" TEXT NOT NULL,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -73,10 +71,10 @@ CREATE UNIQUE INDEX "ConsultationLead_applicationId_key" ON "ConsultationLead"("
 CREATE UNIQUE INDEX "ConsultationLead_inviteHash_key" ON "ConsultationLead"("inviteHash");
 
 -- CreateIndex
-CREATE INDEX "ConsultationSlot_startsAt_endsAt_idx" ON "ConsultationSlot"("startsAt", "endsAt");
+CREATE UNIQUE INDEX "ConsultationLead_inboundKey_key" ON "ConsultationLead"("inboundKey");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "ConsultationAppointment_stripeSessionId_key" ON "ConsultationAppointment"("stripeSessionId");
+CREATE INDEX "ConsultationSlot_startsAt_endsAt_idx" ON "ConsultationSlot"("startsAt", "endsAt");
 
 -- CreateIndex
 CREATE INDEX "ConsultationAppointment_leadId_idx" ON "ConsultationAppointment"("leadId");

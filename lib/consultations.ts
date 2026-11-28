@@ -9,12 +9,13 @@ export const followUpStatuses = [
 ] as const;
 
 export const followUpLabels = {
-  problems: "Business problems identified",
+  problems: "Observed business problems",
   knowledgeGaps: "Knowledge gaps",
-  economicImpact: "Potential economic impact",
-  observations: "Supporting observations",
+  opportunities: "Possible opportunities",
+  observations: "Supporting evidence",
+  economicImpact: "Potential business impact",
   investigationAreas: "Proposed investigation areas",
-  recommendation: "Private consultation recommendation",
+  contribution: "My proposed contribution",
   message: "Personalised follow-up message",
 } as const;
 
@@ -38,19 +39,34 @@ export const engagementTypes = [
 ] as const;
 
 export const engagementStatuses = [
-  "Commercial discussion",
-  "Proposal submitted",
-  "Hired or contract secured",
+  "No immediate opportunity",
+  "Further research required",
+  "Follow-up needed",
+  "Partnership discussion",
+  "Consulting opportunity",
+  "Contract proposal",
+  "Employment opportunity",
+  "Secured contract",
+  "Secured employment",
   "Declined or closed",
 ] as const;
+
+export const relationshipSources = ["Inbound", "Outbound"] as const;
+export const relationshipName = z.string().trim().min(1).max(180);
+export const privateSessionRequestSchema = z.object({
+  founderName: relationshipName,
+  businessName: relationshipName,
+  email: z.string().trim().toLowerCase().pipe(z.email().max(254)),
+  context: z.string().trim().min(1).max(2_000),
+});
 
 export const stageLabels = [
   "Space booked",
   "Space completed",
   "Business opportunity identified",
+  "Private session requested",
   "Private session offered",
   "Private session booked",
-  "Payment received",
   "Private session completed",
   ...engagementStatuses,
 ] as const;
@@ -58,20 +74,16 @@ export type PipelineStage = (typeof stageLabels)[number];
 
 const date = z.iso.date();
 const text = z.string().trim().max(8_000);
-const money = z.number().int().nonnegative().max(1_000_000_000);
-export const maxConsultationFeePence = 99_999_999;
-export const clinicSettings = z.object({
-  feePence: money
-    .min(30, "Enter a fee of at least £0.30.")
-    .max(maxConsultationFeePence),
+const contractValue = z.number().int().nonnegative().max(1_000_000_000);
+export const sessionSettings = z.object({
   durationMinutes: z.number().int().min(15).max(480),
 });
 export const engagementSchema = z.object({
-  type: z.enum(engagementTypes),
-  problem: text.min(1),
+  type: z.enum(engagementTypes).nullable(),
+  problem: text,
   solution: text,
-  estimatedPence: money.nullable(),
-  agreedPence: money.nullable(),
+  estimatedPence: contractValue.nullable(),
+  agreedPence: contractValue.nullable(),
   status: z.enum(engagementStatuses),
   followUpOn: date.nullable(),
   outcome: text,
@@ -82,13 +94,6 @@ export const consultationPath = "/private-session";
 
 export function consultationLink(invite: string) {
   return new URL(`${consultationPath}#token=${invite}`, location.origin).href;
-}
-
-export function gbp(pence: number) {
-  return new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency: "GBP",
-  }).format(pence / 100);
 }
 
 export function pence(value: string) {

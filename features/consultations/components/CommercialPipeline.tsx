@@ -10,12 +10,12 @@ import {
 } from "@/lib/business-research";
 import {
   consultationLink,
+  consultationPath,
   consultationTime,
   engagementStatuses,
   engagementTypes,
-  gbp,
   pence,
-  maxConsultationFeePence,
+  relationshipSources,
   type PipelineStage,
 } from "@/lib/consultations";
 import { commercialRequest } from "../commercial-api";
@@ -28,11 +28,10 @@ type Slot = {
   _count: { appointments: number };
 };
 type Overview = {
-  checkout: boolean;
   conversions: {
     publicParticipants: number;
-    paidAfterSpace: number;
-    securedAfterConsultation: number;
+    privateSessionsAfterSpace: number;
+    securedAfterPrivateSession: number;
   };
   totals: { stage: PipelineStage; count: number }[];
   rows: {
@@ -41,14 +40,15 @@ type Overview = {
     businessName: string;
     founderName: string;
     researchStatus: string | null;
+    source: string;
     stages: PipelineStage[];
   }[];
-  settings: { feePence: number; durationMinutes: number } | null;
+  settings: { durationMinutes: number } | null;
   slots: Slot[];
 };
 type Engagement = {
   id: string;
-  type: string;
+  type: string | null;
   problem: string;
   solution: string;
   estimatedPence: number | null;
@@ -60,21 +60,21 @@ type Engagement = {
 type Appointment = {
   id: string;
   bookingStatus: string;
-  paymentStatus: string;
-  feePence: number;
-  checkoutStartedAt: string | null;
   email: string;
   discovery: BusinessDiscovery;
   slot: { startsAt: string; endsAt: string };
 };
 type Detail = {
-  checkout: boolean;
   lead: {
     id: string;
     founderName: string;
     businessName: string;
     applicationId: string | null;
     offeredAt: string | null;
+    source: string;
+    requestedAt: string | null;
+    replyEmail: string | null;
+    requestContext: string | null;
     consultations: Appointment[];
     engagements: Engagement[];
   };
@@ -148,7 +148,7 @@ export default function CommercialPipeline({ id }: { id?: string }) {
           <h1>{detail?.lead.businessName || "Commercial pipeline"}</h1>
           <p>
             {detail?.lead.founderName ||
-              "Track private consultations and commercial opportunities."}
+              "Track founder relationships, private sessions and opportunities."}
           </p>
         </div>
         {detail?.lead.applicationId &&
@@ -174,7 +174,17 @@ export default function CommercialPipeline({ id }: { id?: string }) {
       {id && detail ? (
         <>
           <section className="panel padded">
-            <h2>Private consultation</h2>
+            <h2>Private session</h2>
+            {detail.lead.requestedAt && (
+              <div className="stack-form">
+                <h3>Inbound request</h3>
+                <p>
+                  Received {consultationTime(detail.lead.requestedAt)} UK time
+                </p>
+                <p>Reply to {detail.lead.replyEmail}</p>
+                <p>{detail.lead.requestContext}</p>
+              </div>
+            )}
             {canEdit && !link && (
               <button
                 className="button primary"
@@ -202,18 +212,18 @@ export default function CommercialPipeline({ id }: { id?: string }) {
                 key={appointment.id}
                 appointment={appointment}
                 canEdit={canEdit}
-                checkout={detail.checkout}
                 busy={busy}
                 write={write}
               />
             ))}
           </section>
           <section className="panel padded">
-            <h2>Commercial engagements</h2>
+            <h2>Opportunity outcomes</h2>
             {detail.lead.engagements.map((engagement) => (
               <details key={engagement.id}>
                 <summary>
-                  {engagement.type} · {engagement.status}
+                  {engagement.status}
+                  {engagement.type && ` · ${engagement.type}`}
                 </summary>
                 <EngagementForm
                   leadId={id}
@@ -229,14 +239,14 @@ export default function CommercialPipeline({ id }: { id?: string }) {
               (appointment) => appointment.bookingStatus === "Completed",
             ) ? (
               <details>
-                <summary>Add an engagement</summary>
+                <summary>Record an outcome</summary>
                 <EngagementForm leadId={id} write={write} busy={busy} />
               </details>
             ) : (
               !detail.lead.engagements.length && (
                 <p>
-                  Record the completed private session to start tracking
-                  engagements.
+                  Mark the private session complete to record a follow-up or
+                  opportunity.
                 </p>
               )
             )}
@@ -257,25 +267,25 @@ export default function CommercialPipeline({ id }: { id?: string }) {
               aria-pressed={view === "settings"}
               onClick={() => setView("settings")}
             >
-              Consultation settings
+              Session settings
             </button>
           </nav>
           {view === "pipeline" ? (
             <>
               <section className="panel padded">
-                <h2>From the Space to paid work</h2>
+                <h2>From the Space to collaboration</h2>
                 <dl className="commercial-metrics">
                   <div>
                     <dt>Founders who attended</dt>
                     <dd>{overview.conversions.publicParticipants}</dd>
                   </div>
                   <div>
-                    <dt>Paid after the Space</dt>
-                    <dd>{overview.conversions.paidAfterSpace}</dd>
+                    <dt>Private sessions after the Space</dt>
+                    <dd>{overview.conversions.privateSessionsAfterSpace}</dd>
                   </div>
                   <div>
-                    <dt>Secured work after consultation</dt>
-                    <dd>{overview.conversions.securedAfterConsultation}</dd>
+                    <dt>Secured work after a private session</dt>
+                    <dd>{overview.conversions.securedAfterPrivateSession}</dd>
                   </div>
                 </dl>
                 <h2>Pipeline overview</h2>
@@ -292,8 +302,12 @@ export default function CommercialPipeline({ id }: { id?: string }) {
                 <details className="panel padded">
                   <summary>Add a business directly</summary>
                   <p>
-                    Use this for a founder who hasn’t booked a public Space.
+                    Create an invitation for a founder you contacted or who
+                    approached you directly.
                   </p>
+                  <Link className="text-link" href={consultationPath}>
+                    Open the private-session request form
+                  </Link>
                   <form
                     className="stack-form"
                     onSubmit={(event) => {
@@ -305,6 +319,7 @@ export default function CommercialPipeline({ id }: { id?: string }) {
                           action: "new-lead",
                           founderName: fields.get("founderName"),
                           businessName: fields.get("businessName"),
+                          source: fields.get("source"),
                         },
                         "Business added.",
                         () => form.reset(),
@@ -318,6 +333,14 @@ export default function CommercialPipeline({ id }: { id?: string }) {
                     <label>
                       Business name
                       <input name="businessName" required maxLength={180} />
+                    </label>
+                    <label>
+                      How did you connect?
+                      <select name="source" defaultValue="Inbound">
+                        {relationshipSources.map((source) => (
+                          <option key={source}>{source}</option>
+                        ))}
+                      </select>
                     </label>
                     <button className="button primary" disabled={busy}>
                       Add business
@@ -336,7 +359,7 @@ export default function CommercialPipeline({ id }: { id?: string }) {
                       <div>
                         <strong>{row.businessName}</strong>
                         <p>
-                          {row.founderName}
+                          {row.founderName} · {row.source}
                           {row.researchStatus &&
                             ` · Research: ${row.researchStatus}`}
                         </p>
@@ -401,12 +424,7 @@ function ConsultationSettings({
   return (
     <>
       <section className="panel padded">
-        <h2>Fee and duration</h2>
-        <p>
-          {overview.checkout
-            ? "Online checkout is configured."
-            : "Online checkout is off. You can record an offline payment after receiving it."}
-        </p>
+        <h2>Session duration</h2>
         <form
           className="stack-form"
           onSubmit={(event) => {
@@ -416,31 +434,13 @@ function ConsultationSettings({
               {
                 action: "settings",
                 settings: {
-                  feePence: pence(String(values.get("fee"))),
                   durationMinutes: Number(values.get("duration")),
                 },
               },
-              "Consultation settings saved.",
+              "Session settings saved.",
             );
           }}
         >
-          <label>
-            Fee (£)
-            <input
-              name="fee"
-              type="number"
-              step="0.01"
-              min="0.30"
-              max={maxConsultationFeePence / 100}
-              defaultValue={
-                overview.settings
-                  ? (overview.settings.feePence / 100).toFixed(2)
-                  : ""
-              }
-              required
-              readOnly={!canEdit}
-            />
-          </label>
           <label>
             Duration (minutes)
             <input
@@ -492,7 +492,7 @@ function ConsultationSettings({
             <li key={slot.id}>
               <span>{consultationTime(slot.startsAt)} · UK time</span>
               {slot._count.appointments ? (
-                <Status value="Reserved or confirmed" />
+                <Status value="Booked" />
               ) : (
                 canEdit && (
                   <button
@@ -522,13 +522,11 @@ function ConsultationSettings({
 function AppointmentCard({
   appointment,
   canEdit,
-  checkout,
   write,
   busy,
 }: {
   appointment: Appointment;
   canEdit: boolean;
-  checkout: boolean;
   write: Write;
   busy: boolean;
 }) {
@@ -541,13 +539,8 @@ function AppointmentCard({
   return (
     <article className="commercial-appointment">
       <h3>{consultationTime(appointment.slot.startsAt)} · UK time</h3>
-      <p>
-        {gbp(appointment.feePence)} · {appointment.email}
-      </p>
-      <div className="inline">
-        <Status value={appointment.bookingStatus} />
-        <Status value={appointment.paymentStatus} />
-      </div>
+      <p>{appointment.email}</p>
+      <Status value={appointment.bookingStatus} />
       <details>
         <summary>Private discovery answers</summary>
         <dl className="research-answers">
@@ -567,47 +560,29 @@ function AppointmentCard({
           </div>
         </dl>
       </details>
-      {canEdit && (
+      {canEdit && appointment.bookingStatus === "Confirmed" && (
         <div className="inline">
-          {appointment.bookingStatus === "Reserved" && (
-            <>
-              {!checkout && !appointment.checkoutStartedAt && (
-                <button
-                  className="button primary"
-                  type="button"
-                  disabled={busy}
-                  onClick={() => change("record-payment")}
-                >
-                  Record payment received
-                </button>
-              )}
-              <button
-                className="button"
-                type="button"
-                disabled={busy}
-                onClick={() => {
-                  if (
-                    window.confirm(
-                      "Cancel this unpaid reservation and release the time?",
-                    )
-                  )
-                    change("cancel");
-                }}
-              >
-                Cancel reservation
-              </button>
-            </>
-          )}
-          {appointment.bookingStatus === "Confirmed" && (
-            <button
-              className="button primary"
-              type="button"
-              disabled={busy}
-              onClick={() => change("complete")}
-            >
-              Mark session complete
-            </button>
-          )}
+          <button
+            className="button primary"
+            type="button"
+            disabled={busy}
+            onClick={() => change("complete")}
+          >
+            Mark session complete
+          </button>
+          <button
+            className="button"
+            type="button"
+            disabled={busy}
+            onClick={() => {
+              if (
+                window.confirm("Cancel this appointment and release the time?")
+              )
+                change("cancel");
+            }}
+          >
+            Cancel appointment
+          </button>
         </div>
       )}
     </article>
@@ -641,6 +616,7 @@ function EngagementForm({
         engagementId: engagement?.id,
         engagement: {
           ...fields,
+          type: fields.type || null,
           estimatedPence: fields.estimatedPence
             ? pence(String(fields.estimatedPence))
             : null,
@@ -650,7 +626,7 @@ function EngagementForm({
           followUpOn: fields.followUpOn || null,
         },
       },
-      "Engagement saved.",
+      "Outcome saved.",
       () => {
         if (!engagement) form.reset();
       },
@@ -660,7 +636,12 @@ function EngagementForm({
     <form className="stack-form" onSubmit={save}>
       <label>
         Engagement type
-        <select name="type" defaultValue={engagement?.type} disabled={readOnly}>
+        <select
+          name="type"
+          defaultValue={engagement?.type ?? ""}
+          disabled={readOnly}
+        >
+          <option value="">Select a type if applicable</option>
           {engagementTypes.map((type) => (
             <option key={type}>{type}</option>
           ))}
@@ -672,7 +653,6 @@ function EngagementForm({
           name="problem"
           defaultValue={engagement?.problem}
           maxLength={8_000}
-          required
           readOnly={readOnly}
         />
       </label>
@@ -686,7 +666,7 @@ function EngagementForm({
         />
       </label>
       <label>
-        Estimated value (£)
+        Estimated contract value (£, optional)
         <input
           name="estimatedPence"
           type="number"
@@ -698,7 +678,7 @@ function EngagementForm({
         />
       </label>
       <label>
-        Agreed value (£)
+        Agreed contract value (£, optional)
         <input
           name="agreedPence"
           type="number"
@@ -710,7 +690,7 @@ function EngagementForm({
         />
       </label>
       <label>
-        Proposal status
+        Outcome
         <select
           name="status"
           defaultValue={engagement?.status}
@@ -731,7 +711,7 @@ function EngagementForm({
         />
       </label>
       <label>
-        Outcome
+        Opportunity notes
         <textarea
           name="outcome"
           defaultValue={engagement?.outcome}
@@ -741,7 +721,7 @@ function EngagementForm({
       </label>
       {!readOnly && (
         <button className="button primary" disabled={busy}>
-          Save engagement
+          Save outcome
         </button>
       )}
     </form>

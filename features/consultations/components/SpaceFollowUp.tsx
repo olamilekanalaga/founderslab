@@ -135,6 +135,7 @@ export default function SpaceFollowUp({
                   <textarea
                     name={key}
                     rows={4}
+                    placeholder="Describe what you observed, why it matters and invite the founder to talk privately."
                     maxLength={8_000}
                     readOnly={!canEdit}
                     value={message}

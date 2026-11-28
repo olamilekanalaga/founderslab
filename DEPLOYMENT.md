@@ -31,31 +31,25 @@ Accounts created through workspace signup use their stored credentials. `BOOTSTR
 
 Keep preview and local databases separate from production. The Vercel preparation step runs in Production. For a persistent Node host, run the migrations, defaults seed, and Sunday publication from the [local setup guide](README.md#local-setup), then build and start the application. Keep applied migrations intact. [Database migrations](prisma/README.md)
 
-## Private Business Sessions
+## Private sessions and opportunities
 
-The private commercial workspace uses the existing database. Apply
-`202611280003_private_consultations` through the usual migration command before
-testing against a separate Preview database. The migration adds four tables and
-leaves existing applications, research and consent records in place.
+Apply the pending `202611280003_private_consultations` migration before testing
+in a separate preview database. It adds the private workflow to the existing
+database and preserves current applications, Space bookings, and consent records.
 
-Open **Admin operations → Commercial pipeline → Consultation settings**. Set the
-fee in pounds and the duration in minutes, then add available appointment times.
-The time picker uses your device time zone. Founders see the time in the UK time
-zone. Use **Research → After the Space** to write a personalised follow-up and
-copy it with a private booking link. For someone outside the public programme,
-use **Commercial pipeline → Add a business directly**, then open their record
-and create a link. Share these links privately. Replacing a link invalidates the
-one previously shared. A single link can reserve one active appointment and
-reopen its confirmation.
+Open **Admin operations → Commercial pipeline → Session settings**. Set the
+duration in minutes and add appointment times. The time picker uses your device
+time zone. Founders see appointments in UK time and get immediate confirmation
+when they book. The same invitation link reopens their confirmation.
 
-For online payments, create a Stripe webhook destination at
-`https://<your-site>/api/stripe/consultations`. Select
-`checkout.session.completed` and `checkout.session.expired`. Add
-`STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` as sensitive, server-side
-Vercel environment variables in the environment where the endpoint runs. Use a
-Stripe test key and its test webhook signing secret for Preview.
-Stripe confirms a paid booking through the webhook. The founder can view the
-confirmation through their private link. When Checkout is off, the team can
-record a payment received outside Founders Lab. Unpaid reservations without
-a checkout can be released in the commercial record. Full or partial refunds
-and appointment changes after payment are handled outside this workflow.
+- **Outbound:** Open the founder in **Research queue → After the Space**, save
+  your observations and DM, then create a private booking link. Copy the DM and
+  link together to review and send them yourself.
+- **Inbound:** Share `/private-session` or give the address to a founder who asks.
+  Requests appear in the commercial pipeline. Review the private request
+  before creating and sharing an invitation. If the founder already contacted
+  you elsewhere, use **Add a business directly** instead.
+
+Replacing an invitation invalidates the old link. After the conversation,
+mark it complete in the commercial record and record the outcome, opportunity
+notes, and follow-up date. Private sessions and the public Space are free.
