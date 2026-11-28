@@ -1453,3 +1453,90 @@ html:has(.admin-desk)::-webkit-scrollbar-thumb:hover {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+
+.research-queue,
+.booking-research {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.booking-research {
+  max-width: 860px;
+  margin-inline: auto;
+}
+
+.booking-research > .back-link {
+  justify-self: start;
+  margin: 0;
+}
+
+.research-queue-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  overflow-wrap: anywhere;
+}
+
+.research-queue-row:hover {
+  border-color: var(--accent);
+}
+
+.research-queue-row :is(strong, small) {
+  display: block;
+}
+
+.research-queue-row small,
+.research-answers dt {
+  color: var(--muted);
+}
+
+.research-challenge {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.booking-research .panel h2 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 14px;
+}
+
+.research-answers {
+  display: grid;
+  gap: 14px;
+  margin: 16px 0 0;
+}
+
+.research-answers dd {
+  margin: 4px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.research-discovery-link {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  border-top: 1px solid var(--border);
+  margin-top: 18px;
+  padding-top: 14px;
+}
+
+.research-discovery-link .stack-form {
+  width: 100%;
+}
+
+@media (max-width: 650px) {
+  .research-queue-row {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+  .research-queue-row .research-challenge {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}

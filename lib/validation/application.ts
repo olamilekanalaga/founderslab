@@ -2,6 +2,7 @@ import { z } from "zod";
 import { TEAM_SIZES } from "@/lib/catalog";
 import { chainNames } from "@/lib/chains";
 import { projectLogoSchema } from "./project-logo";
+import { spaceDiscussionOptions } from "@/lib/space-registration";
 import {
   text,
   short,
@@ -84,4 +85,16 @@ export const publicApplicationSchema = applicationSchema.extend({
     .pipe(z.union([z.email(), z.literal("")]))
     .optional()
     .default(""),
+});
+
+export const founderRegistrationSchema = publicApplicationSchema.extend({
+  discussionPreference: z.enum(
+    spaceDiscussionOptions.map(({ value }) => value),
+    {
+      error: "Choose what you are comfortable discussing live.",
+    },
+  ),
+  publicSpaceConsent: z.literal(true, {
+    error: "Acknowledge that the Space is public and recorded.",
+  }),
 });

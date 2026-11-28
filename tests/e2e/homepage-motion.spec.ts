@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { sundaySessions } from "@/lib/dates/sunday-schedule";
+import { openRegistrationForm } from "./registration-steps";
 
 for (const [width, height] of [
   [320, 710],
@@ -65,6 +66,7 @@ for (const [width, height] of [
     await expect(choose).toBeFocused();
     await page.keyboard.press("Enter");
     await expect(page).toHaveURL(`/apply?session=${sessions[0].id}`);
+    await openRegistrationForm(page);
     await expect(page.getByLabel("Founder name")).toBeVisible();
     await expect(page.locator(".founder-application-heading")).toHaveAttribute(
       "data-motion-visible",

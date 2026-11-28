@@ -15,16 +15,29 @@ import {
 import PublicHeader from "@/components/layout/PublicHeader";
 import PublicFooter from "@/components/layout/PublicFooter";
 import BrandMark from "@/components/shared/BrandMark";
+import {
+  freeSpaceDescription,
+  spaceInvitationDay,
+  spaceInvitationLead,
+} from "@/lib/space-registration";
 import HeroBookingPreview from "./HeroBookingPreview";
 import { ProgrammeAvailability } from "./ProgrammeAvailability";
 const questions = [
   [
     "Who is FoundersLab for?",
-    "FoundersLab is for Web3 founders who want to talk openly about what they’re building, who it’s for and what they’re learning from users and the wider industry.",
+    "Founders Lab is for Web3 founders with a live product who want to talk about what they’re building and what they’re learning.",
   ],
   [
-    "Will my information and Space appearance be public?",
-    "Your application details remain private.\n\nYour X Space appearance is public and recorded. After each session, we also publish a free weekly recap featuring the founders, their products and what they shared.",
+    "What will we talk about?",
+    "We’ll discuss your product, the problem it solves, how people use it, what you’re seeing in the market, and opportunities ahead. You choose which challenges you’re comfortable sharing.",
+  ],
+  [
+    "What should I share before the session?",
+    "Share your project name, website and a short description of what you’re building. You can leave sensitive details out of the registration form.",
+  ],
+  [
+    "What stays private?",
+    "Your registration answers stay with the team. The Space is public and recorded, and you decide what you’re comfortable sharing live. Promotional consent is a separate choice.",
   ],
   [
     "Does participation cost anything?",
@@ -32,11 +45,15 @@ const questions = [
   ],
   [
     "Where and when do we meet?",
-    "On X Spaces, every Sunday at 7 PM London time. The calendar also shows the time in your timezone, with GMT and BST handled automatically.",
+    "Join me on my X page every Sunday at 7 PM London time. The calendar also shows the time in your timezone.",
   ],
   [
     "What happens after I apply?",
-    "The programme team reviews your application and booking request. Save your private confirmation link to check your status. A pending request does not reserve a seat.",
+    "You’ll get a private receipt immediately. A place is confirmed after the team approves your booking. We use your answers to prepare for the live Space. Save the receipt link to check your booking status.",
+  ],
+  [
+    "I already booked. Do I need to register again?",
+    "Your existing booking still applies. Use your private confirmation link to check its status.",
   ],
   [
     "Do I need an account?",
@@ -60,24 +77,15 @@ export default function HomePage() {
             </div>
             <div className="fl-hero-copy">
               <span className="fl-eyebrow">
-                <Mic2 size={15} aria-hidden="true" /> FoundersLab · WEEKLY WEB3
-                SPACES
+                <Mic2 size={15} aria-hidden="true" /> FoundersLab · Free X Space
               </span>
               <h1 id="programme-title">
-                What are you building, and <span>why does it matter?</span>
+                {spaceInvitationLead} <span>{spaceInvitationDay}</span>
               </h1>
-              <p>
-                Every Sunday, FoundersLab brings Web3 founders together to
-                discuss what’s happening across the industry, the problems
-                they’re solving and the thinking behind what they’re building.
-              </p>
+              <p>{freeSpaceDescription}</p>
               <div className="fl-hero-actions">
-                <Link
-                  className="fl-action fl-action-primary"
-                  href="/#choose-a-sunday"
-                >
-                  Book a Founder Space{" "}
-                  <ArrowRight size={18} aria-hidden="true" />
+                <Link className="fl-action fl-action-primary" href="/apply">
+                  Start registration <ArrowRight size={18} aria-hidden="true" />
                 </Link>
                 <Link className="fl-action fl-action-text" href="#how-it-works">
                   How it works <ArrowRight size={17} aria-hidden="true" />
@@ -121,23 +129,18 @@ export default function HomePage() {
             aria-labelledby="about-title"
           >
             <div className="fl-about-intro" data-home-reveal>
-              <span className="fl-eyebrow">Built around the conversation</span>
-              <h2 id="about-title">
-                Beyond the product. Let’s talk about why it exists.
-              </h2>
+              <span className="fl-eyebrow">Sunday X Spaces</span>
+              <h2 id="about-title">Tell us what you’re building.</h2>
               <p>
-                Markets change. New technologies emerge. User behaviour shifts.
-                Yet founders continue building. What problems are worth solving?
-                Who needs these products? Why are builders making these
-                decisions now?
+                Come on my X page to introduce your product, the problem it
+                solves and the people it helps.
               </p>
               <p>
-                Each week, we bring different founders into one conversation to
-                explore these questions, share experiences and discuss the
-                realities of building in Web3.
+                We’ll talk about what you’re learning from users, where there’s
+                demand and what opportunities you see ahead.
               </p>
-              <Link className="fl-inline-action" href="/#choose-a-sunday">
-                Find your conversation{" "}
+              <Link className="fl-inline-action" href="/apply">
+                See the registration format{" "}
                 <ArrowRight size={17} aria-hidden="true" />
               </Link>
             </div>
@@ -146,31 +149,31 @@ export default function HomePage() {
                 <span className="fl-benefit-symbol">
                   <Lightbulb size={30} aria-hidden="true" />
                 </span>
-                <h3>Show people what you’re building.</h3>
+                <h3>Introduce your product.</h3>
                 <p>
-                  Explain the problem behind your product, who faces it and why
-                  it matters now.
+                  Share what it does, who it’s for and why you started building
+                  it.
                 </p>
                 <span className="fl-benefit-phrase">
                   Your product.
                   <br />
-                  Your perspective.
+                  Your story.
                 </span>
               </article>
               <article className="fl-benefit-small" data-home-reveal>
                 <MessageCircle size={23} aria-hidden="true" />
-                <h3>Talk through the real questions.</h3>
+                <h3>Talk about your users.</h3>
                 <p>
-                  Talk through what you’re learning from users, how the market
-                  is changing and what that means for your next decision.
+                  Tell us how people use your product and what you’re learning
+                  about demand.
                 </p>
               </article>
               <article className="fl-benefit-small" data-home-reveal>
                 <Network size={23} aria-hidden="true" />
-                <h3>Find common ground.</h3>
+                <h3>Explore what’s ahead.</h3>
                 <p>
-                  Exchange perspectives with other builders and explore shared
-                  interests worth following up.
+                  Share opportunities you see and any challenges you’re
+                  comfortable discussing.
                 </p>
               </article>
             </div>
@@ -182,7 +185,9 @@ export default function HomePage() {
           >
             <div className="fl-process-intro" data-home-reveal>
               <h2 id="process-title">How It Works</h2>
-              <p>Your next conversation starts with a Sunday.</p>
+              <p>
+                Choose a Sunday, tell us about your product, and join me live.
+              </p>
             </div>
             <ol className="fl-process-steps">
               <li data-home-reveal>
@@ -190,29 +195,26 @@ export default function HomePage() {
                   <CalendarDays size={23} aria-hidden="true" />
                 </span>
                 <h3>Choose your Sunday</h3>
-                <p>
-                  Pick an available date. See the live places left and the time
-                  where you are.
-                </p>
+                <p>Read what to expect, then choose an available Sunday.</p>
               </li>
               <li data-home-reveal>
                 <span>
                   <FileText size={23} aria-hidden="true" />
                 </span>
-                <h3>Tell us your story</h3>
+                <h3>Tell us about your product</h3>
                 <p>
-                  Send your founder and project details. The programme team
-                  reviews your request.
+                  Send a short description and choose what you’re comfortable
+                  discussing on air.
                 </p>
               </li>
               <li data-home-reveal>
                 <span>
                   <Mic2 size={23} aria-hidden="true" />
                 </span>
-                <h3>Join the conversation</h3>
+                <h3>Join me live on X</h3>
                 <p>
-                  Once approved, join the scheduled X Space and keep the
-                  connection going.
+                  Once your booking is approved, come on my X page for the
+                  Sunday Space.
                 </p>
               </li>
             </ol>
@@ -228,10 +230,7 @@ export default function HomePage() {
                 <br />
                 worth knowing.
               </h2>
-              <p>
-                A small commitment.
-                <br />A clear idea of what comes next.
-              </p>
+              <p>What to share, what stays private and how booking works.</p>
               <Link className="fl-inline-action" href="/terms">
                 Programme terms & privacy{" "}
                 <ArrowRight size={16} aria-hidden="true" />
@@ -270,14 +269,11 @@ export default function HomePage() {
             data-home-reveal
           >
             <div>
-              <h2 id="cta-title">What are you building?</h2>
-              <p>There’s a conversation waiting to happen.</p>
+              <h2 id="cta-title">See you on Sunday.</h2>
+              <p>Share what you’re building in a free X Space.</p>
             </div>
-            <Link
-              className="fl-action fl-action-primary"
-              href="/#choose-a-sunday"
-            >
-              Choose a Sunday <ArrowRight size={19} aria-hidden="true" />
+            <Link className="fl-action fl-action-primary" href="/apply">
+              Start registration <ArrowRight size={19} aria-hidden="true" />
             </Link>
             <p className="fl-final-note">
               Free participation. Application review required. No founder

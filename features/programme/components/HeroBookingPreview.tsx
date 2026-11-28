@@ -25,7 +25,7 @@ export default function HeroBookingPreview() {
             <CalendarDays size={21} aria-hidden="true" />
           </span>
           <div>
-            <strong>Your next conversation</strong>
+            <strong>Your next Space</strong>
             <span>Find your Sunday</span>
           </div>
           <span className="fl-free-label">Free</span>

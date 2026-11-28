@@ -11,9 +11,9 @@ import { db, hash, token, loadState } from "@/server/db";
 import { body, json, failure } from "@/server/http";
 import { requireOrigin, rateLimit } from "@/server/auth";
 import {
-  publicApplicationSchema as applicationSchema,
+  founderRegistrationSchema as applicationSchema,
   normaliseKey,
-} from "@/lib/validation";
+} from "@/lib/validation/application";
 import { approvedSeats, DomainError } from "@/lib/domain";
 import { cookies } from "next/headers";
 import {
@@ -196,8 +196,8 @@ export async function POST(
 
       const raw = token();
       const id = crypto.randomUUID();
-      const { websiteTrap: ignored, projectLogo, ...data } = p;
-      void ignored;
+      const { websiteTrap, projectLogo, publicSpaceConsent, ...data } = p;
+      void websiteTrap;
       const application = await db().$transaction(async (tx) => {
         if (sessionId) {
           await requireProgrammeBooking(tx, sessionId, true);
@@ -247,6 +247,7 @@ export async function POST(
         const created = await tx.application.create({
           data: {
             ...data,
+            publicSpaceConsentAt: publicSpaceConsent ? new Date() : null,
             ...(projectLogo
               ? { projectLogo: { create: { image: projectLogo } } }
               : {}),

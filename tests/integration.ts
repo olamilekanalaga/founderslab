@@ -22,6 +22,11 @@ import {
   RETIRED_AWARD_COMMANDS,
 } from "@/lib/programme-policy";
 import { projectLogoPng } from "./fixtures/project-logo";
+import { businessDiscovery } from "./fixtures/business-discovery";
+import {
+  discoveryQuestions,
+  researchAcknowledgements,
+} from "@/lib/business-research";
 const artifactDir = process.env.TEST_ARTIFACT_DIR || "artifacts";
 mkdirSync(artifactDir, { recursive: true });
 const artifactPath = (name: string) => join(artifactDir, name);
@@ -318,6 +323,8 @@ try {
         "bdReferrerXHandle",
         "bdReviewStatus",
         "bdPartnerId",
+        "discussionPreference",
+        "publicSpaceConsentAt",
       ]) {
         assert.equal(row[field], null);
         delete row[field];
@@ -580,6 +587,8 @@ try {
     comments: "None",
     privacyConsent: true,
     promotionalConsent: false,
+    discussionPreference: "product-and-market",
+    publicSpaceConsent: true,
   };
   assert.equal(
     (
@@ -595,6 +604,15 @@ try {
     projectLogo: "data:image/png;base64," + projectLogoPng,
   });
   assert.equal(result.status, 201, JSON.stringify(result.data));
+  assert.equal(
+    (
+      await request("/api/public/apply", {
+        ...application,
+        publicSpaceConsent: false,
+      })
+    ).status,
+    400,
+  );
   const capability = result.data.token;
   assert.equal(
     (
@@ -633,6 +651,8 @@ try {
     status: "Approved",
   });
   const linked = state.applications.find((a) => a.id === app.id)!;
+  assert.equal(linked.discussionPreference, application.discussionPreference);
+  assert.ok(Number.isFinite(Date.parse(linked.publicSpaceConsentAt || "")));
   const logoPath = "/api/project-logo/" + app.id;
   assert.equal(linked.hasProjectLogo, true);
   assert.equal(state.companyLogoApplicationIds?.[linked.companyId!], app.id);
@@ -805,6 +825,132 @@ try {
   pass(
     "Six concurrent approvals produce five project seats, fifteen speakers, and one capacity rejection",
   );
+  const legacyBooking = state.bookings.find(
+    (booking) =>
+      booking.sessionId === session.id &&
+      booking.status === "Approved" &&
+      booking.applicationId !== app.id,
+  )!;
+  const legacyId = legacyBooking.applicationId;
+  const researchPath = "/api/booking-research?application=" + legacyId;
+  const issue = { action: "issue-link", applicationId: legacyId };
+  assert.equal((await request(researchPath)).status, 401);
+  assert.equal(
+    (await request("/api/booking-research", issue, admin, false)).status,
+    403,
+  );
+  assert.equal(
+    (await request(researchPath, undefined, admin)).data.discovery,
+    null,
+  );
+  const earlier = await request("/api/booking-research", issue, admin);
+  const issued = await request("/api/booking-research", issue, admin);
+  assert.equal(issued.status, 200);
+  assert.notEqual(issued.data.token, earlier.data.token);
+  const publicResearch = "/api/public/business-discovery";
+  assert.equal(
+    (
+      await request(publicResearch, {
+        action: "open",
+        token: earlier.data.token,
+      })
+    ).status,
+    404,
+  );
+  const expiringDb = new Client({ connectionString: url.toString() });
+  await expiringDb.connect();
+  await expiringDb.query(
+    'UPDATE "ApplicationResearch" SET "linkExpiresAt"=now() - interval \'1 second\' WHERE "applicationId"=$1',
+    [legacyId],
+  );
+  await expiringDb.end();
+  assert.equal(
+    (
+      await request(publicResearch, {
+        action: "open",
+        token: issued.data.token,
+      })
+    ).status,
+    404,
+  );
+  const share = await request("/api/booking-research", issue, admin);
+  const discoveryBrowser = await chromium.launch({
+    executablePath:
+      process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || "/usr/bin/chromium",
+    headless: true,
+    args: ["--no-sandbox"],
+  });
+  try {
+    const page = await discoveryBrowser.newPage({
+      viewport: { width: 393, height: 852 },
+    });
+    await page.goto(origin + "/business-discovery#token=" + share.data.token);
+    await page
+      .getByLabel("What are you building?")
+      .fill("A checkout product for Web3 retailers");
+    for (const [field, question] of Object.entries(discoveryQuestions))
+      await page
+        .getByLabel(question)
+        .fill(businessDiscovery[field as keyof typeof discoveryQuestions]);
+    for (const area of businessDiscovery.areas)
+      await page.getByLabel(area, { exact: true }).check();
+    await page
+      .getByRole("button", { name: "Send business information" })
+      .click();
+    await expect(
+      page.locator("#main-content").getByRole("alert"),
+    ).toContainText("Check the highlighted fields.");
+    for (const label of Object.values(researchAcknowledgements))
+      await page.getByLabel(label).check();
+    await page
+      .getByRole("button", { name: "Send business information" })
+      .click();
+    await expect(
+      page.getByRole("heading", { name: "Business information received" }),
+    ).toBeVisible();
+  } finally {
+    await discoveryBrowser.close();
+  }
+  assert.equal(
+    (await request(publicResearch, { action: "open", token: share.data.token }))
+      .status,
+    404,
+  );
+  assert.equal(
+    (await request("/api/booking-research", issue, admin)).status,
+    409,
+  );
+  const researchSave = {
+    action: "save",
+    applicationId: legacyId,
+    status: "Research ready",
+    notes: {
+      proposedSolutions: "Test a guided trial",
+      followUpActions: "Review after the Space",
+    },
+    revision: 0,
+  };
+  assert.equal(
+    (await request("/api/booking-research", researchSave, admin)).status,
+    200,
+  );
+  assert.equal(
+    (await request("/api/booking-research", researchSave, admin)).status,
+    409,
+  );
+  const prepared = await request(researchPath, undefined, admin);
+  assert.equal(prepared.data.status, "Research ready");
+  assert.equal(
+    prepared.data.discovery.businessDescription,
+    "A checkout product for Web3 retailers",
+  );
+  assert.deepEqual(prepared.data.notes, researchSave.notes);
+  const afterDiscovery = (await request("/api/workspace", undefined, admin))
+    .data.state as DataState;
+  assert.deepEqual(afterDiscovery.bookings, state.bookings);
+  pass(
+    "Existing bookings gain private discovery through a replaceable, expiring, one-use link without changing the booking.",
+  );
   const lockedBooking = publicSessions.data.sessions[1];
   assert.equal(publicSessions.data.sessions.length, 3);
   assert.equal(publicSession.bookingLocked, false);
@@ -861,6 +1007,17 @@ try {
   const calendarRecord = calendarState.applications.find(
     (entry) => entry.reference === calendarResult.data.reference,
   )!;
+  const calendarResearch = await request(
+    "/api/booking-research?application=" + calendarRecord.id,
+    undefined,
+    admin,
+  );
+  assert.equal(calendarResearch.status, 200);
+  assert.equal(
+    calendarResearch.data.discussionPreference,
+    calendarApplication.discussionPreference,
+  );
+  assert.equal(calendarResearch.data.discovery, null);
   const availableSeats = async () =>
     (await request("/api/public/sessions")).data.sessions.find(
       (entry: { id: string }) => entry.id === lockedBooking.id,
@@ -1457,6 +1614,10 @@ try {
   const managerWorkspace = await request("/api/workspace", undefined, manager);
   assert.equal(managerWorkspace.status, 200);
   assert.equal(managerWorkspace.data.viewer.roleId, "space-manager");
+  assert.equal(
+    (await request("/api/booking-research", undefined, manager)).status,
+    403,
+  );
   assert.deepEqual(managerWorkspace.data.state.users, []);
   assert.deepEqual(managerWorkspace.data.state.audit, []);
   assert.equal(
@@ -2282,6 +2443,20 @@ try {
     await page
       .getByRole("heading", { name: "Space Managers", exact: true })
       .waitFor();
+    await page.goto(origin + "/research");
+    await page
+      .locator(`.research-queue-row[href="/research/${legacyId}"]`)
+      .click();
+    await expect(
+      page.getByRole("heading", { name: "Submitted business information" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("combobox", { name: "Research status" }),
+    ).toHaveValue("Research ready");
+    await expect(page.getByLabel("Proposed solutions")).toHaveValue(
+      researchSave.notes.proposedSolutions,
+    );
+    await page.goto(origin + "/owner-invitations");
     await page
       .locator(".space-managers-settings")
       .getByRole("cell")

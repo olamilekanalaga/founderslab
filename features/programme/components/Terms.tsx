@@ -21,14 +21,14 @@ export function Terms() {
           already incurred remain applicable to their historical records. These
           terms describe new participation.
         </p>
-        <h2>Privacy and research</h2>
+        <h2>Privacy and what you share</h2>
         <p>
-          Applications are used to review participation, arrange sessions and
-          support private founder research. Confidential contact information,
-          research notes and commercial opportunities are accessible only to
-          authorised team members. We do not publish your application
-          automatically. Promotional consent is separate and optional;
-          publication of research also requires administrator approval.
+          We use your registration to review participation, arrange your Space
+          and prepare for the conversation. The Space is public and recorded.
+          You choose what to share live. Please keep sensitive figures,
+          credentials and customer data out of your registration. We keep
+          submitted details private and ask separately for permission to use
+          information in promotion or publication.
         </p>
         <h2>Recording links</h2>
         <p>

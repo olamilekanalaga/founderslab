@@ -6,9 +6,20 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Mic } from "lucide-react";
 import PublicHeader from "@/components/layout/PublicHeader";
 
-import { publicSlotOpen, type PublicSession } from "@/lib/dates/booking";
+import {
+  isSunday,
+  publicSlotOpen,
+  type PublicSession,
+} from "@/lib/dates/booking";
 import { COUNTRIES, SECTORS, TEAM_SIZES } from "@/lib/catalog";
-import { publicApplicationSchema as applicationSchema } from "@/lib/validation/application";
+import { founderRegistrationSchema as applicationSchema } from "@/lib/validation/application";
+import {
+  publicSpaceAcknowledgement,
+  spaceDiscussionOptions,
+  spaceInvitation,
+} from "@/lib/space-registration";
+import SessionTime from "@/components/shared/SessionTime";
+import RegistrationIntro from "./RegistrationIntro";
 
 import PublicFooter from "@/components/layout/PublicFooter";
 import { api } from "@/features/bookings/lib/public-api";
@@ -23,7 +34,10 @@ export function ApplicationForm({
 }) {
   const params = useSearchParams(),
     router = useRouter();
-  const selectedSessionId = params.get("session") || "";
+  const requestedSessionId = params.get("session") || "";
+  const [step, setStep] = useState<"intro" | "sunday" | "form">("intro");
+  const [selectedSessionId, setSelectedSessionId] = useState("");
+  const [availabilityError, setAvailabilityError] = useState(false);
   const [availableSessions, setAvailableSessions] = useState<PublicSession[]>();
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
@@ -97,24 +111,26 @@ export function ApplicationForm({
       .catch(() => {});
   }, []);
   useEffect(() => {
-    if (selectedSessionId)
+    if (step === "sunday")
       void api("sessions")
         .then((r) => setAvailableSessions(r.sessions))
-        .catch(() =>
-          setError(
-            "Could not load your selected Space. Return to the calendar and try again.",
-          ),
-        );
-  }, [selectedSessionId]);
-  const chosenSession = availableSessions?.find(
-    (s) => s.id === selectedSessionId,
+        .catch(() => setAvailabilityError(true));
+  }, [step]);
+  const nextSession = availableSessions?.find(isSunday);
+  const openSession =
+    nextSession && publicSlotOpen(nextSession, nextSession.availableSeats)
+      ? nextSession
+      : null;
+  const selectionValid = Boolean(
+    selectedSessionId && openSession?.id === selectedSessionId,
   );
-  const selectionValid =
-    !selectedSessionId ||
-    Boolean(
-      chosenSession &&
-      publicSlotOpen(chosenSession, chosenSession.availableSeats),
-    );
+  function goTo(next: typeof step) {
+    setStep(next);
+    requestAnimationFrame(() => {
+      window.scrollTo(0, 0);
+      document.getElementById("founder-application-title")?.focus();
+    });
+  }
   const countries = catalog.countries,
     sectors = catalog.sectors;
   const change = (key: string, value: string) =>
@@ -151,28 +167,66 @@ export function ApplicationForm({
             <span className="founder-application-mark">
               <Mic size={23} aria-hidden="true" />
             </span>
-            <h1 id="founder-application-title">Founder application</h1>
-            <p>For founders with live Web3 products.</p>
+            <h1 id="founder-application-title" tabIndex={-1}>
+              {step === "intro"
+                ? spaceInvitation
+                : step === "sunday"
+                  ? "Choose a Sunday"
+                  : "Founder application"}
+            </h1>
+            {step === "form" && openSession && (
+              <p>
+                <SessionTime startsAt={openSession.startsAt} />
+              </p>
+            )}
           </header>
           {!configured && (
             <p role="alert">Applications are temporarily unavailable.</p>
           )}
 
-          {!selectionValid &&
-            (error || availableSessions ? (
-              <>
-                <p className="error" role="alert">
-                  {error || "That Sunday is no longer available."}
+          {step === "intro" && (
+            <RegistrationIntro onContinue={() => goTo("sunday")} />
+          )}
+          {step === "sunday" && (
+            <div className="registration-intro">
+              {requestedSessionId &&
+                availableSessions &&
+                openSession?.id !== requestedSessionId && (
+                  <p role="status">That Sunday is no longer available.</p>
+                )}
+              {availabilityError ? (
+                <p role="alert">
+                  Could not load Sundays. Please check the booking calendar.
                 </p>
-                <Link className="fl-inline-action" href="/#choose-a-sunday">
-                  Return to booking calendar
-                </Link>
-              </>
-            ) : (
-              <p role="status">Checking availability…</p>
-            ))}
+              ) : !availableSessions ? (
+                <p role="status">Checking availability…</p>
+              ) : openSession ? (
+                <div className="registration-slot">
+                  <strong>
+                    <SessionTime startsAt={openSession.startsAt} />
+                  </strong>
+                  <button
+                    type="button"
+                    className="button primary"
+                    disabled={!configured}
+                    onClick={() => {
+                      setSelectedSessionId(openSession.id);
+                      goTo("form");
+                    }}
+                  >
+                    Continue with this Sunday
+                  </button>
+                </div>
+              ) : (
+                <p>No Sunday is open for bookings right now.</p>
+              )}
+              <Link className="fl-inline-action" href="/#choose-a-sunday">
+                Return to booking calendar
+              </Link>
+            </div>
+          )}
           <form
-            hidden={!selectionValid}
+            hidden={step !== "form"}
             className="public-form"
             noValidate
             onChange={(event) => {
@@ -208,7 +262,11 @@ export function ApplicationForm({
                 const { name, validity } = control;
                 if (name === "otherSpeakers" && !validity.valid)
                   issues[name] = "Enter a whole number from 4 to 10.";
-                else if (validity.valueMissing)
+                else if (
+                  validity.valueMissing &&
+                  name !== "discussionPreference" &&
+                  name !== "publicSpaceConsent"
+                )
                   issues[name] =
                     control instanceof HTMLSelectElement
                       ? "Select an option."
@@ -226,6 +284,7 @@ export function ApplicationForm({
                 privacyConsent: answers.privacyConsent === "on",
                 promotionalConsent: answers.promotionalConsent === "on",
                 hiring: answers.hiring === "yes",
+                publicSpaceConsent: answers.publicSpaceConsent === "on",
               });
               if (!parsed.success)
                 for (const issue of parsed.error.issues) {
@@ -256,9 +315,7 @@ export function ApplicationForm({
               try {
                 const result = await api("apply", {
                   ...parsed.data,
-                  ...(selectedSessionId
-                    ? { sessionId: selectedSessionId }
-                    : {}),
+                  sessionId: selectedSessionId,
                 });
                 router.push("/confirmation#token=" + result.token);
               } catch (e) {
@@ -482,9 +539,8 @@ export function ApplicationForm({
                   {fieldMessage("otherSpeakers")}
                 </label>
               )}
-
               <label className="span-2">
-                Description &amp; Business
+                What are you building?
                 <textarea
                   required
                   maxLength={5000}
@@ -493,7 +549,7 @@ export function ApplicationForm({
                   {...fieldAttributes("description")}
                   value={fields.description}
                   onChange={(e) => change("description", e.target.value)}
-                  placeholder="What are you building, who is it for, and how does the business work?"
+                  placeholder="Tell us briefly what your product does and who it helps."
                 />
                 {fieldMessage("description")}
               </label>
@@ -600,15 +656,39 @@ export function ApplicationForm({
               />
             </label>
             <div className="privacy-notice">
-              <h3>Your information, handled carefully.</h3>
+              <h3>Before you join</h3>
               <p>
-                We use your application to review participation, coordinate
-                sessions and maintain founder records. Contact details and
-                internal notes are private. Public research or promotional use
-                needs a separate approval and consent. You may request
-                corrections or withdrawal through the programme host.{" "}
+                We use your registration to prepare for the Space. Share only
+                what you’re comfortable discussing live. Keep sensitive details
+                out of this form.{" "}
                 <Link href="/terms">Privacy & programme terms</Link>.
               </p>
+              <fieldset className="space-discussion-options">
+                <legend>What are you comfortable discussing live?</legend>
+                {spaceDiscussionOptions.map(({ value, label }) => (
+                  <label className="check-label" key={value}>
+                    <input
+                      type="radio"
+                      name="discussionPreference"
+                      value={value}
+                      required
+                      {...fieldAttributes("discussionPreference")}
+                    />{" "}
+                    {label}
+                  </label>
+                ))}
+                {fieldMessage("discussionPreference")}
+              </fieldset>
+              <label className="check-label">
+                <input
+                  name="publicSpaceConsent"
+                  type="checkbox"
+                  required
+                  {...fieldAttributes("publicSpaceConsent")}
+                />{" "}
+                {publicSpaceAcknowledgement}
+              </label>
+              {fieldMessage("publicSpaceConsent")}
               <label className="check-label">
                 <input
                   name="privacyConsent"
@@ -628,8 +708,8 @@ export function ApplicationForm({
                   checked={promo}
                   onChange={(e) => setPromo(e.target.checked)}
                 />{" "}
-                Optional: I consent to promotional use of my submitted founder
-                and project information.
+                Optional: I consent to promotional use of the founder and
+                project information I approve for public use.
               </label>
             </div>
             {errorCount > 0 && (
@@ -649,10 +729,11 @@ export function ApplicationForm({
               disabled={busy || preparingLogo || !selectionValid || !configured}
               className="button primary full-width"
             >
-              {busy ? "Submitting…" : "Submit founder application"}
+              {busy ? "Submitting…" : "Request booking"}
             </button>
             <small>
-              Submitting an application does not guarantee a speaking slot.
+              We’ll confirm receipt immediately. A place is confirmed after the
+              team approves your booking.
             </small>
           </form>
         </section>

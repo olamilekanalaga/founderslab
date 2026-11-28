@@ -66,9 +66,15 @@ export interface DataState {
   applications: Serialized<
     Omit<
       Application,
-      "dedupeKey" | "confirmationHash" | "confirmationExpires"
+      | "dedupeKey"
+      | "confirmationHash"
+      | "confirmationExpires"
+      | "discussionPreference"
+      | "publicSpaceConsentAt"
     > & {
       hasProjectLogo?: boolean;
+      discussionPreference?: string | null;
+      publicSpaceConsentAt?: Date | null;
     }
   >[];
   sessions: Serialized<Session>[];
@@ -125,6 +131,7 @@ export const SECTIONS: Section[] = [
   "dashboard",
   "founders",
   "companies",
+  "research",
   "spaces",
   "reports",
   "settings",

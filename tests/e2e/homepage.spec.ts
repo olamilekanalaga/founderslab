@@ -2,9 +2,11 @@ import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { sundaySessions } from "@/lib/dates/sunday-schedule";
 import { publicSlotOpen, type PublicSession } from "@/lib/dates/booking";
+import {
+  freeSpaceDescription,
+  spaceInvitation,
+} from "@/lib/space-registration";
 
-const headline =
-  "Introduce your product. Share your journey. Reach your audience.";
 for (const [label, width, height] of [
   ["desktop", 1440, 1024],
   ["mobile", 393, 852],
@@ -12,12 +14,20 @@ for (const [label, width, height] of [
   test(`homepage uses live booking data with a light accessible ${label} layout`, async ({
     page,
     request,
-  }) => {
+  }, testInfo) => {
     await page.setViewportSize({ width, height });
     const response = await page.goto("/");
     expect(response?.status()).toBe(200);
     await expect(page).toHaveURL(/\/$/);
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText(headline);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+      spaceInvitation,
+    );
+    await expect(
+      page.getByText(freeSpaceDescription, { exact: true }),
+    ).toBeVisible();
+    await expect(page.locator("body")).not.toContainText(
+      /Private Business Clinic|independent business research|proposed solutions/i,
+    );
     await expect(
       page.getByRole("heading", { name: "How It Works", exact: true }),
     ).toBeVisible();
@@ -33,11 +43,13 @@ for (const [label, width, height] of [
     for (const [index, session] of upcoming.entries()) {
       const card = page.locator(".fl-preview-dates > button").nth(index);
       await expect(card).toContainText(
-        publicSlotOpen(session, session.availableSeats)
-          ? `${session.availableSeats} ${session.availableSeats === 1 ? "slot" : "slots"} left`
-          : session.availableSeats <= 0
-            ? "Full"
-            : "Closed",
+        index > 0 || session.bookingLocked
+          ? "Locked"
+          : publicSlotOpen(session, session.availableSeats)
+            ? `${session.availableSeats} ${session.availableSeats === 1 ? "slot" : "slots"} left`
+            : session.availableSeats <= 0
+              ? "Full"
+              : "Closed",
       );
     }
     await expect(page.locator(".fl-upcoming")).toHaveCount(0);
@@ -82,15 +94,17 @@ for (const [label, width, height] of [
       .analyze();
     expect(audit.violations).toEqual([]);
     await page.screenshot({
-      path: `artifacts/saas-homepage-${label}.png`,
+      path: testInfo.outputPath(`saas-homepage-${label}.png`),
       fullPage: true,
     });
     await page
       .locator(".fl-hero-actions")
-      .getByRole("link", { name: "Book a Founder Space" })
+      .getByRole("link", { name: "Start registration" })
       .click();
-    await expect(page).toHaveURL(/\/#choose-a-sunday$/);
-    await expect(page.locator("#choose-a-sunday")).toBeVisible();
+    await expect(page).toHaveURL(/\/apply$/);
+    await expect(
+      page.getByRole("heading", { name: spaceInvitation }),
+    ).toBeVisible();
   });
 }
 
@@ -138,13 +152,13 @@ test("full, closed, empty and failed availability never invent bookable seats or
     page.locator(".fl-preview-dates > button").nth(0),
   ).toBeDisabled();
   await expect(page.locator(".fl-preview-dates > button").nth(1)).toContainText(
-    "1 slot left",
+    "Locked",
   );
   await expect(
     page.getByRole("link", { name: "Choose this Sunday" }),
-  ).toHaveAttribute("href", `/apply?session=${sessions[1].id}`);
+  ).toHaveCount(0);
   await expect(page.locator(".fl-preview-dates > button").nth(2)).toContainText(
-    "Closed",
+    "Locked",
   );
   await expect(
     page.locator(".fl-preview-dates > button").nth(2),

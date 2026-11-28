@@ -79,8 +79,11 @@ export function Confirmation() {
             <span className="confirmation-check">
               <CheckCircle2 size={34} />
             </span>
-            <div className="eyebrow">APPLICATION RECEIVED</div>
-            <h1>You’re on our radar.</h1>
+            <h1>
+              {data.bookings.length
+                ? "Booking request received"
+                : "Application received"}
+            </h1>
             <p>
               Thank you for telling us about <b>{data.companyName}</b>.
             </p>
@@ -108,9 +111,10 @@ export function Confirmation() {
             ))}
             <h2>What happens next?</h2>
             <p>
-              The programme team reviews applications and booking requests. A
-              pending request does not reserve a seat. Save this private link to
-              check your status; do not share it publicly.
+              {data.bookings.length
+                ? "We’ll review your request and prepare for the conversation. Your place is confirmed after the team approves the booking."
+                : "We’ll review your application."}{" "}
+              Save this private link to check your status.
             </p>
             <Link className="button primary" href="/#choose-a-sunday">
               Explore session requests <ArrowRight size={16} />

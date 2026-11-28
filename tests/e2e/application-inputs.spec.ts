@@ -1,10 +1,32 @@
 import { test, expect } from "@playwright/test";
 import { projectLogoPng } from "../fixtures/project-logo";
+import {
+  freeSpaceDescription,
+  publicSpaceAcknowledgement,
+  spaceDiscussionOptions,
+  spaceInvitation,
+} from "@/lib/space-registration";
+import { openRegistrationForm } from "./registration-steps";
 
 test("application starts with honest examples and accepts a bare domain through browser validation", async ({
   page,
 }) => {
   await page.goto("/apply");
+  await expect(
+    page.getByRole("heading", { name: spaceInvitation }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(freeSpaceDescription, { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "This format is not for me" }),
+  ).toHaveAttribute("href", "/");
+  await openRegistrationForm(page);
+  await expect(
+    page.locator(
+      "[name=revenueModel], [name=challenges], [name=previousAttempts]",
+    ),
+  ).toHaveCount(0);
   const contact = page.getByRole("region", {
     name: "Let’s connect before your Space",
   });
@@ -130,6 +152,7 @@ test("mobile booking highlights missing and invalid answers, then submits correc
     }),
   );
   await page.goto("/apply?session=test-sunday");
+  await openRegistrationForm(page);
   await expect(page.getByLabel("Founder name")).toBeVisible();
   for (const [leftName, rightName] of [
     ["xHandle", "founderRole"],
@@ -149,7 +172,7 @@ test("mobile booking highlights missing and invalid answers, then submits correc
   const xWidth = (await page.locator('[name="xHandle"]').boundingBox())!.width;
   expect(nameWidth).toBeGreaterThan(2 * xWidth);
   const submit = page.getByRole("button", {
-    name: "Submit founder application",
+    name: "Request booking",
   });
   await expect(submit.locator("svg")).toHaveCount(0);
   await submit.click();
@@ -231,6 +254,11 @@ test("mobile booking highlights missing and invalid answers, then submits correc
   await page
     .getByLabel("I agree to the privacy notice and programme terms.")
     .check();
+  await page.getByLabel(spaceDiscussionOptions[0].label).check();
+  await submit.click();
+  await expect(page.getByLabel(publicSpaceAcknowledgement)).toBeFocused();
+  expect(submitted).toBeUndefined();
+  await page.getByLabel(publicSpaceAcknowledgement).check();
   await submit.click();
   await expect(page).toHaveURL(/\/confirmation#token=/);
   const contact = page.getByRole("region", {
@@ -254,6 +282,9 @@ test("mobile booking highlights missing and invalid answers, then submits correc
   ).toHaveAttribute("href", "https://t.me/ola_crrypt");
   expect(submitted?.contact).toBe("");
   expect(submitted?.projectLogo).toMatch(/^data:image\/png;base64,/);
+  expect(submitted?.discovery).toBeUndefined();
+  expect(submitted?.discussionPreference).toBe(spaceDiscussionOptions[0].value);
+  expect(submitted?.publicSpaceConsent).toBe(true);
   expect(submitted?.focus).toBe("");
   expect(submitted?.comments).toBe("");
   expect(submitted?.sessionId).toBe("test-sunday");

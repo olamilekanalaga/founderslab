@@ -6,6 +6,7 @@ import { useWorkspace } from "@/components/layout/WorkspaceContext";
 import { Avatar, Status, ExternalLink } from "@/components/ui";
 import DeleteRecordButton from "@/features/founders/components/DeleteRecordButton";
 import type { DataState } from "@/lib/types";
+import { spaceDiscussionLabel } from "@/lib/space-registration";
 
 export default function ApplicationReview({
   application: a,
@@ -123,6 +124,10 @@ export default function ApplicationReview({
           <table className="studio-review-table" aria-label="Project answers">
             <tbody>
               {fact("Description", a.description)}
+              {fact(
+                "Live discussion preference",
+                spaceDiscussionLabel(a.discussionPreference),
+              )}
               {fact("Blockchain / chain", a.ecosystem)}
               {fact("Sector", a.sector)}
               {fact("Stage", a.stage)}

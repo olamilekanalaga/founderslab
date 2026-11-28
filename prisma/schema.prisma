@@ -153,6 +153,9 @@ model FounderCompanyMembership {
 }
 
 model Application {
+  discussionPreference String?
+  publicSpaceConsentAt DateTime?
+  businessResearch    ApplicationResearch?
   projectLogo         ProjectLogo?
   projectXHandle      String?
   bdReferrerXHandle   String?
@@ -194,6 +197,18 @@ model Application {
   updatedAt           DateTime         @updatedAt
 
   @@index([bdPartnerId])
+}
+
+model ApplicationResearch {
+  applicationId    String      @id
+  application      Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  discovery        Json?
+  submittedAt      DateTime?
+  status           String      @default("Pending")
+  notes            Json?
+  revision         Int         @default(0)
+  linkHash         String?     @unique
+  linkExpiresAt    DateTime?
 }
 
 model ProjectLogo {
