@@ -7,14 +7,16 @@ import {
 
 export function DiscoveryFields({
   errors = {},
+  challengeLabel,
 }: {
   errors?: Record<string, string>;
+  challengeLabel?: string;
 }) {
   return (
     <div className="record-form discovery-fields">
       {Object.entries(discoveryQuestions).map(([field, label]) => (
         <label className="span-2" key={field}>
-          {label}
+          {field === "challenges" && challengeLabel ? challengeLabel : label}
           <textarea
             name={field}
             rows={3}

@@ -30,3 +30,32 @@ Accounts created through workspace signup use their stored credentials. `BOOTSTR
 4. After a real Space, submit its Space Data and verify that the next Sunday opens. Use isolated tests for fixture attendance and schedule changes.
 
 Keep preview and local databases separate from production. The Vercel preparation step runs in Production. For a persistent Node host, run the migrations, defaults seed, and Sunday publication from the [local setup guide](README.md#local-setup), then build and start the application. Keep applied migrations intact. [Database migrations](prisma/README.md)
+
+## Private Business Sessions
+
+The private commercial workspace uses the existing database. Apply
+`202611280003_private_consultations` through the usual migration command before
+testing against a separate Preview database. The migration adds four tables and
+leaves existing applications, research and consent records in place.
+
+Open **Admin operations → Commercial pipeline → Consultation settings**. Set the
+fee in pounds and the duration in minutes, then add available appointment times.
+The time picker uses your device time zone. Founders see the time in the UK time
+zone. Use **Research → After the Space** to write a personalised follow-up and
+copy it with a private booking link. For someone outside the public programme,
+use **Commercial pipeline → Add a business directly**, then open their record
+and create a link. Share these links privately. Replacing a link invalidates the
+one previously shared. A single link can reserve one active appointment and
+reopen its confirmation.
+
+For online payments, create a Stripe webhook destination at
+`https://<your-site>/api/stripe/consultations`. Select
+`checkout.session.completed` and `checkout.session.expired`. Add
+`STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` as sensitive, server-side
+Vercel environment variables in the environment where the endpoint runs. Use a
+Stripe test key and its test webhook signing secret for Preview.
+Stripe confirms a paid booking through the webhook. The founder can view the
+confirmation through their private link. When Checkout is off, the team can
+record a payment received outside Founders Lab. Unpaid reservations without
+a checkout can be released in the commercial record. Full or partial refunds
+and appointment changes after payment are handled outside this workflow.

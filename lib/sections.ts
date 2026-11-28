@@ -9,6 +9,7 @@ export const SECTION_PERMISSIONS: Record<Section, string> = {
   "space-data": "booking.read",
   classification: "directory.read",
   research: "research.read",
+  commercial: "commercial.read",
   "market-map": "research.read",
   opportunities: "commercial.read",
   reports: "reports.read",

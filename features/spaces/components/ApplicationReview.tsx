@@ -124,10 +124,11 @@ export default function ApplicationReview({
           <table className="studio-review-table" aria-label="Project answers">
             <tbody>
               {fact("Description", a.description)}
-              {fact(
-                "Live discussion preference",
-                spaceDiscussionLabel(a.discussionPreference),
-              )}
+              {a.discussionPreference &&
+                fact(
+                  "Previously recorded discussion preference",
+                  spaceDiscussionLabel(a.discussionPreference),
+                )}
               {fact("Blockchain / chain", a.ecosystem)}
               {fact("Sector", a.sector)}
               {fact("Stage", a.stage)}

@@ -7002,3 +7002,48 @@ td > b,
 #choose-a-saturday {
   scroll-margin-top: 100px;
 }
+
+.commercial-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 146px), 1fr));
+  gap: 14px;
+}
+
+.commercial-metrics dt,
+.commercial-list p {
+  margin: 0;
+}
+
+.commercial-metrics dd {
+  margin: 4px 0 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.commercial-list {
+  display: grid;
+  gap: 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.commercial-list li,
+.commercial-appointment {
+  display: grid;
+  gap: 10px;
+  overflow-wrap: anywhere;
+}
+
+.commercial-appointment,
+.commercial-pipeline details + details {
+  margin-top: 16px;
+}
+
+.commercial-pipeline summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.commercial-pipeline summary + form {
+  margin-top: 14px;
+}

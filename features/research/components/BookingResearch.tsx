@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ChevronRight, Clipboard, FlaskConical } from "lucide-react";
+import { ArrowLeft, ChevronRight, FlaskConical } from "lucide-react";
 import { useWorkspace } from "@/components/layout/WorkspaceContext";
 import { ExternalLink, Status } from "@/components/ui";
 import {
@@ -14,6 +14,7 @@ import {
 } from "@/lib/business-research";
 import SessionTime from "@/components/shared/SessionTime";
 import { spaceDiscussionLabel } from "@/lib/space-registration";
+import SpaceFollowUp from "@/features/consultations/components/SpaceFollowUp";
 
 type QueueItem = {
   id: string;
@@ -32,7 +33,6 @@ type ResearchWorkspace = QueueItem & {
   discovery: BusinessDiscovery | null;
   notes: ResearchNotes;
   revision: number;
-  linkExpiresAt: string | null;
 };
 
 async function researchRequest<T>(
@@ -68,7 +68,6 @@ export default function BookingResearch({ id }: { id?: string }) {
   const [notice, setNotice] = useState("");
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
-  const [shareLink, setShareLink] = useState("");
 
   useEffect(() => {
     let mounted = true;
@@ -130,8 +129,7 @@ export default function BookingResearch({ id }: { id?: string }) {
           <div>
             <h1>Research</h1>
             <p>
-              Open a founder’s workspace to read their challenge and prepare for
-              the Space.
+              Review submitted business information, prepare for the Space and record follow-up.
             </p>
           </div>
         </div>
@@ -156,7 +154,7 @@ export default function BookingResearch({ id }: { id?: string }) {
                   <small>{item.founderName}</small>
                 </span>
                 <span className="research-challenge">
-                  {item.challenge || "Business discovery needed"}
+                  {item.challenge || "Founder profile only"}
                 </span>
                 <Status value={item.status} />
                 <ChevronRight size={17} aria-hidden="true" />
@@ -206,10 +204,12 @@ export default function BookingResearch({ id }: { id?: string }) {
           </ExternalLink>
         </div>
         <dl className="research-answers">
-          <div>
-            <dt>Live discussion preference</dt>
-            <dd>{spaceDiscussionLabel(workspace.discussionPreference)}</dd>
-          </div>
+          {workspace.discussionPreference && (
+            <div>
+              <dt>Previously recorded discussion preference</dt>
+              <dd>{spaceDiscussionLabel(workspace.discussionPreference)}</dd>
+            </div>
+          )}
           <div>
             <dt>What are they building?</dt>
             <dd>
@@ -240,74 +240,6 @@ export default function BookingResearch({ id }: { id?: string }) {
             </>
           )}
         </dl>
-        {!discovery && (
-          <div className="research-discovery-link">
-            <p>Business discovery hasn’t been submitted yet.</p>
-            {canEdit && workspace.booking && (
-              <>
-                <button
-                  type="button"
-                  className="button primary"
-                  disabled={busy}
-                  onClick={() => {
-                    void write<{ token: string; expiresAt: string }>(
-                      { action: "issue-link" },
-                      ({ token, expiresAt }) => {
-                        setShareLink(
-                          new URL(
-                            "/business-discovery#token=" + token,
-                            location.origin,
-                          ).href,
-                        );
-                        setWorkspace({
-                          ...workspace,
-                          linkExpiresAt: expiresAt,
-                        });
-                      },
-                    );
-                  }}
-                >
-                  {workspace.linkExpiresAt
-                    ? "Replace discovery link"
-                    : "Create discovery link"}
-                </button>
-                <p>
-                  Send this privately to the booked founder. It expires in 14
-                  days and works for one submission.
-                </p>
-                {shareLink && (
-                  <div className="stack-form">
-                    <label>
-                      Private discovery link
-                      <input
-                        value={shareLink}
-                        readOnly
-                        onFocus={(event) => event.currentTarget.select()}
-                      />
-                    </label>
-                    <button
-                      type="button"
-                      className="button"
-                      onClick={async () => {
-                        try {
-                          await navigator.clipboard.writeText(shareLink);
-                          setNotice("Discovery link copied.");
-                        } catch {
-                          setNotice("Select the link above to copy it.");
-                        }
-                      }}
-                    >
-                      <Clipboard size={16} aria-hidden="true" /> Copy link
-                    </button>
-                    {notice && notice !== "Research saved." && (
-                      <p role="status">{notice}</p>
-                    )}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        )}
       </section>
       <section className="panel padded">
         <h2>
@@ -364,6 +296,7 @@ export default function BookingResearch({ id }: { id?: string }) {
           )}
         </form>
       </section>
+      {viewer.permissions.includes("commercial.read") && <SpaceFollowUp applicationId={id} />}
       {error && (
         <p role="alert" className="error">
           {error}

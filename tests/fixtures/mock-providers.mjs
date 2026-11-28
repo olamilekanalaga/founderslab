@@ -7,5 +7,8 @@ globalThis.fetch = (input, options) => {
       throw new Error("Unexpected Telegram test request");
     return realFetch(process.env.TEST_TELEGRAM_ENDPOINT, options);
   }
+  if (url.hostname === "api.stripe.com") {
+    return realFetch(process.env.TEST_STRIPE_ENDPOINT + url.pathname, options);
+  }
   return realFetch(input, options);
 };
