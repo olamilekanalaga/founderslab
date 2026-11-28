@@ -2460,3 +2460,79 @@
     scroll-behavior: auto !important;
   }
 }
+
+.registration-intro {
+  display: grid;
+  gap: 15px;
+  line-height: 1.65;
+}
+
+.registration-intro h2 {
+  margin: 8px 0 0;
+  font-size: 20px;
+}
+
+.registration-intro ul {
+  margin: 0;
+  padding-inline-start: 22px;
+}
+
+.registration-intro li + li {
+  margin-top: 5px;
+}
+
+.registration-actions,
+.registration-slot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 18px;
+}
+
+.registration-slot {
+  padding: 16px;
+  border: 1px solid var(--fl-line);
+  border-radius: 16px;
+  background: var(--fl-soft);
+}
+
+.public-app .discovery-intro {
+  margin: 0 0 16px;
+  line-height: 1.6;
+}
+
+.public-app .founder-application-page .discovery-areas {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px 6px;
+  border: 1px solid var(--fl-line);
+  border-radius: 13px;
+}
+
+.discovery-areas legend {
+  font-size: 14px;
+  font-weight: 600;
+  padding-inline: 5px;
+}
+
+.public-app .founder-application-page .discovery-areas .check-label {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  gap: 12px;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.public-app .founder-application-page .discovery-areas input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  min-height: 0;
+  flex-shrink: 0;
+  accent-color: var(--fl-accent);
+}
+
+.public-app .founder-application-page .discovery-fields + .discovery-fields {
+  margin-top: 16px;
+}

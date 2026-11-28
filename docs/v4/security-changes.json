@@ -66,8 +66,8 @@
     "file": "server/handlers/public.ts",
     "name": "POST",
     "originalSha256": "714e50f62f02baf27528bb45a11ec3087afcb19fe73227cbaf4b15b891e0f38b",
-    "sha256": "10cc4dfee398e13b17c56ce8de47c567bee06b2381e7c68a8b176e8d12eec7a2",
-    "reason": "Publish three Sundays and restrict both public booking endpoints to the head of the completion-gated schedule. Record booking notification metadata at commit and schedule Telegram delivery after the response. Save validated optional raster logos in the application transaction."
+    "sha256": "5dcd781d5d33abb1083faa908cb1b58187b49625dc8fecd6bfc359a535b45125",
+    "reason": "Publish three Sundays and restrict both public booking endpoints to the head of the completion-gated schedule. Record booking notification metadata at commit and schedule Telegram delivery after the response. Save validated optional raster logos in the application transaction. Validate mandatory business discovery and save it privately in the application transaction."
   },
   {
     "file": "server/services/space-managers.ts",

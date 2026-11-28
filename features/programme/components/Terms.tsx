@@ -23,12 +23,14 @@ export function Terms() {
         </p>
         <h2>Privacy and research</h2>
         <p>
-          Applications are used to review participation, arrange sessions and
-          support private founder research. Confidential contact information,
-          research notes and commercial opportunities are accessible only to
-          authorised team members. We do not publish your application
-          automatically. Promotional consent is separate and optional;
-          publication of research also requires administrator approval.
+          We use your registration and business discovery answers to review
+          participation, arrange your Space and prepare independent research.
+          Research findings are exploratory. Your discovery answers and private
+          working notes are available to authorised research staff. Only
+          information you approve will be discussed publicly. Leave out
+          confidential financial figures, credentials and customer data.
+          Promotional consent is separate and optional. Publishing research also
+          requires administrator approval.
         </p>
         <h2>Recording links</h2>
         <p>

@@ -7,6 +7,7 @@ export default async function Page({
   params: Promise<{ section: string; id: string }>;
 }) {
   const { section, id } = await params;
-  if (!["founders", "companies", "spaces"].includes(section)) notFound();
+  if (!["founders", "companies", "spaces", "research"].includes(section))
+    notFound();
   return <PrivateWorkspace section={section} id={id} />;
 }

@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { sundaySessions } from "@/lib/dates/sunday-schedule";
+import { openRegistrationForm } from "./registration-steps";
 
 for (const [label, width, height] of [
   ["desktop", 1440, 900],
@@ -29,6 +30,7 @@ for (const [label, width, height] of [
     expect(audit.violations).toEqual([]);
     await next.click();
     await expect(page).toHaveURL(target!);
+    await openRegistrationForm(page);
     await expect(
       page.getByRole("heading", { name: "Founder application" }),
     ).toBeVisible();
@@ -63,6 +65,7 @@ test("hero date choice is carried directly into the application and mobile Escap
   const target = await preview.getAttribute("href");
   await preview.click();
   await expect(page).toHaveURL(target!);
+  await openRegistrationForm(page);
   await expect(page.getByLabel("Founder name", { exact: true })).toBeVisible();
   await page.setViewportSize({ width: 393, height: 852 });
   const menu = page.getByRole("button", { name: "Open programme navigation" });
@@ -82,6 +85,7 @@ test("an unavailable Sunday offers a return to the calendar", async ({
     route.fulfill({ json: { sessions: [] } }),
   );
   await page.goto("/apply?session=unavailable");
+  await page.getByRole("button", { name: "Continue to registration" }).click();
   await expect(
     page.getByText("That Sunday is no longer available."),
   ).toBeVisible();
@@ -89,7 +93,7 @@ test("an unavailable Sunday offers a return to the calendar", async ({
     page.getByRole("link", { name: "Return to booking calendar" }),
   ).toHaveAttribute("href", "/#choose-a-sunday");
   await expect(
-    page.getByRole("button", { name: "Submit founder application" }),
+    page.getByRole("button", { name: "Request booking" }),
   ).toBeHidden();
 });
 

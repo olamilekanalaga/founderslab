@@ -179,6 +179,11 @@ export default function Operations({
     <>
       <div className="page-heading">
         <h1>Admin operations</h1>
+        {viewer.permissions.includes("research.read") && (
+          <Link className="button" href="/research">
+            Research queue
+          </Link>
+        )}
       </div>
       <nav className="operations-tabs" aria-label="Admin operations sections">
         {(

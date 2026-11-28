@@ -3,8 +3,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { sundaySessions } from "@/lib/dates/sunday-schedule";
 import { publicSlotOpen, type PublicSession } from "@/lib/dates/booking";
 
-const headline =
-  "Introduce your product. Share your journey. Reach your audience.";
+const headline = "Bring a business challenge. Explore practical solutions.";
 for (const [label, width, height] of [
   ["desktop", 1440, 1024],
   ["mobile", 393, 852],
@@ -33,11 +32,13 @@ for (const [label, width, height] of [
     for (const [index, session] of upcoming.entries()) {
       const card = page.locator(".fl-preview-dates > button").nth(index);
       await expect(card).toContainText(
-        publicSlotOpen(session, session.availableSeats)
-          ? `${session.availableSeats} ${session.availableSeats === 1 ? "slot" : "slots"} left`
-          : session.availableSeats <= 0
-            ? "Full"
-            : "Closed",
+        index > 0 || session.bookingLocked
+          ? "Locked"
+          : publicSlotOpen(session, session.availableSeats)
+            ? `${session.availableSeats} ${session.availableSeats === 1 ? "slot" : "slots"} left`
+            : session.availableSeats <= 0
+              ? "Full"
+              : "Closed",
       );
     }
     await expect(page.locator(".fl-upcoming")).toHaveCount(0);
@@ -87,10 +88,12 @@ for (const [label, width, height] of [
     });
     await page
       .locator(".fl-hero-actions")
-      .getByRole("link", { name: "Book a Founder Space" })
+      .getByRole("link", { name: "Start registration" })
       .click();
-    await expect(page).toHaveURL(/\/#choose-a-sunday$/);
-    await expect(page.locator("#choose-a-sunday")).toBeVisible();
+    await expect(page).toHaveURL(/\/apply$/);
+    await expect(
+      page.getByRole("heading", { name: "More than a conversation." }),
+    ).toBeVisible();
   });
 }
 
@@ -138,13 +141,13 @@ test("full, closed, empty and failed availability never invent bookable seats or
     page.locator(".fl-preview-dates > button").nth(0),
   ).toBeDisabled();
   await expect(page.locator(".fl-preview-dates > button").nth(1)).toContainText(
-    "1 slot left",
+    "Locked",
   );
   await expect(
     page.getByRole("link", { name: "Choose this Sunday" }),
-  ).toHaveAttribute("href", `/apply?session=${sessions[1].id}`);
+  ).toHaveCount(0);
   await expect(page.locator(".fl-preview-dates > button").nth(2)).toContainText(
-    "Closed",
+    "Locked",
   );
   await expect(
     page.locator(".fl-preview-dates > button").nth(2),

@@ -107,6 +107,11 @@ export default function Overview({ addFounder }: { addFounder: () => void }) {
           <p>Keep your founders, projects and weekly Spaces in view.</p>
         </div>
         <div className="heading-actions">
+          {can("research.read") && (
+            <Link className="button" href={path("research")}>
+              Research queue <ArrowUpRight size={15} />
+            </Link>
+          )}
           {can("reports.read") && (
             <Link className="button" href={path("reports")}>
               View reports <ArrowUpRight size={15} />

@@ -1,10 +1,23 @@
 import { test, expect } from "@playwright/test";
 import { projectLogoPng } from "../fixtures/project-logo";
+import { businessDiscovery } from "../fixtures/business-discovery";
+import {
+  discoveryQuestions,
+  researchAcknowledgements,
+} from "@/lib/business-research";
+import { openRegistrationForm } from "./registration-steps";
 
 test("application starts with honest examples and accepts a bare domain through browser validation", async ({
   page,
 }) => {
   await page.goto("/apply");
+  await expect(
+    page.getByRole("heading", { name: "More than a conversation." }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "This format is not for me" }),
+  ).toHaveAttribute("href", "/");
+  await openRegistrationForm(page);
   const contact = page.getByRole("region", {
     name: "Let’s connect before your Space",
   });
@@ -130,6 +143,7 @@ test("mobile booking highlights missing and invalid answers, then submits correc
     }),
   );
   await page.goto("/apply?session=test-sunday");
+  await openRegistrationForm(page);
   await expect(page.getByLabel("Founder name")).toBeVisible();
   for (const [leftName, rightName] of [
     ["xHandle", "founderRole"],
@@ -149,7 +163,7 @@ test("mobile booking highlights missing and invalid answers, then submits correc
   const xWidth = (await page.locator('[name="xHandle"]').boundingBox())!.width;
   expect(nameWidth).toBeGreaterThan(2 * xWidth);
   const submit = page.getByRole("button", {
-    name: "Submit founder application",
+    name: "Request booking",
   });
   await expect(submit.locator("svg")).toHaveCount(0);
   await submit.click();
@@ -231,6 +245,19 @@ test("mobile booking highlights missing and invalid answers, then submits correc
   await page
     .getByLabel("I agree to the privacy notice and programme terms.")
     .check();
+  for (const [field, question] of Object.entries(discoveryQuestions))
+    await page
+      .getByLabel(question)
+      .fill(businessDiscovery[field as keyof typeof discoveryQuestions]);
+  for (const area of businessDiscovery.areas)
+    await page.getByLabel(area, { exact: true }).check();
+  await submit.click();
+  await expect(
+    page.getByLabel(researchAcknowledgements.researchConsent),
+  ).toBeFocused();
+  expect(submitted).toBeUndefined();
+  for (const label of Object.values(researchAcknowledgements))
+    await page.getByLabel(label).check();
   await submit.click();
   await expect(page).toHaveURL(/\/confirmation#token=/);
   const contact = page.getByRole("region", {
@@ -254,6 +281,7 @@ test("mobile booking highlights missing and invalid answers, then submits correc
   ).toHaveAttribute("href", "https://t.me/ola_crrypt");
   expect(submitted?.contact).toBe("");
   expect(submitted?.projectLogo).toMatch(/^data:image\/png;base64,/);
+  expect(submitted?.discovery).toEqual(businessDiscovery);
   expect(submitted?.focus).toBe("");
   expect(submitted?.comments).toBe("");
   expect(submitted?.sessionId).toBe("test-sunday");

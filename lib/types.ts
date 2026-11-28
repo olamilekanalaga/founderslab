@@ -125,6 +125,7 @@ export const SECTIONS: Section[] = [
   "dashboard",
   "founders",
   "companies",
+  "research",
   "spaces",
   "reports",
   "settings",

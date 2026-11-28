@@ -33,6 +33,7 @@ import Overview from "@/features/programme/components/Overview";
 import Directory from "@/features/directory/components/Directory";
 import Spaces from "@/features/spaces/components/Spaces";
 import Reports from "@/features/reports/components/Reports";
+import BookingResearch from "@/features/research/components/BookingResearch";
 import SpaceManagersSettings from "@/features/space-managers/components/SpaceManagersSettings";
 import TeamSettings from "@/features/settings/components/Settings";
 const OWNER_NAME = "⭕️La_Crrypt💰₿";
@@ -188,14 +189,16 @@ function Shell({ section, id }: { section: Section; id?: string }) {
           className={
             navId === section ||
             (navId === "founders" && section === "companies") ||
-            (navId === "operations" && section === "spaces")
+            (navId === "operations" &&
+              (section === "spaces" || section === "research"))
               ? "active"
               : ""
           }
           aria-current={
             navId === section ||
             (navId === "founders" && section === "companies") ||
-            (navId === "operations" && section === "spaces")
+            (navId === "operations" &&
+              (section === "spaces" || section === "research"))
               ? "page"
               : undefined
           }
@@ -218,9 +221,11 @@ function Shell({ section, id }: { section: Section; id?: string }) {
         ? "Directory"
         : section === "settings"
           ? "Settings"
-          : section === "spaces"
-            ? "Founder Spaces"
-            : navigation.find((n) => n.id === section)?.label;
+          : section === "research"
+            ? "Research"
+            : section === "spaces"
+              ? "Founder Spaces"
+              : navigation.find((n) => n.id === section)?.label;
   const can = viewer.permissions.includes(SECTION_PERMISSIONS[section]);
   const canManageTeam = viewer.permissions.includes("team.manage");
   const role = manager
@@ -327,6 +332,8 @@ function Shell({ section, id }: { section: Section; id?: string }) {
             <Spaces id={id} edit={edit} />
           ) : section === "reports" ? (
             <Reports />
+          ) : section === "research" ? (
+            <BookingResearch key={id || "queue"} id={id} />
           ) : (
             <TeamSettings
               edit={edit}

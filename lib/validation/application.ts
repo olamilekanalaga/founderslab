@@ -2,6 +2,7 @@ import { z } from "zod";
 import { TEAM_SIZES } from "@/lib/catalog";
 import { chainNames } from "@/lib/chains";
 import { projectLogoSchema } from "./project-logo";
+import { discoveryAnswersSchema } from "@/lib/business-research";
 import {
   text,
   short,
@@ -84,4 +85,8 @@ export const publicApplicationSchema = applicationSchema.extend({
     .pipe(z.union([z.email(), z.literal("")]))
     .optional()
     .default(""),
+});
+
+export const founderRegistrationSchema = publicApplicationSchema.extend({
+  discovery: discoveryAnswersSchema,
 });
