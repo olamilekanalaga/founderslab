@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 
-import { ArrowUpRight, ArrowLeft, Pencil, Building2 } from "lucide-react";
+import { ArrowLeft, ChevronRight, Pencil } from "lucide-react";
 import { useWorkspace } from "@/components/layout/WorkspaceContext";
-import { Avatar, Empty, SectionHeading } from "@/components/ui";
-import { profileSpaceWeeks } from "@/features/spaces/lib/space-data";
+import { Avatar, Empty, ExternalLink } from "@/components/ui";
+import ProjectDetails from "@/features/companies/components/ProjectDetails";
 import DeleteRecordButton from "@/features/founders/components/DeleteRecordButton";
 import FounderSpaces from "@/features/spaces/components/FounderSpaces";
 import { niceDate } from "@/lib/dates/format";
@@ -25,88 +25,84 @@ export default function FounderProfile({
     .filter((m) => m.founderId === id)
     .map((m) => s.companies.find((c) => c.id === m.companyId))
     .filter((c) => !!c);
-  const sessions = profileSpaceWeeks(s, { founderId: id });
   return (
-    <>
+    <div className="directory-profile">
       <Link className="back-link" href={path("founders")}>
-        <ArrowLeft size={16} />
+        <ArrowLeft size={16} aria-hidden="true" />
         Founder directory
       </Link>
-      <div className="profile-banner">
-        <Avatar name={founder.name} />
-        <div>
-          <h1>{founder.name}</h1>
-          <p>
-            @{founder.xHandle} · {founder.country}
-          </p>
+      <section
+        className="panel padded directory-summary"
+        aria-labelledby="founder-title"
+      >
+        <header className="directory-profile-header">
+          <Avatar name={founder.name} />
+          <div>
+            <h1 id="founder-title">{founder.name}</h1>
+            {founder.role && <p>{founder.role}</p>}
+          </div>
+        </header>
+        <div className="directory-profile-block">
+          <h2>{companies.length === 1 ? "Project" : "Projects"}</h2>
+          {!companies.length && <p>No projects added yet.</p>}
+          {companies.map((company) => (
+            <div className="founder-project-details" key={company.id}>
+              <h3>
+                <Link
+                  className="directory-project-name"
+                  href={path("companies", company.id)}
+                >
+                  {company.name}
+                  <ChevronRight size={17} aria-hidden="true" />
+                </Link>
+              </h3>
+              <ProjectDetails company={company} />
+            </div>
+          ))}
+        </div>
+        <div className="directory-profile-block">
+          <h2>Founder details</h2>
+          <dl className="directory-facts">
+            <div>
+              <dt>Country</dt>
+              <dd>{founder.country}</dd>
+            </div>
+            <div>
+              <dt>Personal X</dt>
+              <dd>
+                <ExternalLink href={`https://x.com/${founder.xHandle}`}>
+                  @{founder.xHandle}
+                </ExternalLink>
+              </dd>
+            </div>
+            {founder.contact && (
+              <div>
+                <dt>Contact</dt>
+                <dd>{founder.contact}</dd>
+              </div>
+            )}
+            <div>
+              <dt>Added</dt>
+              <dd>{niceDate(founder.createdAt)}</dd>
+            </div>
+          </dl>
         </div>
         {viewer.permissions.includes("directory.write") && (
-          <button
-            className="button"
-            onClick={() =>
-              edit("founder", founder as unknown as Record<string, unknown>)
-            }
-          >
-            <Pencil size={15} />
-            Edit founder
-          </button>
+          <footer className="directory-profile-actions">
+            <button className="button" onClick={() => edit("founder", founder)}>
+              <Pencil size={15} aria-hidden="true" />
+              Edit founder
+            </button>
+            <DeleteRecordButton
+              kind="founder"
+              id={founder.id}
+              name={founder.name}
+              backTo={path("founders")}
+            />
+          </footer>
         )}
-        <DeleteRecordButton
-          kind="founder"
-          id={founder.id}
-          name={founder.name}
-          backTo={path("founders")}
-        />
-      </div>
+      </section>
       <FounderSpaces founderId={id} />
-      <section className="panel padded">
-        <h2>Founder details</h2>
-        <dl className="facts">
-          <div>
-            <dt>Founder X</dt>
-            <dd>@{founder.xHandle}</dd>
-          </div>
-          <div>
-            <dt>Country</dt>
-            <dd>{founder.country}</dd>
-          </div>
-          <div>
-            <dt>Contact</dt>
-            <dd>{founder.contact || "Not recorded"}</dd>
-          </div>
-          <div>
-            <dt>Space appearances</dt>
-            <dd>{sessions.length}</dd>
-          </div>
-          <div>
-            <dt>Added</dt>
-            <dd>{niceDate(founder.createdAt)}</dd>
-          </div>
-        </dl>
-      </section>
-      <section className="panel">
-        <SectionHeading title="Companies" />
-        {companies.map((company) => (
-          <div key={company.id}>
-            <Link className="entity-row" href={path("companies", company.id)}>
-              <span className="entity-symbol">
-                <Building2 size={19} />
-              </span>
-              <span>
-                <b>{company.name}</b>
-                <small>
-                  {company.country} · {company.teamSize} people
-                </small>
-                <span className="profile-short-description">
-                  {company.description}
-                </span>
-              </span>
-              <ArrowUpRight size={16} />
-            </Link>
-          </div>
-        ))}
-        {!companies.length && <Empty>No company added yet.</Empty>}
-      </section>
-    </>
+    </div>
   );
 }

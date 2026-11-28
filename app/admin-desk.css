@@ -1263,3 +1263,193 @@ html:has(.admin-desk)::-webkit-scrollbar-thumb:hover {
   color: var(--accent);
   font-weight: 650;
 }
+
+.admin-desk .workspace-main article.founder-tile {
+  padding: 0;
+}
+
+.directory-card-link {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 22px;
+  border-radius: inherit;
+  color: inherit;
+}
+
+.directory-card-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -4px;
+}
+
+.directory-card-chevron {
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.directory-profile {
+  max-width: 760px;
+  margin-inline: auto;
+}
+
+.directory-profile-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.directory-profile-header .person-avatar {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  font-size: 16px;
+}
+
+.directory-profile-header h1 {
+  margin: 0;
+  font-size: clamp(24px, 4vw, 32px);
+  line-height: 1.18;
+  overflow-wrap: anywhere;
+}
+
+.directory-profile-header p {
+  margin: 4px 0 0;
+  color: var(--muted);
+}
+
+.directory-profile-block {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.directory-summary .directory-profile-block h2 {
+  margin: 0 0 10px;
+  font-size: 17px;
+  line-height: 1.35;
+}
+
+.directory-profile .directory-description {
+  margin: 0;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.directory-profile-links,
+.directory-profile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+
+.directory-profile-links {
+  margin-top: 12px;
+}
+
+.directory-profile-links .text-link {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 44px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  color: var(--accent);
+  overflow-wrap: anywhere;
+}
+
+.directory-profile-links svg,
+.directory-project-name svg {
+  flex-shrink: 0;
+}
+
+.directory-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 12px;
+  margin: 16px 0 0;
+}
+
+.directory-facts dt {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.directory-facts dd {
+  margin: 4px 0 0;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.directory-facts dd a {
+  display: inline;
+}
+
+.directory-profile .entity-row {
+  padding-inline: 0;
+}
+
+.directory-profile .founder-project-details + .founder-project-details {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.directory-project-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  overflow-wrap: anywhere;
+}
+
+.directory-profile-actions {
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.directory-history > summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 12px 22px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.directory-history > summary::-webkit-details-marker {
+  display: none;
+}
+
+.directory-history > summary > span {
+  margin-inline-start: auto;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.directory-history[open] > summary {
+  border-bottom: 1px solid var(--border);
+}
+
+.directory-history[open] > summary > svg {
+  rotate: 180deg;
+}
+
+.directory-history-empty h2 {
+  margin: 0 0 5px;
+  font-size: 16px;
+}
+
+.directory-history-empty p {
+  margin: 0;
+  color: var(--muted);
+}
+
+@media (min-width: 600px) {
+  .directory-facts {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

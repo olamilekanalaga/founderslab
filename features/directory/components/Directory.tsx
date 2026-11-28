@@ -2,7 +2,15 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Search, Plus, ArrowUpRight, LayoutGrid, List, X } from "lucide-react";
+import {
+  Search,
+  Plus,
+  ArrowUpRight,
+  ChevronRight,
+  LayoutGrid,
+  List,
+  X,
+} from "lucide-react";
 import { useWorkspace } from "@/components/layout/WorkspaceContext";
 import { Avatar, Status, Empty } from "@/components/ui";
 import type { Resource } from "@/components/shared/RecordEditor";
@@ -282,33 +290,38 @@ export default function Directory({
                   .filter((c) => !!c);
                 return (
                   <article className="founder-tile" key={f.id}>
-                    <div className="row-between">
-                      <Avatar name={f.name} index={i} />
-                      <Link
-                        className="icon-button"
-                        href={path("founders", f.id)}
-                        aria-label={`Open ${f.name}`}
-                      >
-                        <ArrowUpRight size={17} />
-                      </Link>
-                    </div>
                     <Link
-                      className="founder-tile-name"
+                      className="directory-card-link"
                       href={path("founders", f.id)}
+                      aria-labelledby={`directory-founder-${f.id}`}
                     >
-                      {f.name}
+                      <div className="row-between">
+                        <Avatar name={f.name} index={i} />
+                        <ChevronRight
+                          size={17}
+                          className="directory-card-chevron"
+                          aria-hidden="true"
+                        />
+                      </div>
+                      <span
+                        className="founder-tile-name"
+                        id={`directory-founder-${f.id}`}
+                      >
+                        {f.name}
+                      </span>
+                      <span className="founder-tile-company">
+                        {co.map((c) => c.name).join(" · ") || f.role}
+                      </span>
+                      <span className="founder-tile-handle">@{f.xHandle}</span>
+                      <p className="founder-short-description">
+                        {co[0]?.description ||
+                          "No product description recorded."}
+                      </p>
+                      <div className="founder-tile-footer">
+                        <span>{f.country}</span>
+                        <span>{co[0]?.sector || "Unclassified"}</span>
+                      </div>
                     </Link>
-                    <span className="founder-tile-company">
-                      {co.map((c) => c.name).join(" · ") || f.role}
-                    </span>
-                    <span className="founder-tile-handle">@{f.xHandle}</span>
-                    <p className="founder-short-description">
-                      {co[0]?.description || "No product description recorded."}
-                    </p>
-                    <div className="founder-tile-footer">
-                      <span>{f.country}</span>
-                      <span>{co[0]?.sector || "Unclassified"}</span>
-                    </div>
                   </article>
                 );
               })
@@ -316,38 +329,48 @@ export default function Directory({
                 const logoApplicationId = s.companyLogoApplicationIds?.[c.id];
                 return (
                   <article className="founder-tile" key={c.id}>
-                    <div className="row-between">
-                      <Avatar
-                        name={c.name}
-                        index={i}
-                        logo={
-                          logoApplicationId
-                            ? `/api/project-logo/${encodeURIComponent(logoApplicationId)}`
-                            : undefined
-                        }
-                      />
-                      <Link
-                        className="icon-button"
-                        href={path("companies", c.id)}
-                        aria-label={`Open ${c.name}`}
-                      >
-                        <ArrowUpRight size={17} />
-                      </Link>
-                    </div>
                     <Link
-                      className="founder-tile-name"
+                      className="directory-card-link"
                       href={path("companies", c.id)}
+                      aria-labelledby={`directory-company-${c.id}`}
                     >
-                      {c.name}
+                      <div className="row-between">
+                        <Avatar
+                          name={c.name}
+                          index={i}
+                          logo={
+                            logoApplicationId
+                              ? `/api/project-logo/${encodeURIComponent(logoApplicationId)}`
+                              : undefined
+                          }
+                        />
+                        <ChevronRight
+                          size={17}
+                          className="directory-card-chevron"
+                          aria-hidden="true"
+                        />
+                      </div>
+                      <span
+                        className="founder-tile-name"
+                        id={`directory-company-${c.id}`}
+                      >
+                        {c.name}
+                      </span>
+                      <span className="founder-tile-company">
+                        {c.sector} · {c.stage}
+                      </span>
+                      <p className="founder-short-description">
+                        {c.description}
+                      </p>
+                      <div className="founder-tile-footer">
+                        <span>{c.country}</span>
+                        <span>
+                          {c.teamSize === "1"
+                            ? "1 person"
+                            : `${c.teamSize} people`}
+                        </span>
+                      </div>
                     </Link>
-                    <span className="founder-tile-company">
-                      {c.sector} · {c.stage}
-                    </span>
-                    <p className="founder-short-description">{c.description}</p>
-                    <div className="founder-tile-footer">
-                      <span>{c.country}</span>
-                      <span>{c.teamSize} people</span>
-                    </div>
                   </article>
                 );
               })}
