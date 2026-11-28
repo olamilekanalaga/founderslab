@@ -2164,6 +2164,14 @@ try {
     await page
       .getByRole("heading", { name: "Integration Fictional", exact: true })
       .waitFor();
+    await expect(
+      page
+        .locator(".directory-profile-overview")
+        .getByRole("heading", { name: "Project", exact: true }),
+    ).toBeVisible();
+    await expect(page.locator(".directory-description")).toHaveText(
+      application.description,
+    );
     assert.equal(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
@@ -2198,12 +2206,43 @@ try {
         ),
       )
       .toBeGreaterThan(0);
-    await companyCard
-      .getByRole("link", { name: "Isolated Example", exact: true })
-      .click();
+    await expect(companyCard.getByRole("link")).toHaveCount(1);
+    await companyCard.click({ position: { x: 12, y: 12 } });
+    await page.waitForURL("**/companies/" + linked.companyId);
+    const project = page.getByRole("region", { name: application.companyName });
     await expect(
-      page.locator(".profile-banner .person-avatar-logo"),
+      project.getByRole("heading", { name: "About the project" }),
+    ).toBeVisible();
+    assert.equal(
+      await project.evaluate((overview) => {
+        const title = overview.querySelector("h1")!.getBoundingClientRect();
+        const about = overview.querySelector("h2")!.getBoundingClientRect();
+        return (
+          about.top > title.bottom && about.width > overview.clientWidth * 0.7
+        );
+      }),
+      true,
+    );
+    await expect(project.locator(".directory-description")).toHaveText(
+      application.description,
+    );
+    await expect(
+      project.getByRole("link", { name: "Website" }),
+    ).toHaveAttribute("href", "https://isolated.example.invalid");
+    await expect(
+      project.getByRole("link", { name: "@isolated_project on X" }),
+    ).toHaveAttribute("href", "https://x.com/isolated_project");
+    await expect(
+      project.getByRole("link", { name: /Integration Fictional/ }),
+    ).toHaveAttribute("href", "/founders/" + linked.founderId);
+    await expect(
+      project.locator(".directory-profile-header .person-avatar-logo"),
     ).toHaveAttribute("src", logoPath);
+    await page.screenshot({
+      path: artifactPath("company-profile-mobile.png"),
+      animations: "disabled",
+      fullPage: true,
+    });
     await page
       .getByRole("button", { name: "Edit company", exact: true })
       .click();
@@ -2224,6 +2263,21 @@ try {
       corrected.companies.find((c) => c.id === linked.companyId)!.xHandle,
       "corrected_project",
     );
+    await page.goto(origin + "/companies/" + participants[0].companyId);
+    const history = page.locator("details.directory-history");
+    const chooseSpace = history.getByRole("combobox", {
+      name: "Choose a Space",
+    });
+    await expect(chooseSpace).toBeHidden();
+    await history.locator("summary").click();
+    await chooseSpace.selectOption(session.id);
+    const savedRecording = corrected.sessions.find(
+      (row) => row.id === session.id,
+    )?.recordingUrl;
+    assert.ok(savedRecording);
+    await expect(
+      history.getByRole("link", { name: "Shared session recording" }),
+    ).toHaveAttribute("href", savedRecording);
     await page.goto(origin + "/owner-invitations");
     await page
       .getByRole("heading", { name: "Space Managers", exact: true })
