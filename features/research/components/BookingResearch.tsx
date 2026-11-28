@@ -270,13 +270,15 @@ export default function BookingResearch({ id }: { id?: string }) {
                   days and works for one submission.
                 </p>
                 {shareLink && (
-                  <label className="stack-form">
-                    Private discovery link
-                    <input
-                      value={shareLink}
-                      readOnly
-                      onFocus={(event) => event.currentTarget.select()}
-                    />
+                  <div className="stack-form">
+                    <label>
+                      Private discovery link
+                      <input
+                        value={shareLink}
+                        readOnly
+                        onFocus={(event) => event.currentTarget.select()}
+                      />
+                    </label>
                     <button
                       type="button"
                       className="button"
@@ -291,7 +293,10 @@ export default function BookingResearch({ id }: { id?: string }) {
                     >
                       <Clipboard size={16} aria-hidden="true" /> Copy link
                     </button>
-                  </label>
+                    {notice && notice !== "Research saved." && (
+                      <p role="status">{notice}</p>
+                    )}
+                  </div>
                 )}
               </>
             )}
@@ -358,7 +363,7 @@ export default function BookingResearch({ id }: { id?: string }) {
           {error}
         </p>
       )}
-      {notice && (
+      {notice === "Research saved." && (
         <p role="status" className="notice">
           {notice}
         </p>
