@@ -2166,7 +2166,7 @@ try {
       .waitFor();
     await expect(
       page
-        .locator(".directory-summary")
+        .locator(".directory-profile-overview")
         .getByRole("heading", { name: "Project", exact: true }),
     ).toBeVisible();
     await expect(page.locator(".directory-description")).toHaveText(
@@ -2213,6 +2213,16 @@ try {
     await expect(
       project.getByRole("heading", { name: "About the project" }),
     ).toBeVisible();
+    assert.equal(
+      await project.evaluate((overview) => {
+        const title = overview.querySelector("h1")!.getBoundingClientRect();
+        const about = overview.querySelector("h2")!.getBoundingClientRect();
+        return (
+          about.top > title.bottom && about.width > overview.clientWidth * 0.7
+        );
+      }),
+      true,
+    );
     await expect(project.locator(".directory-description")).toHaveText(
       application.description,
     );
@@ -2261,9 +2271,13 @@ try {
     await expect(chooseSpace).toBeHidden();
     await history.locator("summary").click();
     await chooseSpace.selectOption(session.id);
+    const savedRecording = corrected.sessions.find(
+      (row) => row.id === session.id,
+    )?.recordingUrl;
+    assert.ok(savedRecording);
     await expect(
       history.getByRole("link", { name: "Shared session recording" }),
-    ).toHaveAttribute("href", recording);
+    ).toHaveAttribute("href", savedRecording);
     await page.goto(origin + "/owner-invitations");
     await page
       .getByRole("heading", { name: "Space Managers", exact: true })

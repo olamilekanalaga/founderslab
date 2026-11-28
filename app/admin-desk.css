@@ -1323,7 +1323,7 @@ html:has(.admin-desk)::-webkit-scrollbar-thumb:hover {
   border-top: 1px solid var(--border);
 }
 
-.directory-summary .directory-profile-block h2 {
+.directory-profile-overview .directory-profile-block h2 {
   margin: 0 0 10px;
   font-size: 17px;
   line-height: 1.35;

@@ -34,7 +34,7 @@ export default function CompanyProfile({
         Company directory
       </Link>
       <section
-        className="panel padded directory-summary"
+        className="panel padded directory-profile-overview"
         aria-labelledby="project-title"
       >
         <header className="directory-profile-header">

@@ -32,7 +32,7 @@ export default function FounderProfile({
         Founder directory
       </Link>
       <section
-        className="panel padded directory-summary"
+        className="panel padded directory-profile-overview"
         aria-labelledby="founder-title"
       >
         <header className="directory-profile-header">
