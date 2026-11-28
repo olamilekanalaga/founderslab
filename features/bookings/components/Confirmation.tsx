@@ -112,7 +112,7 @@ export function Confirmation() {
             <h2>What happens next?</h2>
             <p>
               {data.bookings.length
-                ? "We’ll review your request and use your answers to prepare research. Your place is confirmed after the team approves the booking."
+                ? "We’ll review your request and prepare for the conversation. Your place is confirmed after the team approves the booking."
                 : "We’ll review your application."}{" "}
               Save this private link to check your status.
             </p>

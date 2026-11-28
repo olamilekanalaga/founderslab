@@ -21,16 +21,14 @@ export function Terms() {
           already incurred remain applicable to their historical records. These
           terms describe new participation.
         </p>
-        <h2>Privacy and research</h2>
+        <h2>Privacy and what you share</h2>
         <p>
-          We use your registration and business discovery answers to review
-          participation, arrange your Space and prepare independent research.
-          Research findings are exploratory. Your discovery answers and private
-          working notes are available to authorised research staff. Only
-          information you approve will be discussed publicly. Leave out
-          confidential financial figures, credentials and customer data.
-          Promotional consent is separate and optional. Publishing research also
-          requires administrator approval.
+          We use your registration to review participation, arrange your Space
+          and prepare for the conversation. The Space is public and recorded.
+          You choose what to share live. Please keep sensitive figures,
+          credentials and customer data out of your registration. We keep
+          submitted details private and ask separately for permission to use
+          information in promotion or publication.
         </p>
         <h2>Recording links</h2>
         <p>

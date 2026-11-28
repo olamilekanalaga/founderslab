@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { freeSpaceDescription } from "@/lib/space-registration";
 
 export default function RegistrationIntro({
   onContinue,
@@ -7,29 +8,16 @@ export default function RegistrationIntro({
 }) {
   return (
     <div className="registration-intro">
+      <h2>Free X Space</h2>
+      <p>{freeSpaceDescription}</p>
+      <h2>What we’ll talk about</h2>
       <p>
-        Founders Lab is a research-driven business discussion. We look into a
-        challenge you’re facing and discuss practical ways forward together on X
-        Spaces.
-      </p>
-      <h2>What you get</h2>
-      <ul>
-        <li>Independent research into your business</li>
-        <li>Analysis of your business model and challenges</li>
-        <li>Potential growth and revenue opportunities</li>
-        <li>Proposed solutions and ways to put them into practice</li>
-        <li>Public exposure through the live X Space</li>
-      </ul>
-      <h2>What we expect from you</h2>
-      <p>
-        Share information about your business and a current challenge before the
-        session. Come ready to discuss our findings and proposed strategies
-        live.
+        Tell us what you’re building, the problem your product solves, how
+        people use it, and where you see it going.
       </p>
       <p>
-        Participation is free. Findings are exploratory. Confidential
-        information will only be discussed publicly with your permission. Leave
-        out private figures, credentials and customer data.
+        The Space is public and recorded. You choose what you’re comfortable
+        sharing live. We meet on Sundays at 7 PM London time.
       </p>
       <div className="registration-actions">
         <button type="button" className="button primary" onClick={onContinue}>

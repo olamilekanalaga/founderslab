@@ -68,7 +68,9 @@ export default function BusinessDiscoveryForm() {
             <h1>
               {submitted
                 ? "Business information received"
-                : "Tell us about your business"}
+                : business
+                  ? "Tell us about your business"
+                  : "Private form"}
             </h1>
             {business && !submitted && <p>{business.companyName}</p>}
           </header>
@@ -134,8 +136,8 @@ export default function BusinessDiscoveryForm() {
               }}
             >
               <p className="discovery-intro">
-                Help us prepare research for your booked Space. Short answers
-                are enough. Leave out confidential financial figures,
+                Share what you’d like the team to look into privately. Short
+                answers are enough. Leave out confidential financial figures,
                 credentials and customer data.
               </p>
               <div className="record-form">
@@ -158,7 +160,7 @@ export default function BusinessDiscoveryForm() {
               </div>
               <DiscoveryFields errors={issues} />
               <div className="privacy-notice">
-                <h2>Consent for the Space</h2>
+                <h2>Confidential review</h2>
                 <p>
                   Your answers are private to the research team. In the public,
                   recorded Space, we’ll discuss only information you approve.

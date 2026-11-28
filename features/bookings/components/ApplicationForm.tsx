@@ -13,10 +13,13 @@ import {
 } from "@/lib/dates/booking";
 import { COUNTRIES, SECTORS, TEAM_SIZES } from "@/lib/catalog";
 import { founderRegistrationSchema as applicationSchema } from "@/lib/validation/application";
-import { readDiscovery } from "@/lib/business-research";
+import {
+  publicSpaceAcknowledgement,
+  spaceDiscussionOptions,
+  spaceInvitation,
+} from "@/lib/space-registration";
 import SessionTime from "@/components/shared/SessionTime";
 import RegistrationIntro from "./RegistrationIntro";
-import { DiscoveryFields, ResearchConsent } from "./DiscoveryFields";
 
 import PublicFooter from "@/components/layout/PublicFooter";
 import { api } from "@/features/bookings/lib/public-api";
@@ -166,7 +169,7 @@ export function ApplicationForm({
             </span>
             <h1 id="founder-application-title" tabIndex={-1}>
               {step === "intro"
-                ? "More than a conversation."
+                ? spaceInvitation
                 : step === "sunday"
                   ? "Choose a Sunday"
                   : "Founder application"}
@@ -247,8 +250,7 @@ export function ApplicationForm({
               setError("");
               const form = event.currentTarget;
               // Read current inputs, including values supplied by browser autofill.
-              const formData = new FormData(form);
-              const answers = Object.fromEntries(formData);
+              const answers = Object.fromEntries(new FormData(form));
               const controls = Array.from(
                 form.querySelectorAll<
                   HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
@@ -260,7 +262,11 @@ export function ApplicationForm({
                 const { name, validity } = control;
                 if (name === "otherSpeakers" && !validity.valid)
                   issues[name] = "Enter a whole number from 4 to 10.";
-                else if (validity.valueMissing)
+                else if (
+                  validity.valueMissing &&
+                  name !== "discussionPreference" &&
+                  name !== "publicSpaceConsent"
+                )
                   issues[name] =
                     control instanceof HTMLSelectElement
                       ? "Select an option."
@@ -278,18 +284,14 @@ export function ApplicationForm({
                 privacyConsent: answers.privacyConsent === "on",
                 promotionalConsent: answers.promotionalConsent === "on",
                 hiring: answers.hiring === "yes",
-                discovery: readDiscovery(formData),
+                publicSpaceConsent: answers.publicSpaceConsent === "on",
               });
               if (!parsed.success)
                 for (const issue of parsed.error.issues) {
                   const name =
                     issue.path[0] === "speakers" && answers.speakers === "Other"
                       ? "otherSpeakers"
-                      : String(
-                          (issue.path[0] === "discovery"
-                            ? issue.path[1]
-                            : issue.path[0]) ?? "",
-                        );
+                      : String(issue.path[0] ?? "");
                   if (name === "websiteTrap" || !name)
                     setError(
                       "Could not submit the application. Please try again.",
@@ -538,7 +540,7 @@ export function ApplicationForm({
                 </label>
               )}
               <label className="span-2">
-                Description &amp; Business
+                What are you building?
                 <textarea
                   required
                   maxLength={5000}
@@ -547,7 +549,7 @@ export function ApplicationForm({
                   {...fieldAttributes("description")}
                   value={fields.description}
                   onChange={(e) => change("description", e.target.value)}
-                  placeholder="What are you building, who is it for, and how does the business work?"
+                  placeholder="Tell us briefly what your product does and who it helps."
                 />
                 {fieldMessage("description")}
               </label>
@@ -643,15 +645,6 @@ export function ApplicationForm({
                 )}
               </div>
             </div>
-            <div className="form-section-title">
-              <h2>Tell us about your business</h2>
-            </div>
-            <p className="discovery-intro">
-              Help us research your challenge before the Space. A short answer
-              is enough. Leave out confidential financial figures, customer data
-              and credentials.
-            </p>
-            <DiscoveryFields errors={fieldErrors} />
             <label className="honeypot" aria-hidden="true">
               Leave empty
               <input
@@ -663,15 +656,39 @@ export function ApplicationForm({
               />
             </label>
             <div className="privacy-notice">
-              <h3>Consent and confirmation</h3>
+              <h3>Before you join</h3>
               <p>
-                The team uses your answers to prepare independent research. Your
-                submission is private. The live Space is public and recorded,
-                and we’ll discuss only information you approve. Promotional use
-                is a separate choice. You can ask the programme host to correct
-                or withdraw your information.{" "}
+                We use your registration to prepare for the Space. Share only
+                what you’re comfortable discussing live. Keep sensitive details
+                out of this form.{" "}
                 <Link href="/terms">Privacy & programme terms</Link>.
               </p>
+              <fieldset className="space-discussion-options">
+                <legend>What are you comfortable discussing live?</legend>
+                {spaceDiscussionOptions.map(({ value, label }) => (
+                  <label className="check-label" key={value}>
+                    <input
+                      type="radio"
+                      name="discussionPreference"
+                      value={value}
+                      required
+                      {...fieldAttributes("discussionPreference")}
+                    />{" "}
+                    {label}
+                  </label>
+                ))}
+                {fieldMessage("discussionPreference")}
+              </fieldset>
+              <label className="check-label">
+                <input
+                  name="publicSpaceConsent"
+                  type="checkbox"
+                  required
+                  {...fieldAttributes("publicSpaceConsent")}
+                />{" "}
+                {publicSpaceAcknowledgement}
+              </label>
+              {fieldMessage("publicSpaceConsent")}
               <label className="check-label">
                 <input
                   name="privacyConsent"
@@ -684,7 +701,6 @@ export function ApplicationForm({
                 I agree to the privacy notice and programme terms.
               </label>
               {fieldMessage("privacyConsent")}
-              <ResearchConsent errors={fieldErrors} />
               <label className="check-label">
                 <input
                   name="promotionalConsent"

@@ -196,8 +196,8 @@ export async function POST(
 
       const raw = token();
       const id = crypto.randomUUID();
-      const { websiteTrap: ignored, projectLogo, discovery, ...data } = p;
-      void ignored;
+      const { websiteTrap, projectLogo, publicSpaceConsent, ...data } = p;
+      void websiteTrap;
       const application = await db().$transaction(async (tx) => {
         if (sessionId) {
           await requireProgrammeBooking(tx, sessionId, true);
@@ -247,15 +247,7 @@ export async function POST(
         const created = await tx.application.create({
           data: {
             ...data,
-            businessResearch: {
-              create: {
-                discovery: {
-                  businessDescription: data.description,
-                  ...discovery,
-                },
-                submittedAt: new Date(),
-              },
-            },
+            publicSpaceConsentAt: publicSpaceConsent ? new Date() : null,
             ...(projectLogo
               ? { projectLogo: { create: { image: projectLogo } } }
               : {}),

@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://founderslab-orcin.vercel.app"),
   title: "Founders Lab with ⭕️La_Crrypt💰₿",
   description:
-    "Independent business research and live discussions of practical solutions on X Spaces. Sundays at 7 PM London time.",
+    "Free Sunday X Spaces for founders to discuss their products, users, markets and opportunities. Sundays at 7 PM London time.",
 };
 export default function RootLayout({
   children,

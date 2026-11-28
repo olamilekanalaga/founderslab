@@ -323,6 +323,8 @@ try {
         "bdReferrerXHandle",
         "bdReviewStatus",
         "bdPartnerId",
+        "discussionPreference",
+        "publicSpaceConsentAt",
       ]) {
         assert.equal(row[field], null);
         delete row[field];
@@ -585,7 +587,8 @@ try {
     comments: "None",
     privacyConsent: true,
     promotionalConsent: false,
-    discovery: businessDiscovery,
+    discussionPreference: "product-and-market",
+    publicSpaceConsent: true,
   };
   assert.equal(
     (
@@ -605,7 +608,7 @@ try {
     (
       await request("/api/public/apply", {
         ...application,
-        discovery: { ...businessDiscovery, discussionConsent: false },
+        publicSpaceConsent: false,
       })
     ).status,
     400,
@@ -648,16 +651,8 @@ try {
     status: "Approved",
   });
   const linked = state.applications.find((a) => a.id === app.id)!;
-  assert.equal(
-    (
-      await request(
-        "/api/booking-research?application=" + app.id,
-        undefined,
-        admin,
-      )
-    ).data.discovery.challenges,
-    businessDiscovery.challenges,
-  );
+  assert.equal(linked.discussionPreference, application.discussionPreference);
+  assert.ok(Number.isFinite(Date.parse(linked.publicSpaceConsentAt || "")));
   const logoPath = "/api/project-logo/" + app.id;
   assert.equal(linked.hasProjectLogo, true);
   assert.equal(state.companyLogoApplicationIds?.[linked.companyId!], app.id);
@@ -1012,6 +1007,17 @@ try {
   const calendarRecord = calendarState.applications.find(
     (entry) => entry.reference === calendarResult.data.reference,
   )!;
+  const calendarResearch = await request(
+    "/api/booking-research?application=" + calendarRecord.id,
+    undefined,
+    admin,
+  );
+  assert.equal(calendarResearch.status, 200);
+  assert.equal(
+    calendarResearch.data.discussionPreference,
+    calendarApplication.discussionPreference,
+  );
+  assert.equal(calendarResearch.data.discovery, null);
   const availableSeats = async () =>
     (await request("/api/public/sessions")).data.sessions.find(
       (entry: { id: string }) => entry.id === lockedBooking.id,

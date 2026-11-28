@@ -21,9 +21,9 @@ export const discoveryQuestions = {
 
 export const researchAcknowledgements = {
   researchConsent:
-    "I understand that Founders Lab involves independent business research and a live discussion of proposed solutions.",
+    "I agree to share these answers with the Founders Lab team for confidential review.",
   discussionConsent:
-    "I agree to discuss approved business information publicly during the Space.",
+    "I understand that the team needs my separate permission to discuss these answers publicly.",
 } as const;
 
 export const discoveryTextLimit = 4_000;
@@ -44,10 +44,10 @@ export const discoveryAnswersSchema = z.object({
     .max(discoveryAreas.length)
     .transform((values) => [...new Set(values)]),
   researchConsent: z.literal(true, {
-    error: "Acknowledge the research format.",
+    error: "Agree to confidential review.",
   }),
   discussionConsent: z.literal(true, {
-    error: "Acknowledge the public discussion format.",
+    error: "Acknowledge the separate permission requirement.",
   }),
 });
 export const businessDiscoverySchema = discoveryAnswersSchema.extend({

@@ -2472,15 +2472,6 @@
   font-size: 20px;
 }
 
-.registration-intro ul {
-  margin: 0;
-  padding-inline-start: 22px;
-}
-
-.registration-intro li + li {
-  margin-top: 5px;
-}
-
 .registration-actions,
 .registration-slot {
   display: flex;
@@ -2499,6 +2490,28 @@
 .public-app .discovery-intro {
   margin: 0 0 16px;
   line-height: 1.6;
+}
+
+.space-discussion-options {
+  display: grid;
+  min-width: 0;
+  gap: 7px;
+  margin: 16px 0;
+  padding: 12px;
+  border: 1px solid var(--fl-line);
+  border-radius: 12px;
+}
+
+.space-discussion-options legend {
+  padding-inline: 5px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.public-app .privacy-notice .space-discussion-options label {
+  margin: 0;
+  min-height: 44px;
+  align-items: center;
 }
 
 .public-app .founder-application-page .discovery-areas {

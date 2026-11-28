@@ -153,6 +153,8 @@ model FounderCompanyMembership {
 }
 
 model Application {
+  discussionPreference String?
+  publicSpaceConsentAt DateTime?
   businessResearch    ApplicationResearch?
   projectLogo         ProjectLogo?
   projectXHandle      String?

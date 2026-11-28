@@ -179,6 +179,10 @@ test("historical Prisma migrations remain byte-identical and BD tables are addit
             .replace(/^  xHandle +String\?\n/m, "")
             .replace(/^  projectLogo +ProjectLogo\?\n/m, "")
             .replace(/^  businessResearch +ApplicationResearch\?\n/m, "")
+            .replace(
+              /^  (?:discussionPreference|publicSpaceConsentAt) +.*\n/gm,
+              "",
+            )
             .replace(/model ApplicationResearch \{[\s\S]*?\n\}\n\n/, "")
             .replace(/model ProjectLogo \{[\s\S]*?\n\}\n\n/, "")
             .replace(/^  projectXHandle +String\?\n/m, "")
@@ -247,6 +251,7 @@ test("historical Prisma migrations remain byte-identical and BD tables are addit
         "prisma/migrations/202611270001_booking_telegram_notifications/migration.sql",
         "prisma/migrations/202611270002_project_logos/migration.sql",
         "prisma/migrations/202611280001_business_research/migration.sql",
+        "prisma/migrations/202611280002_public_space_consent/migration.sql",
       )
       .sort(),
   );

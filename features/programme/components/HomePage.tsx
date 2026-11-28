@@ -15,24 +15,29 @@ import {
 import PublicHeader from "@/components/layout/PublicHeader";
 import PublicFooter from "@/components/layout/PublicFooter";
 import BrandMark from "@/components/shared/BrandMark";
+import {
+  freeSpaceDescription,
+  spaceInvitationDay,
+  spaceInvitationLead,
+} from "@/lib/space-registration";
 import HeroBookingPreview from "./HeroBookingPreview";
 import { ProgrammeAvailability } from "./ProgrammeAvailability";
 const questions = [
   [
     "Who is FoundersLab for?",
-    "Founders Lab is for Web3 founders with a live product and a business challenge they want to investigate, such as attracting customers, finding a revenue model or improving operations.",
+    "Founders Lab is for Web3 founders with a live product who want to talk about what they’re building and what they’re learning.",
   ],
   [
-    "What do I get from the Space?",
-    "We independently research your challenge and use the live Space to discuss findings, possible solutions and ways to test them. The findings are exploratory.",
+    "What will we talk about?",
+    "We’ll discuss your product, the problem it solves, how people use it, what you’re seeing in the market, and opportunities ahead. You choose which challenges you’re comfortable sharing.",
   ],
   [
     "What should I share before the session?",
-    "Tell us what you build, who it serves, how it earns money or plans to, what you’ve tried and what a good outcome looks like. Leave out confidential financial figures, customer data and credentials.",
+    "Share your project name, website and a short description of what you’re building. You can leave sensitive details out of the registration form.",
   ],
   [
     "What stays private?",
-    "Your registration answers and the team’s working notes are private. The Space is public and recorded. We’ll discuss only the business information you approve for the live conversation. Promotional consent is a separate choice.",
+    "Your registration answers stay with the team. The Space is public and recorded, and you decide what you’re comfortable sharing live. Promotional consent is a separate choice.",
   ],
   [
     "Does participation cost anything?",
@@ -40,7 +45,7 @@ const questions = [
   ],
   [
     "Where and when do we meet?",
-    "On X Spaces, every Sunday at 7 PM London time. The calendar also shows the time in your timezone, with GMT and BST handled automatically.",
+    "Join me on my X page every Sunday at 7 PM London time. The calendar also shows the time in your timezone.",
   ],
   [
     "What happens after I apply?",
@@ -48,7 +53,7 @@ const questions = [
   ],
   [
     "I already booked. Do I need to register again?",
-    "Use the private business discovery link from the Founders Lab team to add your answers to your existing booking.",
+    "Your existing booking still applies. Use your private confirmation link to check its status.",
   ],
   [
     "Do I need an account?",
@@ -72,18 +77,12 @@ export default function HomePage() {
             </div>
             <div className="fl-hero-copy">
               <span className="fl-eyebrow">
-                <Mic2 size={15} aria-hidden="true" /> FoundersLab · WEEKLY WEB3
-                SPACES
+                <Mic2 size={15} aria-hidden="true" /> FoundersLab · Free X Space
               </span>
               <h1 id="programme-title">
-                Bring a business challenge.{" "}
-                <span>Explore practical solutions.</span>
+                {spaceInvitationLead} <span>{spaceInvitationDay}</span>
               </h1>
-              <p>
-                Founders Lab researches real challenges facing Web3 businesses.
-                Every Sunday on X Spaces, we discuss our findings, practical
-                options and what you could test next.
-              </p>
+              <p>{freeSpaceDescription}</p>
               <div className="fl-hero-actions">
                 <Link className="fl-action fl-action-primary" href="/apply">
                   Start registration <ArrowRight size={18} aria-hidden="true" />
@@ -130,15 +129,15 @@ export default function HomePage() {
             aria-labelledby="about-title"
           >
             <div className="fl-about-intro" data-home-reveal>
-              <span className="fl-eyebrow">Independent business research</span>
-              <h2 id="about-title">More than a conversation.</h2>
+              <span className="fl-eyebrow">Sunday X Spaces</span>
+              <h2 id="about-title">Tell us what you’re building.</h2>
               <p>
-                Bring a business problem you want to solve. We’ll look into your
-                product, customers and business model before the Space.
+                Come on my X page to introduce your product, the problem it
+                solves and the people it helps.
               </p>
               <p>
-                We’ll use the live conversation to discuss possible solutions
-                and how you could test or implement them.
+                We’ll talk about what you’re learning from users, where there’s
+                demand and what opportunities you see ahead.
               </p>
               <Link className="fl-inline-action" href="/apply">
                 See the registration format{" "}
@@ -150,31 +149,31 @@ export default function HomePage() {
                 <span className="fl-benefit-symbol">
                   <Lightbulb size={30} aria-hidden="true" />
                 </span>
-                <h3>Get a fresh look at your business.</h3>
+                <h3>Introduce your product.</h3>
                 <p>
-                  We look at your challenge, what you’ve tried and where there
-                  may be room to grow.
+                  Share what it does, who it’s for and why you started building
+                  it.
                 </p>
                 <span className="fl-benefit-phrase">
-                  Your challenge.
+                  Your product.
                   <br />
-                  Your next steps.
+                  Your story.
                 </span>
               </article>
               <article className="fl-benefit-small" data-home-reveal>
                 <MessageCircle size={23} aria-hidden="true" />
-                <h3>Explore opportunities.</h3>
+                <h3>Talk about your users.</h3>
                 <p>
-                  Discuss ways to reach customers, develop new revenue streams
-                  or improve how your business operates.
+                  Tell us how people use your product and what you’re learning
+                  about demand.
                 </p>
               </article>
               <article className="fl-benefit-small" data-home-reveal>
                 <Network size={23} aria-hidden="true" />
-                <h3>Discuss practical solutions live.</h3>
+                <h3>Explore what’s ahead.</h3>
                 <p>
-                  Talk through our findings on X Spaces and identify a next step
-                  worth trying.
+                  Share opportunities you see and any challenges you’re
+                  comfortable discussing.
                 </p>
               </article>
             </div>
@@ -187,7 +186,7 @@ export default function HomePage() {
             <div className="fl-process-intro" data-home-reveal>
               <h2 id="process-title">How It Works</h2>
               <p>
-                Read the format, choose a Sunday and tell us what to research.
+                Choose a Sunday, tell us about your product, and join me live.
               </p>
             </div>
             <ol className="fl-process-steps">
@@ -202,21 +201,20 @@ export default function HomePage() {
                 <span>
                   <FileText size={23} aria-hidden="true" />
                 </span>
-                <h3>Tell us about your challenge</h3>
+                <h3>Tell us about your product</h3>
                 <p>
-                  Share your business information, what you’ve tried and what
-                  you’d like to change. We review the request and prepare
-                  research.
+                  Send a short description and choose what you’re comfortable
+                  discussing on air.
                 </p>
               </li>
               <li data-home-reveal>
                 <span>
                   <Mic2 size={23} aria-hidden="true" />
                 </span>
-                <h3>Discuss the findings live</h3>
+                <h3>Join me live on X</h3>
                 <p>
-                  Once your booking is approved, join the X Space to discuss
-                  proposed solutions and agree on possible next steps.
+                  Once your booking is approved, come on my X page for the
+                  Sunday Space.
                 </p>
               </li>
             </ol>
@@ -271,10 +269,8 @@ export default function HomePage() {
             data-home-reveal
           >
             <div>
-              <h2 id="cta-title">What would you like to solve?</h2>
-              <p>
-                Bring a challenge for independent research and live discussion.
-              </p>
+              <h2 id="cta-title">See you on Sunday.</h2>
+              <p>Share what you’re building in a free X Space.</p>
             </div>
             <Link className="fl-action fl-action-primary" href="/apply">
               Start registration <ArrowRight size={19} aria-hidden="true" />

@@ -13,6 +13,7 @@ import {
   type ResearchNotes,
 } from "@/lib/business-research";
 import SessionTime from "@/components/shared/SessionTime";
+import { spaceDiscussionLabel } from "@/lib/space-registration";
 
 type QueueItem = {
   id: string;
@@ -27,6 +28,7 @@ type ResearchWorkspace = QueueItem & {
   website: string;
   xHandle: string;
   projectXHandle: string | null;
+  discussionPreference: string | null;
   discovery: BusinessDiscovery | null;
   notes: ResearchNotes;
   revision: number;
@@ -205,6 +207,10 @@ export default function BookingResearch({ id }: { id?: string }) {
         </div>
         <dl className="research-answers">
           <div>
+            <dt>Live discussion preference</dt>
+            <dd>{spaceDiscussionLabel(workspace.discussionPreference)}</dd>
+          </div>
+          <div>
             <dt>What are they building?</dt>
             <dd>
               {discovery?.businessDescription ||
@@ -227,8 +233,8 @@ export default function BookingResearch({ id }: { id?: string }) {
               <div>
                 <dt>Consent</dt>
                 <dd>
-                  The founder acknowledged the research format and agreed to
-                  discuss information they approve.
+                  The founder shared these answers for confidential review.
+                  Confirm separately before discussing them live.
                 </dd>
               </div>
             </>

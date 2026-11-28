@@ -2,8 +2,11 @@ import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { sundaySessions } from "@/lib/dates/sunday-schedule";
 import { publicSlotOpen, type PublicSession } from "@/lib/dates/booking";
+import {
+  freeSpaceDescription,
+  spaceInvitation,
+} from "@/lib/space-registration";
 
-const headline = "Bring a business challenge. Explore practical solutions.";
 for (const [label, width, height] of [
   ["desktop", 1440, 1024],
   ["mobile", 393, 852],
@@ -11,12 +14,20 @@ for (const [label, width, height] of [
   test(`homepage uses live booking data with a light accessible ${label} layout`, async ({
     page,
     request,
-  }) => {
+  }, testInfo) => {
     await page.setViewportSize({ width, height });
     const response = await page.goto("/");
     expect(response?.status()).toBe(200);
     await expect(page).toHaveURL(/\/$/);
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText(headline);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+      spaceInvitation,
+    );
+    await expect(
+      page.getByText(freeSpaceDescription, { exact: true }),
+    ).toBeVisible();
+    await expect(page.locator("body")).not.toContainText(
+      /Private Business Clinic|independent business research|proposed solutions/i,
+    );
     await expect(
       page.getByRole("heading", { name: "How It Works", exact: true }),
     ).toBeVisible();
@@ -83,7 +94,7 @@ for (const [label, width, height] of [
       .analyze();
     expect(audit.violations).toEqual([]);
     await page.screenshot({
-      path: `artifacts/saas-homepage-${label}.png`,
+      path: testInfo.outputPath(`saas-homepage-${label}.png`),
       fullPage: true,
     });
     await page
@@ -92,7 +103,7 @@ for (const [label, width, height] of [
       .click();
     await expect(page).toHaveURL(/\/apply$/);
     await expect(
-      page.getByRole("heading", { name: "More than a conversation." }),
+      page.getByRole("heading", { name: spaceInvitation }),
     ).toBeVisible();
   });
 }

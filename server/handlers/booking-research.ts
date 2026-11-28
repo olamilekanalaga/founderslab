@@ -52,6 +52,7 @@ export async function GET(request: Request) {
           website: true,
           xHandle: true,
           projectXHandle: true,
+          discussionPreference: true,
           bookings: bookingSelect,
           businessResearch: {
             select: {
