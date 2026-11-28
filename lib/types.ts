@@ -121,6 +121,7 @@ export type Section =
   | "space-data"
   | "classification"
   | "research"
+  | "commercial"
   | "market-map"
   | "opportunities"
   | "reports"
@@ -132,6 +133,7 @@ export const SECTIONS: Section[] = [
   "founders",
   "companies",
   "research",
+  "commercial",
   "spaces",
   "reports",
   "settings",

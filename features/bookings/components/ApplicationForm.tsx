@@ -15,7 +15,6 @@ import { COUNTRIES, SECTORS, TEAM_SIZES } from "@/lib/catalog";
 import { founderRegistrationSchema as applicationSchema } from "@/lib/validation/application";
 import {
   publicSpaceAcknowledgement,
-  spaceDiscussionOptions,
   spaceInvitation,
 } from "@/lib/space-registration";
 import SessionTime from "@/components/shared/SessionTime";
@@ -262,11 +261,7 @@ export function ApplicationForm({
                 const { name, validity } = control;
                 if (name === "otherSpeakers" && !validity.valid)
                   issues[name] = "Enter a whole number from 4 to 10.";
-                else if (
-                  validity.valueMissing &&
-                  name !== "discussionPreference" &&
-                  name !== "publicSpaceConsent"
-                )
+                else if (validity.valueMissing && name !== "publicSpaceConsent")
                   issues[name] =
                     control instanceof HTMLSelectElement
                       ? "Select an option."
@@ -663,22 +658,6 @@ export function ApplicationForm({
                 out of this form.{" "}
                 <Link href="/terms">Privacy & programme terms</Link>.
               </p>
-              <fieldset className="space-discussion-options">
-                <legend>What are you comfortable discussing live?</legend>
-                {spaceDiscussionOptions.map(({ value, label }) => (
-                  <label className="check-label" key={value}>
-                    <input
-                      type="radio"
-                      name="discussionPreference"
-                      value={value}
-                      required
-                      {...fieldAttributes("discussionPreference")}
-                    />{" "}
-                    {label}
-                  </label>
-                ))}
-                {fieldMessage("discussionPreference")}
-              </fieldset>
               <label className="check-label">
                 <input
                   name="publicSpaceConsent"

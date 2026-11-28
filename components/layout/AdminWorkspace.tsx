@@ -33,6 +33,7 @@ import Overview from "@/features/programme/components/Overview";
 import Directory from "@/features/directory/components/Directory";
 import Spaces from "@/features/spaces/components/Spaces";
 import Reports from "@/features/reports/components/Reports";
+import CommercialPipeline from "@/features/consultations/components/CommercialPipeline";
 import BookingResearch from "@/features/research/components/BookingResearch";
 import SpaceManagersSettings from "@/features/space-managers/components/SpaceManagersSettings";
 import TeamSettings from "@/features/settings/components/Settings";
@@ -190,7 +191,7 @@ function Shell({ section, id }: { section: Section; id?: string }) {
             navId === section ||
             (navId === "founders" && section === "companies") ||
             (navId === "operations" &&
-              (section === "spaces" || section === "research"))
+              ["spaces", "research", "commercial"].includes(section))
               ? "active"
               : ""
           }
@@ -198,7 +199,7 @@ function Shell({ section, id }: { section: Section; id?: string }) {
             navId === section ||
             (navId === "founders" && section === "companies") ||
             (navId === "operations" &&
-              (section === "spaces" || section === "research"))
+              ["spaces", "research", "commercial"].includes(section))
               ? "page"
               : undefined
           }
@@ -221,11 +222,13 @@ function Shell({ section, id }: { section: Section; id?: string }) {
         ? "Directory"
         : section === "settings"
           ? "Settings"
-          : section === "research"
-            ? "Research"
-            : section === "spaces"
-              ? "Founder Spaces"
-              : navigation.find((n) => n.id === section)?.label;
+          : section === "commercial"
+            ? "Commercial pipeline"
+            : section === "research"
+              ? "Research"
+              : section === "spaces"
+                ? "Founder Spaces"
+                : navigation.find((n) => n.id === section)?.label;
   const can = viewer.permissions.includes(SECTION_PERMISSIONS[section]);
   const canManageTeam = viewer.permissions.includes("team.manage");
   const role = manager
@@ -332,6 +335,8 @@ function Shell({ section, id }: { section: Section; id?: string }) {
             <Spaces id={id} edit={edit} />
           ) : section === "reports" ? (
             <Reports />
+          ) : section === "commercial" ? (
+            <CommercialPipeline key={id || "pipeline"} id={id} />
           ) : section === "research" ? (
             <BookingResearch key={id || "queue"} id={id} />
           ) : (

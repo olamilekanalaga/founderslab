@@ -153,6 +153,7 @@ model FounderCompanyMembership {
 }
 
 model Application {
+  consultationLead    ConsultationLead?
   discussionPreference String?
   publicSpaceConsentAt DateTime?
   businessResearch    ApplicationResearch?
@@ -209,6 +210,74 @@ model ApplicationResearch {
   revision         Int         @default(0)
   linkHash         String?     @unique
   linkExpiresAt    DateTime?
+}
+
+model ConsultationLead {
+  id             String                    @id @default(cuid())
+  applicationId  String?                   @unique
+  application    Application?               @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+  founderName     String
+  businessName    String
+  source          String
+  inboundKey      String?                   @unique
+  requestedAt     DateTime?
+  replyEmail      String?
+  requestContext  String?
+  followUp        Json?
+  followUpStatus  String                    @default("Not started")
+  followUpVersion Int                       @default(0)
+  inviteHash      String?                   @unique
+  offeredAt       DateTime?
+  consultations   ConsultationAppointment[]
+  engagements     CommercialEngagement[]
+  createdAt       DateTime                  @default(now())
+}
+
+model ConsultationSlot {
+  id           String                    @id @default(cuid())
+  startsAt     DateTime
+  endsAt       DateTime
+  withdrawnAt  DateTime?
+  appointments ConsultationAppointment[]
+
+  @@index([startsAt, endsAt])
+}
+
+model ConsultationAppointment {
+  id                String           @id @default(cuid())
+  leadId            String
+  lead              ConsultationLead @relation(fields: [leadId], references: [id])
+  slotId            String
+  slot              ConsultationSlot @relation(fields: [slotId], references: [id])
+  email             String
+  discovery         Json
+  bookingStatus     String           @default("Confirmed")
+  completedAt       DateTime?
+  createdAt         DateTime         @default(now())
+
+  @@index([leadId])
+  @@index([slotId])
+}
+
+model CommercialEngagement {
+  id             String           @id @default(cuid())
+  leadId         String
+  lead           ConsultationLead @relation(fields: [leadId], references: [id])
+  type           String?
+  problem        String
+  solution       String
+  estimatedPence Int?
+  agreedPence    Int?
+  status         String
+  proposalAt     DateTime?
+  securedContractAt DateTime?
+  securedEmploymentAt DateTime?
+  followUpOn     DateTime?        @db.Date
+  outcome        String
+  updatedAt      DateTime         @updatedAt
+  createdAt      DateTime         @default(now())
+
+  @@index([leadId, createdAt])
 }
 
 model ProjectLogo {

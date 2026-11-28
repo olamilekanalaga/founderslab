@@ -587,7 +587,6 @@ try {
     comments: "None",
     privacyConsent: true,
     promotionalConsent: false,
-    discussionPreference: "product-and-market",
     publicSpaceConsent: true,
   };
   assert.equal(
@@ -651,7 +650,7 @@ try {
     status: "Approved",
   });
   const linked = state.applications.find((a) => a.id === app.id)!;
-  assert.equal(linked.discussionPreference, application.discussionPreference);
+  assert.equal(linked.discussionPreference, null);
   assert.ok(Number.isFinite(Date.parse(linked.publicSpaceConsentAt || "")));
   const logoPath = "/api/project-logo/" + app.id;
   assert.equal(linked.hasProjectLogo, true);
@@ -951,6 +950,229 @@ try {
   pass(
     "Existing bookings gain private discovery through a replaceable, expiring, one-use link without changing the booking.",
   );
+  const commercial = "/api/commercial";
+  const privateSession = "/api/public/private-session";
+  const commercialAction = (payload: unknown) => request(commercial, payload, admin);
+  assert.equal((await request(commercial)).status, 401);
+  assert.equal((await request(commercial, { action: "new-lead" }, admin, false)).status, 403);
+  assert.equal((await request(privateSession, { action: "open", token: randomBytes(32).toString("base64url") })).status, 404);
+  const initialPipeline = await request(commercial, undefined, admin);
+  assert.equal(initialPipeline.data.settings, null);
+  assert.equal(
+    (await commercialAction({ action: "settings", settings: { durationMinutes: 45 } })).status,
+    200,
+  );
+  const startsAt = new Date(Date.now() + 2 * 86_400_000).toISOString();
+  const slot = await commercialAction({ action: "add-slot", startsAt });
+  assert.equal(slot.status, 200, JSON.stringify(slot.data));
+  assert.equal((await commercialAction({ action: "add-slot", startsAt })).status, 409);
+
+  const followUp = {
+    action: "save-follow-up",
+    applicationId: legacyId,
+    version: 0,
+    followUp: {
+      problems: "Unknown retention",
+      knowledgeGaps: "No cohort data",
+      opportunities: "Measure repeat use",
+      contribution: "Analyse cohorts with the founder",
+      message: "Let’s review your retention data privately.",
+    },
+    status: "Opportunity identified",
+  };
+  const savedFollowUp = await commercialAction(followUp);
+  assert.equal(savedFollowUp.status, 200);
+  assert.equal((await commercialAction(followUp)).status, 409);
+  const offer = await commercialAction({ action: "issue-space-link", applicationId: legacyId });
+  const replacement = await commercialAction({ action: "issue-space-link", applicationId: legacyId });
+  assert.equal(replacement.data.id, savedFollowUp.data.id);
+  assert.equal((await request(privateSession, { action: "open", token: offer.data.token })).status, 404);
+  const pipelineAfterOffer = await request(commercial, undefined, admin);
+  const outbound = pipelineAfterOffer.data.rows.find(
+    (row: { applicationId: string }) => row.applicationId === legacyId,
+  );
+  assert.equal(outbound.source, "Outbound");
+  assert.ok(outbound.stages.includes("Private session offered"));
+  assert.equal(JSON.stringify(pipelineAfterOffer.data).includes("Unknown retention"), false);
+
+  const inboundRequest = {
+    action: "request",
+    founderName: "Incoming Founder",
+    businessName: "Independent Business",
+    email: "incoming@example.invalid",
+    context: "I’d like to discuss how people discover our product.",
+  };
+  const mailBefore = mail.length;
+  const consultationDiscovery = { ...businessDiscovery, businessDescription: "A Web3 analytics product for retailers" };
+  const consultationBrowser = await chromium.launch({
+    executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || "/usr/bin/chromium",
+    headless: true,
+    args: ["--no-sandbox"],
+  });
+  let directId = "";
+  let privateInvite = "";
+  try {
+    const page = await consultationBrowser.newPage({ viewport: { width: 393, height: 852 } });
+    await page.goto(origin + "/private-session");
+    await page.getByLabel("Founder name").fill(inboundRequest.founderName);
+    await page.getByLabel("Project name").fill(inboundRequest.businessName);
+    await page.getByLabel("Email address").fill(inboundRequest.email);
+    await page.getByLabel("What would you like to discuss?").fill(inboundRequest.context);
+    await page.getByRole("button", { name: "Send session request" }).click();
+    await expect(page.getByRole("heading", { name: "Request received" })).toBeVisible();
+    assert.deepEqual(
+      (await request(privateSession, { ...inboundRequest, email: "INCOMING@EXAMPLE.INVALID" })).data,
+      { received: true },
+    );
+    const pipeline = await request(commercial, undefined, admin);
+    const rows = pipeline.data.rows.filter(
+      (row: { businessName: string }) => row.businessName === inboundRequest.businessName,
+    );
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].applicationId, null);
+    assert.equal(rows[0].source, "Inbound");
+    assert.deepEqual(rows[0].stages, ["Private session requested"]);
+    assert.equal(JSON.stringify(pipeline.data).includes(inboundRequest.email), false);
+    directId = rows[0].id;
+
+    const operator = await consultationBrowser.newContext({
+      viewport: { width: 393, height: 852 },
+      permissions: ["clipboard-read", "clipboard-write"],
+    });
+    const session = admin.cookie.split("=")[1];
+    await operator.addCookies([{ name: "fl_session", value: session, url: origin }]);
+    const commercialPage = await operator.newPage();
+    await commercialPage.goto(origin + "/commercial");
+    await expect(commercialPage.getByRole("heading", { name: "Commercial pipeline" })).toBeVisible();
+    await commercialPage.getByRole("button", { name: "Session settings" }).click();
+    await expect(commercialPage.getByLabel("Duration (minutes)")).toHaveValue("45");
+    await commercialPage.goto(origin + "/research/" + legacyId);
+    await expect(commercialPage.getByLabel("Personalised follow-up message")).toHaveValue(followUp.followUp.message);
+    await commercialPage.getByRole("button", { name: "Copy follow-up message" }).click();
+    await expect(commercialPage.getByRole("status").filter({ hasText: "Follow-up copied." })).toBeVisible();
+    await commercialPage.goto(origin + "/commercial/" + directId);
+    await expect(commercialPage.getByText(inboundRequest.context)).toBeVisible();
+    await commercialPage.getByRole("button", { name: "Create private booking link" }).click();
+    const linkField = commercialPage.getByLabel("Private booking link");
+    await expect(linkField).toHaveValue(/#token=/);
+    const link = await linkField.inputValue();
+    privateInvite = new URLSearchParams(new URL(link).hash.slice(1)).get("token")!;
+    await operator.close();
+
+    await page.goto(link);
+    await page.getByLabel("Appointment (UK time)").selectOption(slot.data.id);
+    await page.getByLabel("Email address").fill(inboundRequest.email);
+    await page.getByLabel("What are you building?").fill(consultationDiscovery.businessDescription);
+    for (const [field, question] of Object.entries(discoveryQuestions)) {
+      const label = field === "challenges" ? "What is the main business challenge you want to investigate?" : question;
+      await page.getByLabel(label).fill(businessDiscovery[field as keyof typeof discoveryQuestions]);
+    }
+    for (const area of businessDiscovery.areas) await page.getByLabel(area, { exact: true }).check();
+    for (const label of Object.values(researchAcknowledgements)) await page.getByLabel(label).check();
+    await page.getByRole("button", { name: "Confirm appointment" }).click();
+    await expect(page.getByRole("heading", { name: "Appointment confirmed" })).toBeVisible();
+    await page.reload();
+    await expect(page.getByRole("heading", { name: "Appointment confirmed" })).toBeVisible();
+  } finally {
+    await consultationBrowser.close();
+  }
+  assert.equal(mail.length, mailBefore);
+
+  const reservation = {
+    action: "reserve",
+    token: replacement.data.token,
+    slotId: slot.data.id,
+    email: "existing@example.invalid",
+    discovery: consultationDiscovery,
+  };
+  assert.equal((await request(privateSession, reservation)).status, 409);
+  const opened = await request(privateSession, { action: "open", token: privateInvite });
+  const appointmentId: string = opened.data.appointment.id;
+  assert.equal(opened.data.appointment.bookingStatus, "Confirmed");
+  assert.deepEqual(Object.keys(opened.data.appointment).sort(), ["bookingStatus", "id", "slot"]);
+  assert.equal((await request(privateSession, { ...reservation, token: privateInvite })).data.appointment.id, appointmentId);
+  const complete = { action: "appointment", appointmentId, status: "complete" };
+  assert.equal((await commercialAction(complete)).status, 409);
+  const opportunity = {
+    action: "engagement",
+    leadId: directId,
+    engagement: {
+      type: null,
+      problem: "",
+      solution: "",
+      estimatedPence: null,
+      agreedPence: null,
+      status: "No immediate opportunity",
+      followUpOn: "2027-01-10",
+      outcome: "Keep in touch.",
+    },
+  };
+  assert.equal((await commercialAction(opportunity)).status, 409);
+  const pastAppointment = new Client({ connectionString: url.toString() });
+  await pastAppointment.connect();
+  await pastAppointment.query(
+    `UPDATE "ConsultationSlot" SET "startsAt"=now() - interval '2 days', "endsAt"=now() - interval '1 day' WHERE id=$1`,
+    [slot.data.id],
+  );
+  await pastAppointment.end();
+  assert.equal((await commercialAction(complete)).status, 200);
+  const engagementRecord = await commercialAction(opportunity);
+  assert.equal(engagementRecord.status, 200);
+  for (const status of [
+    "Further research required", "Follow-up needed", "Partnership discussion",
+    "Consulting opportunity", "Contract proposal", "Employment opportunity",
+    "Secured contract", "Secured employment",
+  ]) {
+    assert.equal(
+      (await commercialAction({
+        ...opportunity,
+        engagementId: engagementRecord.data.id,
+        engagement: {
+          ...opportunity.engagement, status, type: "Research contract",
+          estimatedPence: 250000, agreedPence: 200000,
+        },
+      })).status,
+      200,
+      status,
+    );
+  }
+  const secondSlot = await commercialAction({
+    action: "add-slot",
+    startsAt: new Date(Date.now() + 3 * 86_400_000).toISOString(),
+  });
+  const other = await commercialAction({
+    action: "new-lead", founderName: "Another founder", businessName: "Other business", source: "Inbound",
+  });
+  assert.equal(other.status, 200);
+  const otherLink = await commercialAction({ action: "issue-link", leadId: other.data.id });
+  const invitations = [replacement.data.token, otherLink.data.token];
+  const slotAttempts = await Promise.all(
+    invitations.map((token) => request(privateSession, { ...reservation, token, slotId: secondSlot.data.id })),
+  );
+  assert.deepEqual(slotAttempts.map(({ status }) => status).sort(), [200, 409]);
+  const bookedIndex = slotAttempts.findIndex(({ status }) => status === 200);
+  const release = await commercialAction({
+    action: "appointment", status: "cancel", appointmentId: slotAttempts[bookedIndex].data.appointment.id,
+  });
+  assert.equal(release.status, 200, JSON.stringify(release.data));
+  assert.equal(
+    (await request(privateSession, { ...reservation, token: invitations[1 - bookedIndex], slotId: secondSlot.data.id })).status,
+    200,
+  );
+
+  const finalPipeline = await request(commercial, undefined, admin);
+  const directRow = finalPipeline.data.rows.find((row: { id: string }) => row.id === directId);
+  assert.deepEqual(directRow.stages, [
+    "Private session requested", "Private session offered", "Private session booked",
+    "Private session completed", "Contract proposal", "Secured contract", "Secured employment",
+  ]);
+  assert.equal(JSON.stringify(finalPipeline.data).includes(inboundRequest.context), false);
+  const privateLead = await request(commercial + "?lead=" + directId, undefined, admin);
+  assert.equal(privateLead.data.lead.consultations[0].discovery.challenges, businessDiscovery.challenges);
+  assert.equal(privateLead.data.lead.engagements[0].agreedPence, 200000);
+  assert.equal(privateLead.data.lead.engagements[0].outcome, "Keep in touch.");
+  pass("Private mobile requests and invitations, immediate booking confirmation, availability, confidential follow-up and opportunity outcomes.");
+
   const lockedBooking = publicSessions.data.sessions[1];
   assert.equal(publicSessions.data.sessions.length, 3);
   assert.equal(publicSession.bookingLocked, false);
@@ -1015,7 +1237,7 @@ try {
   assert.equal(calendarResearch.status, 200);
   assert.equal(
     calendarResearch.data.discussionPreference,
-    calendarApplication.discussionPreference,
+    null,
   );
   assert.equal(calendarResearch.data.discovery, null);
   const availableSeats = async () =>
@@ -1618,6 +1840,8 @@ try {
     (await request("/api/booking-research", undefined, manager)).status,
     403,
   );
+  assert.equal((await request(commercial, undefined, manager)).status, 403);
+  assert.equal((await request(commercial, { action: "issue-link", leadId: directId }, manager)).status, 403);
   assert.deepEqual(managerWorkspace.data.state.users, []);
   assert.deepEqual(managerWorkspace.data.state.audit, []);
   assert.equal(

@@ -3,7 +3,6 @@ import { projectLogoPng } from "../fixtures/project-logo";
 import {
   freeSpaceDescription,
   publicSpaceAcknowledgement,
-  spaceDiscussionOptions,
   spaceInvitation,
 } from "@/lib/space-registration";
 import { openRegistrationForm } from "./registration-steps";
@@ -254,7 +253,7 @@ test("mobile booking highlights missing and invalid answers, then submits correc
   await page
     .getByLabel("I agree to the privacy notice and programme terms.")
     .check();
-  await page.getByLabel(spaceDiscussionOptions[0].label).check();
+  await expect(page.locator('[name="discussionPreference"]')).toHaveCount(0);
   await submit.click();
   await expect(page.getByLabel(publicSpaceAcknowledgement)).toBeFocused();
   expect(submitted).toBeUndefined();
@@ -283,7 +282,7 @@ test("mobile booking highlights missing and invalid answers, then submits correc
   expect(submitted?.contact).toBe("");
   expect(submitted?.projectLogo).toMatch(/^data:image\/png;base64,/);
   expect(submitted?.discovery).toBeUndefined();
-  expect(submitted?.discussionPreference).toBe(spaceDiscussionOptions[0].value);
+  expect(submitted?.discussionPreference).toBeUndefined();
   expect(submitted?.publicSpaceConsent).toBe(true);
   expect(submitted?.focus).toBe("");
   expect(submitted?.comments).toBe("");

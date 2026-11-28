@@ -30,3 +30,26 @@ Accounts created through workspace signup use their stored credentials. `BOOTSTR
 4. After a real Space, submit its Space Data and verify that the next Sunday opens. Use isolated tests for fixture attendance and schedule changes.
 
 Keep preview and local databases separate from production. The Vercel preparation step runs in Production. For a persistent Node host, run the migrations, defaults seed, and Sunday publication from the [local setup guide](README.md#local-setup), then build and start the application. Keep applied migrations intact. [Database migrations](prisma/README.md)
+
+## Private sessions and opportunities
+
+Apply the pending `202611280003_private_consultations` migration before testing
+in a separate preview database. It adds the private workflow to the existing
+database and preserves current applications, Space bookings, and consent records.
+
+Open **Admin operations → Commercial pipeline → Session settings**. Set the
+duration in minutes and add appointment times. The time picker uses your device
+time zone. Founders see appointments in UK time and get immediate confirmation
+when they book. The same invitation link reopens their confirmation.
+
+- **Outbound:** Open the founder in **Research queue → After the Space**, save
+  your observations and DM, then create a private booking link. Copy the DM and
+  link together to review and send them yourself.
+- **Inbound:** Share `/private-session` or give the address to a founder who asks.
+  Requests appear in the commercial pipeline. Review the private request
+  before creating and sharing an invitation. If the founder already contacted
+  you elsewhere, use **Add a business directly** instead.
+
+Replacing an invitation invalidates the old link. After the conversation,
+mark it complete in the commercial record and record the outcome, opportunity
+notes, and follow-up date. Private sessions and the public Space are free.
